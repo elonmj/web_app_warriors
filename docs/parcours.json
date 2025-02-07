@@ -1,0 +1,152 @@
+{
+  "players": [
+    {
+      "id": "player1",
+      "name": "Oswalde",
+      "currentRating": 1200,
+      "category": "ONYX",
+      "matches": [
+        {
+          "date": "2024-09-12",
+          "opponent": "opponent1",
+          "opponentRating": 785,
+          "result": {
+            "score": [
+              253,
+              450
+            ],
+            "pr": 3,
+            "pdi": 3,
+            "ds": 43.8
+          },
+          "ratingChange": 15,
+          "categoryAtTime": "ONYX"
+        },
+        {
+          "date": "2024-09-19",
+          "opponent": "opponent2",
+          "opponentRating": 340,
+          "result": {
+            "score": [
+              360,
+              412
+            ],
+            "pr": 1,
+            "pdi": 1,
+            "ds": 12.3
+          },
+          "ratingChange": -10,
+          "categoryAtTime": "ONYX"
+        },
+        {
+          "date": "2024-09-31",
+          "opponent": "opponent3",
+          "opponentRating": 200,
+          "result": {
+            "score": [
+              320,
+              340
+            ],
+            "pr": 3,
+            "pdi": 3,
+            "ds": 5.9
+          },
+          "ratingChange": 8,
+          "categoryAtTime": "ONYX"
+        }
+      ],
+      "statistics": {
+        "totalMatches": 3,
+        "wins": 2,
+        "draws": 0,
+        "losses": 1,
+        "totalPR": 7,
+        "averageDS": 20.7,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "player2",
+      "name": "Kpalingan",
+      "currentRating": 900,
+      "category": "ONYX",
+      "matches": [
+        {
+          "date": "2024-09-12",
+          "opponent": "opponent4",
+          "opponentRating": 785,
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 100
+          },
+          "ratingChange": -20,
+          "categoryAtTime": "ONYX"
+        },
+        {
+          "date": "2024-09-19",
+          "opponent": "opponent5",
+          "opponentRating": 340,
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 1,
+            "pdi": 1,
+            "ds": 100
+          },
+          "ratingChange": -15,
+          "categoryAtTime": "ONYX"
+        },
+        {
+          "date": "2024-09-31",
+          "opponent": "opponent6",
+          "opponentRating": 200,
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 3,
+            "pdi": 3,
+            "ds": 100
+          },
+          "ratingChange": 25,
+          "categoryAtTime": "ONYX"
+        }
+      ],
+      "statistics": {
+        "totalMatches": 3,
+        "wins": 1,
+        "draws": 0,
+        "losses": 2,
+        "totalPR": 4,
+        "averageDS": 100,
+        "inactivityWeeks": 0
+      }
+    }
+  ],
+  "categories": {
+    "ONYX": {
+      "minRating": 1000,
+      "maxRating": 1399
+    },
+    "AMÉTHYSTE": {
+      "minRating": 1400,
+      "maxRating": 1699
+    },
+    "TOPAZE": {
+      "minRating": 1700,
+      "maxRating": 1899
+    },
+    "DIAMANT": {
+      "minRating": 1900,
+      "maxRating": null
+    }
+  }
+}
