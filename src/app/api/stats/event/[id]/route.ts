@@ -1,42 +1,52 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { StatisticsService } from '@/api/services/StatisticsService';
-import { Match } from '@/lib/Match';
-import { Player } from '@/lib/Player';
+import { NextResponse } from 'next/server';
+import * as fs from 'fs/promises';
+import path from 'path';
+import { Event } from '@/types/Event';
+import { Match } from '@/types/Match';
+import { Player } from '@/types/Player';
+import { EventStatisticsCalculator } from '@/lib/Statistics';
 
-/**
- * GET /api/stats/event/[id]
- * Calculate event statistics
- */
+const DATA_DIR = path.join(process.cwd(), 'data');
+
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
+  const eventId = params.id;
+
   try {
-    const eventId = params.id;
+    // Read necessary data files
+    const eventsContent = await fs.readFile(path.join(DATA_DIR, 'events.json'), 'utf-8');
+    const matchesContent = await fs.readFile(path.join(DATA_DIR, 'matches', `${eventId}.json`), 'utf-8');
+    const playersContent = await fs.readFile(path.join(DATA_DIR, 'players.json'), 'utf-8');
 
-    const { getEventMatches, getEventPlayers } = require('@/api/repository/eventRepository');
-    
-    const matches = await getEventMatches(eventId);
-    const players = await getEventPlayers(eventId);
+    // Parse the data
+    const events = JSON.parse(eventsContent).events;
+    const event = events.find((e: Event) => e.id === eventId);
+    const matches = JSON.parse(matchesContent).matches as Match[];
+    const players = JSON.parse(playersContent).players as Player[];
 
-    if (matches.length === 0) {
+    if (!event) {
       return NextResponse.json(
-        { error: 'No matches found for event' },
+        { error: 'Event not found' },
         { status: 404 }
       );
     }
 
-    const statistics = await new StatisticsService().calculateEventStats(
-      eventId,
-      matches,
-      players
-    );
+    // Calculate statistics
+    const stats = EventStatisticsCalculator.calculate(event, matches, players);
 
-    return NextResponse.json(statistics);
+    return NextResponse.json(stats);
   } catch (error) {
     console.error('Error calculating event statistics:', error);
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
+      return NextResponse.json(
+        { error: 'Required data not found' },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to calculate event statistics' },
+      { error: 'Failed to calculate statistics' },
       { status: 500 }
     );
   }

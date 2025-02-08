@@ -1,39 +1,47 @@
 import {
-  Category,
-  CategoryDefinition,
-  CategoryWithPlayers,
-  CATEGORIES,
-  determineCategory,
-  isValidCategory
-} from '../../lib/Category';
-import type { Player } from '../../lib/Player';
+  CategoryManager,
+  DEFAULT_CATEGORY,
+  CATEGORY_DEFINITIONS_ARRAY
+} from '../../lib/CategoryManager';
+import { PlayerCategoryType } from '../../types/Enums';
+import type { Player } from '../../types/Player';
 
 export class CategoryService {
-  private categories: Record<string, CategoryDefinition>;
+  private categories: Record<string, CategoryManager>;
 
   constructor() {
-    this.categories = CATEGORIES;
+    this.categories = {};
+    CategoryManager.getAllCategories().forEach(category => {
+      this.categories[category] = CategoryManager;
+    });
   }
 
   /**
    * Get all available categories
    */
-  async getCategories(): Promise<Category[]> {
-    return Object.entries(this.categories).map(([name, definition]) => ({
-      name,
-      definition
+  async getCategories(): Promise<Array<{ name: PlayerCategoryType, definition: { minRating: number, maxRating: number | null } }>> {
+    return CATEGORY_DEFINITIONS_ARRAY.map(category => ({
+      name: category.name,
+      definition: {
+        minRating: category.minRating,
+        maxRating: category.maxRating
+      }
     }));
   }
 
   /**
    * Get category with its players
    */
-  async getCategoryWithPlayers(categoryName: string, players: Player[]): Promise<CategoryWithPlayers | null> {
-    if (!isValidCategory(categoryName)) {
+  async getCategoryWithPlayers(categoryName: string, players: Player[]): Promise<{
+    name: string,
+    definition: { minRating: number, maxRating: number | null },
+    players: string[]
+  } | null> {
+    if (!CategoryManager.isValidCategory(categoryName)) {
       return null;
     }
 
-    const definition = this.categories[categoryName];
+    const definition = CategoryManager.getCategoryDefinition(categoryName as PlayerCategoryType);
     const categoryPlayers = players.filter(player => player.category === categoryName);
 
     return {
@@ -46,8 +54,8 @@ export class CategoryService {
   /**
    * Determine appropriate category for a rating
    */
-  async determineCategoryForRating(rating: number): Promise<string> {
-    return determineCategory(rating);
+  async determineCategoryForRating(rating: number): Promise<PlayerCategoryType> {
+    return CategoryManager.determineCategory(rating);
   }
 
   /**
@@ -55,12 +63,12 @@ export class CategoryService {
    */
   async shouldChangeCategory(player: Player, newRating: number): Promise<{
     shouldChange: boolean;
-    newCategory: string | null;
+    newCategory: PlayerCategoryType | null;
     isPromotion: boolean;
   }> {
-    const newCategory = determineCategory(newRating);
+    const newCategory = CategoryManager.determineCategory(newRating);
     const shouldChange = newCategory !== player.category;
-    const isPromotion = shouldChange && newRating > player.currentRating;
+    const isPromotion = shouldChange && CategoryManager.isPromotion(player.category as PlayerCategoryType, newCategory);
 
     return {
       shouldChange,
@@ -75,7 +83,7 @@ export class CategoryService {
   async getCategoryDistribution(players: Player[]): Promise<Record<string, number>> {
     const distribution: Record<string, number> = {};
     
-    for (const category of Object.keys(this.categories)) {
+    for (const category of CategoryManager.getAllCategories()) {
       distribution[category] = players.filter(p => p.category === category).length;
     }
 
@@ -93,14 +101,14 @@ export class CategoryService {
     isValid: boolean;
     reason?: string;
   }> {
-    if (!isValidCategory(fromCategory) || !isValidCategory(toCategory)) {
+    if (!CategoryManager.isValidCategory(fromCategory) || !CategoryManager.isValidCategory(toCategory)) {
       return {
         isValid: false,
         reason: 'Invalid category'
       };
     }
 
-    const expectedCategory = determineCategory(rating);
+    const expectedCategory = CategoryManager.determineCategory(rating);
     if (expectedCategory !== toCategory) {
       return {
         isValid: false,
@@ -153,15 +161,10 @@ export class CategoryService {
         };
       }
 
-      // Check if promotion or demotion
-      const categoryOrder = Object.keys(this.categories);
-      const oldIndex = categoryOrder.indexOf(oldCategory);
-      const newIndex = categoryOrder.indexOf(newCategory);
-
-      if (newIndex < oldIndex) { // Lower index means higher category
+      if (CategoryManager.isPromotion(oldCategory as PlayerCategoryType, newCategory as PlayerCategoryType)) {
         stats.promotions++;
         stats.transitionsByCategory[oldCategory].promotionsFrom++;
-      } else if (newIndex > oldIndex) {
+      } else {
         stats.demotions++;
         stats.transitionsByCategory[newCategory].demotionsTo++;
       }

@@ -1,168 +1,191 @@
-import { Match } from "@/lib/Match";
-import { Player } from "@/lib/Player";
-import MatchResultForm from "@/app/components/MatchResultForm";
-import Link from "next/link";
-import { format } from "date-fns";
+"use client";
 
-// Mock data for development - will be replaced with actual API calls
-const mockMatch: Match = {
-  id: "match-1",
-  date: new Date().toISOString(),
-  player1: "player-1",
-  player2: "player-2",
-  player1Rating: 1200,
-  player2Rating: 1350,
-  player1Category: "ONYX",
-  player2Category: "AMÉTHYSTE",
-  status: "pending",
-  isRandom: false,
-  eventId: "event-1",
-};
+import { useEffect, useState } from 'react';
+import { Match, MatchResult } from '@/types/Match';
+import MatchResultForm from '@/app/components/MatchResultForm';
 
-const mockPlayer1: Player = {
-  id: "player-1",
-  name: "John Doe",
-  currentRating: 1200,
-  category: "ONYX",
-  matches: [],
-  statistics: {
-    totalMatches: 10,
-    wins: 5,
-    draws: 2,
-    losses: 3,
-    totalPR: 17,
-    averageDS: 45.5,
-    inactivityWeeks: 0,
-  },
-};
+async function getMatch(eventId: string, matchId: string): Promise<Match | null> {
+  try {
+    const res = await fetch(`/api/matches/${eventId}/${matchId}`);
+    if (!res.ok) throw new Error('Failed to fetch match');
+    return res.json();
+  } catch (error) {
+    console.error('Error fetching match:', error);
+    return null;
+  }
+}
 
-const mockPlayer2: Player = {
-  id: "player-2",
-  name: "Jane Smith",
-  currentRating: 1350,
-  category: "AMÉTHYSTE",
-  matches: [],
-  statistics: {
-    totalMatches: 15,
-    wins: 8,
-    draws: 3,
-    losses: 4,
-    totalPR: 27,
-    averageDS: 52.3,
-    inactivityWeeks: 0,
-  },
-};
+async function submitMatchResult(
+  eventId: string, 
+  matchId: string, 
+  result: MatchResult
+): Promise<boolean> {
+  try {
+    const res = await fetch('/api/matches/result', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        matchId,
+        score: {
+          player1Score: result.score[0],
+          player2Score: result.score[1]
+        }
+      }),
+    });
+
+    if (!res.ok) throw new Error('Failed to submit result');
+    
+    // Trigger rankings update
+    await fetch(`/api/rankings/${eventId}`, {
+      method: 'POST',
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error submitting result:', error);
+    return false;
+  }
+}
 
 export default function MatchResultPage({
-  params,
+  params
 }: {
-  params: { eventId: string; matchId: string };
+  params: { eventId: string; matchId: string }
 }) {
+  const [match, setMatch] = useState<Match | null>(null);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadMatch() {
+      const matchData = await getMatch(params.eventId, params.matchId);
+      if (matchData) {
+        setMatch(matchData);
+      } else {
+        setError("Failed to load match details");
+      }
+      setLoading(false);
+    }
+
+    loadMatch();
+  }, [params.eventId, params.matchId]);
+
+  const handleSubmit = async (score: [number, number]) => {
+    setError("");
+    setSuccess(false);
+    
+    const success = await submitMatchResult(
+      params.eventId,
+      params.matchId,
+      {
+        score,
+        pr: 0, // These will be calculated on the server
+        pdi: 0,
+        ds: 0,
+        validation: {
+          player1Approved: false,
+          player2Approved: false,
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        }
+      }
+    );
+
+    if (success) {
+      setSuccess(true);
+      // Update local match data
+      if (match) {
+        setMatch({
+          ...match,
+          status: 'completed',
+          result: {
+            score,
+            pr: 0,
+            pdi: 0,
+            ds: 0,
+            validation: {
+              player1Approved: false,
+              player2Approved: false,
+              timestamp: new Date().toISOString(),
+              status: 'pending'
+            }
+          }
+        });
+      }
+    } else {
+      setError("Failed to submit match result");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <div className="text-lg text-gray-500">Loading match details...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md bg-red-50 p-4">
+        <div className="text-sm text-red-700">{error}</div>
+      </div>
+    );
+  }
+
+  if (!match) {
+    return (
+      <div className="rounded-md bg-yellow-50 p-4">
+        <div className="text-sm text-yellow-700">Match not found</div>
+      </div>
+    );
+  }
+
+  if (match.status === 'completed' && match.result) {
+    return (
+      <div className="rounded-md bg-green-50 p-4">
+        <div className="text-sm text-green-700">
+          Match result already submitted
+        </div>
+        <div className="mt-2">
+          {match.player1.id} vs {match.player2.id}
+        </div>
+        <div className="mt-2">
+          Score: {match.result.score[0]} - {match.result.score[1]}
+        </div>
+        <div className="mt-1">
+          <div>PR: {match.result.pr}</div>
+          <div>PDI: {match.result.pdi.toFixed(2)}</div>
+          <div>DS: {match.result.ds}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white shadow dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Match Result Entry
-              </h1>
-              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {format(new Date(mockMatch.date), "MMMM d, yyyy")}
-              </div>
-            </div>
-            <Link
-              href={`/event/${params.eventId}`}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-            >
-              Back to Event
-            </Link>
-          </div>
-        </div>
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Submit Match Result
+        </h1>
       </div>
 
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-8">
-          {/* Match Status */}
-          <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-              Match Status
-            </h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Status
-                </span>
-                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                  {mockMatch.status.charAt(0).toUpperCase() + mockMatch.status.slice(1)}
-                </p>
-              </div>
-              {mockMatch.result?.validation && (
-                <>
-                  <div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Player 1 Approval
-                    </span>
-                    <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                      {mockMatch.result.validation.player1Approved ? "Approved" : "Pending"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Player 2 Approval
-                    </span>
-                    <p className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                      {mockMatch.result.validation.player2Approved ? "Approved" : "Pending"}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
+      {success ? (
+        <div className="rounded-md bg-green-50 p-4">
+          <div className="text-sm text-green-700">
+            Match result submitted successfully
           </div>
-
-          {/* Match Result Form */}
-          {mockMatch.status === "pending" && (
-            <MatchResultForm
-              match={mockMatch}
-              player1={mockPlayer1}
-              player2={mockPlayer2}
-              onSubmit={async (score) => {
-                // This will be replaced with actual API call
-                console.log("Submitting score:", score);
-              }}
-            />
-          )}
-
-          {/* Result Display */}
-          {mockMatch.result && (
-            <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                Match Result
-              </h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {mockPlayer1.name}
-                  </span>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                    {mockMatch.result.score[0]}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {mockPlayer2.name}
-                  </span>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                    {mockMatch.result.score[1]}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      ) : (
+        <MatchResultForm
+          player1Name={match.player1.id}
+          player2Name={match.player2.id}
+          onSubmit={handleSubmit}
+        />
+      )}
     </div>
   );
 }

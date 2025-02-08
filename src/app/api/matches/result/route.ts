@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MatchService } from '@/api/services/MatchService';
-import { UpdateMatchResultInput, Match } from '@/lib/Match';
-import { Player } from '@/lib/Player';
+import { RankingService } from '@/api/services/RankingService';
+import { UpdateMatchResultInput, Match } from '@/types/Match';
+import { Player } from '@/types/Player';
+import { MatchRepository } from '@/api/repository/MatchRepository';
 
 const matchService = new MatchService();
+const rankingService = new RankingService();
+const matchRepository = new MatchRepository();
 
 interface MatchUpdate {
   id: string;
@@ -20,45 +24,40 @@ interface MatchResponse {
   };
 }
 
-interface ProcessMatchResult {
-  updatedMatch: Match;
-  updatedPlayer1: Player;
-  updatedPlayer2: Player;
-}
-
 /**
  * POST /api/matches/result
- * Process a match result
+ * Process a match result and update rankings
  */
 export async function POST(request: NextRequest): Promise<NextResponse<MatchResponse | { error: string }>> {
   try {
     const input: UpdateMatchResultInput = await request.json();
     
     // Validate required fields
-    if (!input.matchId || !input.score || typeof input.score.player1Score !== 'number' || typeof input.score.player2Score !== 'number') {
+    // Validate required fields with specific error messages
+    if (!input.matchId) {
       return NextResponse.json(
-        { error: 'Failed to process match result' },
-        { status: 500 }
+        { error: 'Match ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!input.score) {
+      return NextResponse.json(
+        { error: 'Score is required' },
+        { status: 400 }
+      );
+    }
+    
+    if (typeof input.score.player1Score !== 'number' || typeof input.score.player2Score !== 'number') {
+      return NextResponse.json(
+        { error: 'Player scores must be numbers' },
+        { status: 400 }
       );
     }
 
-    const { matchId } = input;
+    // Get match from repository
+    const match = await matchRepository.getMatch(input.matchId);
 
-    // Temporary mock data for testing
-    const mockMatch: Match = {
-      id: 'test-match-1',
-      date: '2024-02-06',
-      player1: 'player1',
-      player2: 'player2',
-      player1Rating: 1200,
-      player2Rating: 1100,
-      player1Category: 'ONYX',
-      player2Category: 'ONYX',
-      status: 'pending',
-      isRandom: false
-    };
-    const matches: Match[] = [mockMatch];
-    const match = await matchService.getMatch(matchId, matches);
     if (!match) {
       return NextResponse.json(
         { error: 'Match not found' },
@@ -66,68 +65,37 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
       );
     }
 
-    // Get players from repository (to be implemented)
-    // In the actual implementation, these would be fetched from the repository
-    const mockPlayer1: Player = {
-      id: match.player1,
-      name: 'Player 1',
-      currentRating: match.player1Rating,
-      category: match.player1Category,
-      matches: [],
-      statistics: {
-        totalMatches: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        totalPR: 0,
-        averageDS: 0,
-        inactivityWeeks: 0
-      }
-    };
-
-    const mockPlayer2: Player = {
-      id: match.player2,
-      name: 'Player 2',
-      currentRating: match.player2Rating,
-      category: match.player2Category,
-      matches: [],
-      statistics: {
-        totalMatches: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        totalPR: 0,
-        averageDS: 0,
-        inactivityWeeks: 0
-      }
-    };
-
     try {
       // Process match result
-      const result: ProcessMatchResult = await matchService.processMatchResult(
-        input,
+      const processResult = await matchService.processMatchResult(
         match,
-        mockPlayer1,
-        mockPlayer2,
-        [] // previousMatches
+        input
       );
 
-      const { updatedMatch, updatedPlayer1, updatedPlayer2 } = result;
+      const { updatedMatch, player1Update, player2Update } = processResult;
+
+      // Update rankings for the event
+      await rankingService.updateEventRankings(match.eventId);
+
+      // Ensure we have valid categories and IDs
+      if (!player1Update.id || !player2Update.id) {
+        throw new Error('Missing player IDs in update');
+      }
 
       const response: MatchResponse = {
         match: updatedMatch,
         updates: {
           player1: {
-            id: updatedPlayer1.id,
-            newRating: updatedPlayer1.currentRating,
-            newCategory: updatedPlayer1.category,
-            ratingChange: updatedPlayer1.currentRating - mockPlayer1.currentRating
+            id: player1Update.id,
+            newRating: player1Update.currentRating || 0,
+            newCategory: player1Update.category || 'ONYX',
+            ratingChange: (player1Update.currentRating || 0) - (match.player1?.ratingBefore || 0)
           },
           player2: {
-            id: updatedPlayer2.id,
-            newRating: updatedPlayer2.currentRating,
-            newCategory: updatedPlayer2.category,
-            ratingChange: updatedPlayer2.currentRating - mockPlayer2.currentRating
+            id: player2Update.id,
+            newRating: player2Update.currentRating || 0,
+            newCategory: player2Update.category || 'ONYX',
+            ratingChange: (player2Update.currentRating || 0) - (match.player2?.ratingBefore || 0)
           }
         }
       };
@@ -143,7 +111,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
   } catch (error) {
     console.error('Error processing match result:', error);
     return NextResponse.json(
-      { error: 'Failed to process match result' },
+      { error: error instanceof Error ? error.message : 'Unknown error processing match result' },
       { status: 500 }
     );
   }
@@ -158,21 +126,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ): Promise<NextResponse<Match | { error: string }>> {
   try {
-    // Temporary mock data for testing
-    const mockMatch: Match = {
-      id: 'test-match-1',
-      date: '2024-02-06',
-      player1: 'player1',
-      player2: 'player2',
-      player1Rating: 1200,
-      player2Rating: 1100,
-      player1Category: 'ONYX',
-      player2Category: 'ONYX',
-      status: 'pending',
-      isRandom: false
-    };
-    const matches: Match[] = [mockMatch];
-    const match = await matchService.getMatch(params.id, matches);
+    const match = await matchRepository.getMatch(params.id);
 
     if (!match) {
       return NextResponse.json(

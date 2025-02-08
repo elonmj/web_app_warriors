@@ -1,140 +1,116 @@
-"use client";
-
-import { Match, MatchScore } from "@/lib/Match";
-import { Player } from "@/lib/Player";
-import { useState } from "react";
+import React, { useState, useMemo } from 'react';
 
 interface MatchResultFormProps {
-  match: Match;
-  player1: Player;
-  player2: Player;
-  onSubmit: (score: MatchScore) => void;
+  onSubmit: (score: [number, number]) => void;
+  player1Name: string;  // Add player names
+  player2Name: string;
 }
 
-export default function MatchResultForm({
-  match,
-  player1,
-  player2,
-  onSubmit,
-}: MatchResultFormProps) {
-  const [score, setScore] = useState<MatchScore>({
-    player1Score: 0,
-    player2Score: 0,
-  });
-  const [error, setError] = useState<string>("");
+// Keep PDI as internal helper for DS calculation
+const calculatePDI = (score1: number, score2: number) => {
+  const totalPoints = score1 + score2;
+  if (totalPoints === 0) return 0;
+  return Math.abs(score1 - score2) / totalPoints;
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
+// Calculate Dominant Score (DS) based on PDI
+const calculateDS = (score1: number, score2: number) => {
+  const pdi = calculatePDI(score1, score2);
+  const threshold = 0.8;
+  return pdi >= threshold ? 100 : Math.floor(pdi * 100);
+};
+
+// Calculate Points Ranking (PR)
+const calculatePR = (score1: number, score2: number) => {
+  if (score1 > score2) return 3;
+  if (score1 === score2) return 1;
+  return 0;
+};
+
+export const MatchResultForm: React.FC<MatchResultFormProps> = ({ 
+  onSubmit, 
+  player1Name,
+  player2Name 
+}) => {
+  // Initialize scores to [0, 0] instead of empty strings
+  const [score, setScore] = useState<[number, number]>([0, 0]);
+
+  const handleChange = (index: number, value: string) => {
+    // Only allow positive numbers or empty string (which becomes 0)
+    if (value === '' || /^\d+$/.test(value)) {
+      const newScore = [...score] as [number, number];
+      newScore[index] = value === '' ? 0 : parseInt(value, 10);
+      setScore(newScore);
+    }
+  };
+
+  // Calculate stats in real-time
+  const stats = useMemo(() => ({
+    ds: calculateDS(score[0], score[1]),
+    pr: calculatePR(score[0], score[1])
+  }), [score]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // Basic validation
-    if (score.player1Score < 0 || score.player2Score < 0) {
-      setError("Scores cannot be negative");
-      return;
-    }
-
-    if (score.player1Score === 0 && score.player2Score === 0) {
-      setError("At least one player must score points");
-      return;
-    }
-
-    // Clear any previous errors and submit
-    setError("");
     onSubmit(score);
   };
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-        Enter Match Result
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Player 1 Score */}
-          <div>
-            <label
-              htmlFor="player1Score"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {player1.name}&apos;s Score
-              <span className="ml-2 text-xs text-gray-500">
-                ({match.player1Category})
-              </span>
-            </label>
-            <input
-              type="number"
-              id="player1Score"
-              min="0"
-              value={score.player1Score}
-              onChange={(e) =>
-                setScore((prev) => ({
-                  ...prev,
-                  player1Score: parseInt(e.target.value) || 0,
-                }))
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-            />
-          </div>
-
-          {/* Player 2 Score */}
-          <div>
-            <label
-              htmlFor="player2Score"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {player2.name}&apos;s Score
-              <span className="ml-2 text-xs text-gray-500">
-                ({match.player2Category})
-              </span>
-            </label>
-            <input
-              type="number"
-              id="player2Score"
-              min="0"
-              value={score.player2Score}
-              onChange={(e) =>
-                setScore((prev) => ({
-                  ...prev,
-                  player2Score: parseInt(e.target.value) || 0,
-                }))
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-            />
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
+        {/* Player 1 score */}
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-700">{player1Name}</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="\d*"
+            value={score[0]}
+            onChange={e => handleChange(0, e.target.value)}
+            className="w-20 h-10 text-center border rounded"
+            aria-label={`Score for ${player1Name}`}
+          />
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 dark:bg-red-900">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Submit Result
-          </button>
+        <div className="flex justify-center">
+          <span className="text-gray-500">vs</span>
         </div>
-      </form>
-    </div>
+
+        {/* Player 2 score */}
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium text-gray-700">{player2Name}</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="\d*"
+            value={score[1]}
+            onChange={e => handleChange(1, e.target.value)}
+            className="w-20 h-10 text-center border rounded"
+            aria-label={`Score for ${player2Name}`}
+          />
+        </div>
+      </div>
+
+      {/* Real-time stats display */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+          <span className="text-gray-600">PR:</span>
+          <span className="font-medium">{stats.pr}</span>
+        </div>
+        <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
+          <span className="text-gray-600">DS:</span>
+          <span className="font-medium">{stats.ds}</span>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Submit
+      </button>
+    </form>
   );
-}
+};
+
+export default MatchResultForm;

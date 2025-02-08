@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mentoring-league-2025-02",
+    "name": "Mentoring League",
+    "startDate": "2025-02-02",
+    "endDate": "2025-02-28",
+    "type": "initial-random-pairing",
+    "status": "in_progress",
+    "metadata": {
+      "description": "February 2025 Mentoring League Tournament",
+      "location": "Online",
+      "totalPlayers": 26,
+      "totalMatches": 14,
+      "currentRound": 1,
+      "lastUpdated": "2025-02-02T12:00:00Z"
+    }
+  }
+]

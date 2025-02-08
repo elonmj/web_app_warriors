@@ -1,6 +1,6 @@
-import { Match, MatchResult } from './Match';
-import { Player } from './Player';
-import { CATEGORIES } from './Category';
+import { Match, MatchResult } from '@/types/Match';
+import { Player } from '@/types/Player';
+import { PlayerCategoryType } from '@/types/Enums';
 
 interface RatingConfig {
   kFactors: {
@@ -120,7 +120,7 @@ class RatingSystem {
 
     // Create temporary player objects for rating calculation
     const tempPlayer1: Player = {
-      id: match.player1,
+      id: match.player1.id,
       name: '',
       currentRating: player1Rating,
       category: match.player1Category,
@@ -129,7 +129,7 @@ class RatingSystem {
     };
 
     const tempPlayer2: Player = {
-      id: match.player2,
+      id: match.player2.id,
       name: '',
       currentRating: player2Rating,
       category: match.player2Category,

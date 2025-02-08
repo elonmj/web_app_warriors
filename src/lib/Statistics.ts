@@ -1,154 +1,126 @@
-import { Match, MatchResult } from './Match';
-import { Player, PlayerMatch, PlayerStatistics } from './Player';
+import { Match, MatchResult } from "@/types/Match";
+import { MatchStatusType } from "@/types/Enums";
+import { Player } from "@/types/Player";
+import { Event } from "@/types/Event";
 
-class StatisticsCalculator {
-  /**
-   * Calculate total Points de Rencontre (PR) from matches
-   */
-  private static calculateTotalPR(matches: PlayerMatch[]): number {
-    return matches.reduce((total, match) => total + match.result.pr, 0);
-  }
-
-  /**
-   * Calculate average Différence de Score (DS) from matches
-   */
-  private static calculateAverageDS(matches: PlayerMatch[]): number {
-    if (matches.length === 0) return 0;
-    const totalDS = matches.reduce((sum, match) => sum + match.result.ds, 0);
-    return Math.round((totalDS / matches.length) * 10) / 10; // Round to 1 decimal
-  }
-
-  /**
-   * Calculate number of weeks since last match
-   */
-  private static calculateInactivityWeeks(lastMatchDate: string): number {
-    const lastMatch = new Date(lastMatchDate);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - lastMatch.getTime());
-    const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-    return diffWeeks;
-  }
-
-  /**
-   * Calculate win/loss statistics from matches
-   */
-  private static calculateWinLossStats(matches: PlayerMatch[]): {
-    wins: number;
-    draws: number;
-    losses: number;
-  } {
-    return matches.reduce((stats, match) => {
-      const [playerScore, opponentScore] = match.result.score;
-      if (playerScore > opponentScore) {
-        stats.wins++;
-      } else if (playerScore === opponentScore) {
-        stats.draws++;
-      } else {
-        stats.losses++;
-      }
-      return stats;
-    }, { wins: 0, draws: 0, losses: 0 });
-  }
-
-  /**
-   * Calculate player statistics from their match history
-   */
-  static calculatePlayerStatistics(player: Player): PlayerStatistics {
-    if (player.matches.length === 0) {
-      return {
-        totalMatches: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        totalPR: 0,
-        averageDS: 0,
-        inactivityWeeks: 0
-      };
-    }
-
-    const winLossStats = this.calculateWinLossStats(player.matches);
-    const lastMatch = player.matches[player.matches.length - 1];
-
-    return {
-      totalMatches: player.matches.length,
-      ...winLossStats,
-      totalPR: this.calculateTotalPR(player.matches),
-      averageDS: this.calculateAverageDS(player.matches),
-      inactivityWeeks: this.calculateInactivityWeeks(lastMatch.date)
-    };
-  }
-
-  /**
-   * Update player statistics based on a new match result
-   */
-  static updatePlayerStatistics(
-    currentStats: PlayerStatistics,
-    newMatch: PlayerMatch
-  ): PlayerStatistics {
-    const [playerScore, opponentScore] = newMatch.result.score;
-    
-    return {
-      totalMatches: currentStats.totalMatches + 1,
-      wins: currentStats.wins + (playerScore > opponentScore ? 1 : 0),
-      draws: currentStats.draws + (playerScore === opponentScore ? 1 : 0),
-      losses: currentStats.losses + (playerScore < opponentScore ? 1 : 0),
-      totalPR: currentStats.totalPR + newMatch.result.pr,
-      averageDS: (currentStats.averageDS * currentStats.totalMatches + newMatch.result.ds) / (currentStats.totalMatches + 1),
-      inactivityWeeks: 0 // Reset on new match
-    };
-  }
-}
-
-interface EventStatistics {
+export interface EventStatistics {
   eventId: string;
   totalMatches: number;
   completedMatches: number;
   activePlayers: number;
-  matchesPerCategory: Record<string, number>;
-  categoryDistribution: Record<string, number>;
   averageRating: number;
   averageDS: number;
+  matchesPerCategory: {
+    [key: string]: number;
+  };
+  categoryDistribution: {
+    [key: string]: number;
+  };
+  playerStats: {
+    playerId: string;
+    name: string;
+    matches: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    averageRating: number;
+    averageDS: number;
+  }[];
+  lastUpdated?: string;
 }
 
-class EventStatisticsCalculator {
-  /**
-   * Calculate event-wide statistics
-   */
-  static calculateEventStatistics(
-    matches: Match[],
-    players: Player[]
-  ): EventStatistics {
-    const completedMatches = matches.filter(m => m.status === 'completed');
-    const categoryMatches: Record<string, number> = {};
-    const categoryPlayers: Record<string, number> = {};
-    
-    // Calculate category distributions
-    matches.forEach(match => {
-      // Count both player categories for the match
-      categoryMatches[match.player1Category] = (categoryMatches[match.player1Category] || 0) + 1;
-      categoryMatches[match.player2Category] = (categoryMatches[match.player2Category] || 0) + 1;
-    });
-    
-    players.forEach(player => {
-      categoryPlayers[player.category] = (categoryPlayers[player.category] || 0) + 1;
-    });
+export class StatisticsCalculator {
+  static calculateAverageRating(players: Player[]): number {
+    if (players.length === 0) return 0;
+    const sum = players.reduce((acc, player) => acc + player.currentRating, 0);
+    return Math.round(sum / players.length);
+  }
 
-    // Calculate averages
-    const totalRating = players.reduce((sum, p) => sum + p.currentRating, 0);
-    const totalDS = completedMatches.reduce((sum, m) => sum + (m.result?.ds || 0), 0);
+  static calculateAverageDS(matches: Match[]): number {
+    const playedMatches = matches.filter((match): match is Match & { result: MatchResult } =>
+      match.status === 'completed' && match.result !== undefined && match.result.ds > 0
+    );
+    if (playedMatches.length === 0) return 0;
+    const sum = playedMatches.reduce((acc, match) => acc + match.result.ds, 0);
+    return Math.round((sum / playedMatches.length) * 10) / 10;
+  }
 
-    return {
-      eventId: matches[0]?.id.split('-')[0] || '', // Assuming event ID is first part of match ID
-      totalMatches: matches.length,
-      completedMatches: completedMatches.length,
-      activePlayers: players.filter(p => p.statistics.inactivityWeeks < 2).length,
-      matchesPerCategory: categoryMatches,
-      categoryDistribution: categoryPlayers,
-      averageRating: Math.round(totalRating / players.length),
-      averageDS: Math.round((totalDS / completedMatches.length) * 10) / 10
-    };
+  static calculateCategoryDistribution(players: Player[]): { [key: string]: number } {
+    return players.reduce((acc, player) => {
+      acc[player.category] = (acc[player.category] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number });
   }
 }
 
-export { StatisticsCalculator, EventStatisticsCalculator };
-export type { EventStatistics };
+export class EventStatisticsCalculator {
+  static calculate(event: Event, matches: Match[], allPlayers: Player[]): EventStatistics {
+    // Get completed and played matches
+    const completedMatches = matches.filter((m): m is Match & { result: MatchResult } =>
+      (m.status === 'completed' || m.status === 'forfeit') && m.result !== undefined
+    );
+    const playedMatches = completedMatches.filter(m => m.status === 'completed');
+
+    // Get active player IDs and players
+    const activePlayerIds = new Set<string>();
+    matches.forEach(m => {
+      activePlayerIds.add(m.player1.id);
+      activePlayerIds.add(m.player2.id);
+    });
+    const eventPlayers = allPlayers.filter(p => activePlayerIds.has(p.id));
+    
+    const matchesPerCategory = matches.reduce((acc, match) => {
+      const player1 = eventPlayers.find((p: Player) => p.id === match.player1.id);
+      const player2 = eventPlayers.find((p: Player) => p.id === match.player2.id);
+      if (player1) acc[player1.category] = (acc[player1.category] || 0) + 1;
+      if (player2) acc[player2.category] = (acc[player2.category] || 0) + 1;
+      return acc;
+    }, {} as { [key: string]: number });
+
+    const playerStats = eventPlayers.map((player: Player) => {
+      const playerMatches = matches.filter(
+        m => m.player1.id === player.id || m.player2.id === player.id
+      );
+
+      const playerMatchesWithResults = playerMatches.filter((m): m is Match & { result: MatchResult } => 
+        m.result !== undefined
+      );
+
+      const wins = playerMatchesWithResults.filter(m => 
+        (m.player1.id === player.id && m.result.score[0] > m.result.score[1]) ||
+        (m.player2.id === player.id && m.result.score[1] > m.result.score[0])
+      ).length;
+
+      const losses = playerMatchesWithResults.filter(m =>
+        (m.player1.id === player.id && m.result.score[0] < m.result.score[1]) ||
+        (m.player2.id === player.id && m.result.score[1] < m.result.score[0])
+      ).length;
+      
+      return {
+        playerId: player.id,
+        name: player.name,
+        matches: playerMatches.length,
+        wins,
+        losses,
+        draws: playerMatchesWithResults.length - wins - losses,
+        averageRating: player.currentRating,
+        averageDS: StatisticsCalculator.calculateAverageDS(playerMatches)
+      };
+    });
+
+    return {
+      eventId: event.id,
+      totalMatches: matches.length,
+      completedMatches: completedMatches.length,
+      activePlayers: eventPlayers.length,
+      averageRating: StatisticsCalculator.calculateAverageRating(eventPlayers),
+      averageDS: StatisticsCalculator.calculateAverageDS(playedMatches),
+      matchesPerCategory,
+      categoryDistribution: StatisticsCalculator.calculateCategoryDistribution(eventPlayers),
+      playerStats,
+      lastUpdated: matches.length > 0
+        ? new Date(Math.max(...matches.map(match => new Date(match.metadata.updatedAt).getTime()))).toISOString()
+        : undefined,
+    };
+  }
+}
