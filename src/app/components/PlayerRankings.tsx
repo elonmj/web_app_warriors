@@ -39,11 +39,13 @@ export default function PlayerRankings({ eventRanking, isGlobal }: PlayerRanking
                 Category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Rating
+                {isGlobal ? 'Current Rating' : 'Rating'}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Points
-              </th>
+              {!isGlobal && (
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Points
+                </th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 W/D/L
               </th>
@@ -93,26 +95,26 @@ export default function PlayerRankings({ eventRanking, isGlobal }: PlayerRanking
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {player.rating}
                       </span>
-                      {player.ratingChange !== 0 && (
-                        <div 
+                      {!isGlobal && player.ratingChange !== 0 && (
+                        <div
                           className="ml-2 flex items-center gap-1 text-xs"
                           title={`Rating change: ${player.ratingChange > 0 ? '+' : ''}${player.ratingChange}`}
                         >
-                          <span 
+                          <span
                             className={
-                              player.ratingChange > 0 
+                              player.ratingChange > 0
                                 ? 'text-green-600 dark:text-green-400'
                                 : 'text-red-600 dark:text-red-400'
                             }
                           >
                             {player.ratingChange > 0 ? '↑' : '↓'}
                           </span>
-                          <span 
+                          <span
                             className={
-                              player.ratingChange > 0 
+                              player.ratingChange > 0
                                 ? 'text-green-600 dark:text-green-400'
                                 : 'text-red-600 dark:text-red-400'
                             }
@@ -123,16 +125,18 @@ export default function PlayerRankings({ eventRanking, isGlobal }: PlayerRanking
                       )}
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {player.points}
-                      </span>
-                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                        pts
-                      </span>
-                    </div>
-                  </td>
+                  {!isGlobal && (
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {player.points}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          pts
+                        </span>
+                      </div>
+                    </td>
+                  )}
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {player.wins}/{player.draws}/{player.losses}
                   </td>

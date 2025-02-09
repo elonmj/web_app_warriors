@@ -1,6 +1,6 @@
 import { RatingSystem } from '../../lib/RatingSystem';
-import { Match } from '../../lib/Match';
-import { Player } from '../../lib/Player';
+import { Match } from '../../types/Match';
+import { Player } from '../../types/Player';
 
 export class RatingService {
   private ratingSystem: RatingSystem;

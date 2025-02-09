@@ -47,11 +47,11 @@ const MatchItem: FC<{ match: MatchData }> = ({ match }) => {
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm">
-          <div className="font-medium text-gray-900">{match.player1Details.name}</div>
-          <div className="text-xs text-gray-500">({match.player1Details.category})</div>
+          <div className="font-medium text-gray-900">{match.player1Details?.name || 'Unknown'}</div>
+          <div className="text-xs text-gray-500">({match.player1Details?.category || 'N/A'})</div>
           <div className="text-xs text-gray-500 my-1">vs</div>
-          <div className="font-medium text-gray-900">{match.player2Details.name}</div>
-          <div className="text-xs text-gray-500">({match.player2Details.category})</div>
+          <div className="font-medium text-gray-900">{match.player2Details?.name || 'Unknown'}</div>
+          <div className="text-xs text-gray-500">({match.player2Details?.category || 'N/A'})</div>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">

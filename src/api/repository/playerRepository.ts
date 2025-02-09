@@ -16,14 +16,19 @@ export class PlayerRepository extends BaseRepository {
 
   async getAllPlayers(): Promise<Player[]> {
     try {
-      const data = await this.readJsonFile<{ players: Player[] }>(this.PLAYERS_FILE);
-      return data?.players || [];
+      const response = await this.readJsonFile<{ players: Player[] }>(this.PLAYERS_FILE);
+      if (!response || !response.players) {
+        console.error('Invalid players data structure:', response);
+        return [];
+      }
+      return response.players;
     } catch (error) {
       if ((error as Error).message.includes('not found')) {
         // Initialize players file if it doesn't exist
         const initialData = { players: [] };
         await this.writeJsonFile(this.PLAYERS_FILE, initialData);
-        return initialData.players;
+        await this.createBackup(this.PLAYERS_FILE, initialData);
+        return [];
       }
       console.error('Error reading players:', error);
       return [];
@@ -86,8 +91,10 @@ export class PlayerRepository extends BaseRepository {
         }
       };
 
-      players.push(newPlayer);
-      await this.writeJsonFile(this.PLAYERS_FILE, { players });
+      const data = await this.readJsonFile<{ players: Player[] }>(this.PLAYERS_FILE);
+      const allPlayers = data?.players || [];
+      allPlayers.push(newPlayer);
+      await this.writeJsonFile(this.PLAYERS_FILE, { players: allPlayers });
 
       return newPlayer;
     });
@@ -125,8 +132,10 @@ export class PlayerRepository extends BaseRepository {
         }
       };
 
-      players[playerIndex] = updatedPlayer;
-      await this.writeJsonFile(this.PLAYERS_FILE, { players });
+      const allPlayers = [...players];
+      allPlayers[playerIndex] = updatedPlayer;
+      await this.writeJsonFile(this.PLAYERS_FILE, { players: allPlayers });
+      await this.createBackup(this.PLAYERS_FILE, { players: allPlayers });
 
       return updatedPlayer;
     });
@@ -145,8 +154,10 @@ export class PlayerRepository extends BaseRepository {
 
       const player = players[playerIndex];
 
-      // Initialize arrays if they don't exist
+      // Initialize and validate player data
       if (!player.matches) player.matches = [];
+
+      // Initialize statistics if missing
       if (!player.statistics) {
         player.statistics = {
           totalMatches: 0,
@@ -163,6 +174,21 @@ export class PlayerRepository extends BaseRepository {
           eventParticipation: []
         };
       }
+
+      // Check for forfeit based on score pattern [0-1] or [1-0]
+      if (match.result) {
+        const [playerScore, opponentScore] = match.result.score;
+        const isForfeit = (playerScore === 0 && opponentScore === 1) ||
+                         (playerScore === 1 && opponentScore === 0);
+
+        if (isForfeit) {
+          if (playerScore === 0) {
+            player.statistics.forfeits.given++;
+          } else {
+            player.statistics.forfeits.received++;
+          }
+        }
+      }
       
       // Add match to history
       player.matches.push(match);
@@ -170,32 +196,49 @@ export class PlayerRepository extends BaseRepository {
       // Update statistics
       this.updatePlayerStatistics(player, match);
 
-      // Update rating history
-      player.currentRating = match.ratingChange.after;
-      player.statistics.bestRating = Math.max(player.statistics.bestRating, match.ratingChange.after);
-      player.statistics.worstRating = Math.min(player.statistics.worstRating, match.ratingChange.after);
+      // Update rating history and check for category change
+      const newRating = match.ratingChange.after;
+      this.updateRatingHistory(player, newRating);
 
-      // Update category if changed
-      const newCategory = CategoryManager.determineCategory(match.ratingChange.after);
+      // Update category if changed based on new rating
+      const newCategory = CategoryManager.determineCategory(newRating);
       if (newCategory !== player.category) {
         await this.updatePlayerCategory(playerId, newCategory as PlayerCategoryType, 'rating_change');
       }
 
-      players[playerIndex] = player;
-      await this.writeJsonFile(this.PLAYERS_FILE, { players });
+      const allPlayers = [...players];
+      allPlayers[playerIndex] = player;
+      await this.writeJsonFile(this.PLAYERS_FILE, { players: allPlayers });
+      await this.createBackup(this.PLAYERS_FILE, { players: allPlayers });
     });
   }
 
   private updatePlayerStatistics(player: Player, match: PlayerMatch): void {
-    const stats = player.statistics;
-    if (!stats) return;
+    if (!player.statistics) {
+      player.statistics = {
+        totalMatches: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        forfeits: { given: 0, received: 0 },
+        totalPR: 0,
+        averageDS: 0,
+        inactivityWeeks: 0,
+        bestRating: player.currentRating,
+        worstRating: player.currentRating,
+        categoryHistory: [],
+        eventParticipation: []
+      };
+    }
 
+    const stats = player.statistics;
     const [playerScore, opponentScore] = match.result.score;
 
+    // Update match counts and points
     stats.totalMatches++;
     stats.totalPR += match.result.pr;
     
-    // Update win/loss record
+    // Update win/loss/draw record
     if (playerScore > opponentScore) {
       stats.wins++;
     } else if (playerScore === opponentScore) {
@@ -204,11 +247,14 @@ export class PlayerRepository extends BaseRepository {
       stats.losses++;
     }
 
-    // Update average DS
+    // Update rating history
+    this.updateRatingHistory(player, match.ratingChange.after);
+
+    // Update average DS (Différence de Score)
     const totalDS = (stats.averageDS * (stats.totalMatches - 1) + match.result.ds);
     stats.averageDS = totalDS / stats.totalMatches;
 
-    // Reset inactivity counter
+    // Reset inactivity counter since player just played
     stats.inactivityWeeks = 0;
 
     // Initialize event participation if needed
@@ -281,8 +327,141 @@ export class PlayerRepository extends BaseRepository {
       await this.writeJsonFile(this.PLAYERS_FILE, { players });
     });
   }
+
+  private updateRatingHistory(player: Player, newRating: number): void {
+    // Initialize statistics if needed
+    if (!player.statistics) {
+      player.statistics = {
+        totalMatches: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        forfeits: { given: 0, received: 0 },
+        totalPR: 0,
+        averageDS: 0,
+        inactivityWeeks: 0,
+        bestRating: newRating,
+        worstRating: newRating,
+        categoryHistory: [],
+        eventParticipation: []
+      };
+    }
+
+    const stats = player.statistics;
+
+    // Update best/worst ratings
+    if (!stats.bestRating || newRating > stats.bestRating) {
+      stats.bestRating = newRating;
+    }
+    if (!stats.worstRating || newRating < stats.worstRating) {
+      stats.worstRating = newRating;
+    }
+
+    // Update current player rating
+    player.currentRating = newRating;
+  }
+  async recalculatePlayerStatistics(playerId: string): Promise<void> {
+    return await this.withLock('players', async () => {
+      const players = await this.getAllPlayers();
+      const playerIndex = players.findIndex(p => p.id === playerId);
+      
+      if (playerIndex === -1) {
+        throw new Error(`Player not found: ${playerId}`);
+      }
+
+      const player = players[playerIndex];
+      
+      // Reset player statistics
+      player.statistics = {
+        totalMatches: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        forfeits: { given: 0, received: 0 },
+        totalPR: 0,
+        averageDS: 0,
+        inactivityWeeks: 0,
+        bestRating: player.currentRating,
+        worstRating: player.currentRating,
+        categoryHistory: player.statistics?.categoryHistory || [],
+        eventParticipation: []
+      };
+
+      // Clear event participation data
+      const eventParticipationMap = new Map<string, {
+        matchesPlayed: number;
+        performance: { wins: number; draws: number; losses: number; pointsEarned: number; };
+      }>();
+
+      // Recalculate all statistics from match history
+      for (const match of player.matches) {
+        // Update basic match stats
+        player.statistics.totalMatches++;
+        player.statistics.totalPR += match.result.pr;
+
+        const [playerScore, opponentScore] = match.result.score;
+
+        // Check for forfeit
+        const isForfeit = (playerScore === 0 && opponentScore === 1) ||
+                         (playerScore === 1 && opponentScore === 0);
+        if (isForfeit) {
+          if (playerScore === 0) {
+            player.statistics.forfeits.given++;
+          } else {
+            player.statistics.forfeits.received++;
+          }
+        }
+
+        // Update win/loss/draw record
+        if (playerScore > opponentScore) {
+          player.statistics.wins++;
+        } else if (playerScore === opponentScore) {
+          player.statistics.draws++;
+        } else {
+          player.statistics.losses++;
+        }
+
+        // Update average DS
+        const totalDS = (player.statistics.averageDS * (player.statistics.totalMatches - 1) + match.result.ds);
+        player.statistics.averageDS = totalDS / player.statistics.totalMatches;
+
+        // Update rating history
+        this.updateRatingHistory(player, match.ratingChange.after);
+
+        // Update event participation
+        let eventStats = eventParticipationMap.get(match.eventId);
+        if (!eventStats) {
+          eventStats = {
+            matchesPlayed: 0,
+            performance: { wins: 0, draws: 0, losses: 0, pointsEarned: 0 }
+          };
+          eventParticipationMap.set(match.eventId, eventStats);
+        }
+
+        eventStats.matchesPlayed++;
+        if (playerScore > opponentScore) eventStats.performance.wins++;
+        else if (playerScore === opponentScore) eventStats.performance.draws++;
+        else eventStats.performance.losses++;
+        eventStats.performance.pointsEarned += match.result.pr;
+      }
+
+      // Convert event participation map to array
+      player.statistics.eventParticipation = Array.from(eventParticipationMap.entries())
+        .map(([eventId, stats]) => ({
+          eventId,
+          finalRank: 0, // This would need to be set from event results
+          ...stats
+        }));
+
+      // Update in database
+      players[playerIndex] = player;
+      await this.writeJsonFile(this.PLAYERS_FILE, { players });
+      await this.createBackup(this.PLAYERS_FILE, { players });
+    });
+  }
 }
 
 // Export functions for external use
 export const getAllPlayers = (repository: PlayerRepository) => repository.getAllPlayers.bind(repository);
 export const updatePlayerCategory = (repository: PlayerRepository) => repository.updatePlayerCategory.bind(repository);
+export const recalculatePlayerStatistics = (repository: PlayerRepository) => repository.recalculatePlayerStatistics.bind(repository);

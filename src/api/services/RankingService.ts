@@ -25,18 +25,18 @@ export class RankingService {
       const players = await this.playerRepository.getAllPlayers();
       
       // Map players to ranking format
-      const rankings: PlayerRanking[] = players
-        .filter(player => player.active) // Only include active players
-        .map(player => ({
+      const rankings: PlayerRanking[] = players.map(player => ({
           playerId: player.id,
           rank: 0, // Will be calculated after sorting
           points: 0, // Not used in global rankings
-          matches: player.statistics.totalMatches,
-          wins: player.statistics.wins,
-          draws: player.statistics.draws,
-          losses: player.statistics.losses,
-          rating: player.currentRating,
-          ratingChange: 0, // Could calculate from last match if needed
+          matches: player.statistics.totalMatches || 0,
+          wins: player.statistics.wins || 0,
+          draws: player.statistics.draws || 0,
+          losses: player.statistics.losses || 0,
+          rating: player.currentRating || 1000,
+          ratingChange: player.statistics.bestRating
+            ? player.currentRating - player.statistics.bestRating
+            : 0,
           category: player.category,
           playerDetails: {
             name: player.name,
@@ -45,37 +45,44 @@ export class RankingService {
           }
         }));
 
-      // Sort rankings by rating (descending)
+      // Sort rankings by rating and secondary criteria
       rankings.sort((a, b) => {
-        // First by rating
+        // First by rating (descending)
         if (b.rating !== a.rating) return b.rating - a.rating;
-        // Then by win ratio for tiebreaking
+
+        // Then by win ratio (descending)
         const aWinRatio = a.wins / (a.matches || 1);
         const bWinRatio = b.wins / (b.matches || 1);
-        return bWinRatio - aWinRatio;
+        if (bWinRatio !== aWinRatio) return bWinRatio - aWinRatio;
+
+        // Finally by total matches (descending)
+        return b.matches - a.matches;
       });
 
-      // Assign ranks with proper tie handling
+      // Assign ranks considering all criteria
       let currentRank = 1;
       let currentRating = -1;
       let currentWinRatio = -1;
-      let tiedCount = 0;
+      let currentMatches = -1;
 
       rankings.forEach((ranking, index) => {
         const winRatio = ranking.wins / (ranking.matches || 1);
         
-        if (ranking.rating === currentRating &&
-            winRatio === currentWinRatio) {
+        // Check if tied with previous player on all criteria
+        const isTied = ranking.rating === currentRating &&
+                      winRatio === currentWinRatio &&
+                      ranking.matches === currentMatches;
+        
+        if (isTied) {
           // Same rank for tied players
           ranking.rank = currentRank;
-          tiedCount++;
         } else {
-          // New rank, accounting for any previous ties
+          // New rank when any criteria differs
           currentRank = index + 1;
           ranking.rank = currentRank;
           currentRating = ranking.rating;
           currentWinRatio = winRatio;
-          tiedCount = 0;
+          currentMatches = ranking.matches;
         }
       });
 
@@ -96,11 +103,11 @@ export class RankingService {
     try {
       const matches = await this.matchRepository.getEventMatches(eventId);
 
-      // Filter for completed and validated matches
+      // Filter for completed and forfeit matches that are validated
       const completedMatches = matches.filter(match => {
-        return match.status === 'completed' &&
+        return (match.status === 'completed' || match.status === 'forfeit') &&
                match.result !== undefined &&
-               ['valid', 'admin_validated', 'auto_validated'].includes(match.result.validation.status);
+               ['validated', 'valid', 'admin_validated', 'auto_validated'].includes(match.result.validation.status);
       });
 
       // Create performance map for each player

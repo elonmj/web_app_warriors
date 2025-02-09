@@ -1,6 +1,5 @@
 import { StatisticsCalculator, EventStatisticsCalculator, EventStatistics } from '../../lib/Statistics';
-import { Match } from '../../lib/Match';
-import { Player, PlayerMatch } from '../../lib/Player';
+import { Match, Player, PlayerMatch, Event } from '../..types';
 
 export class StatisticsService {
   /**
@@ -12,50 +11,68 @@ export class StatisticsService {
     }
 
     // Get opponent data
-    const isPlayer1 = newMatch.player1 === player.id;
-    const opponentId = isPlayer1 ? newMatch.player2 : newMatch.player1;
-    const opponentRating = isPlayer1 ? newMatch.player2Rating : newMatch.player1Rating;
-    const [playerScore, opponentScore] = isPlayer1 ? 
-      newMatch.result.score : 
-      [newMatch.result.score[1], newMatch.result.score[0]];
-
-    // Create PlayerMatch object
-    const playerMatch: PlayerMatch = {
-      date: newMatch.date,
-      opponent: opponentId,
-      opponentRating: opponentRating,
-      result: {
-        score: [playerScore, opponentScore],
-        pr: newMatch.result.pr,
-        pdi: newMatch.result.pdi,
-        ds: newMatch.result.ds
-      },
-      ratingChange: player.currentRating - (player.matches[player.matches.length - 1]?.opponentRating || player.currentRating),
-      categoryAtTime: isPlayer1 ? newMatch.player1Category : newMatch.player2Category
+      const isPlayer1 = newMatch.player1.id === player.id;
+      const opponent = isPlayer1 ? newMatch.player2 : newMatch.player1;
+      const [playerScore, opponentScore] = isPlayer1 ?
+        newMatch.result.score :
+        [newMatch.result.score[1], newMatch.result.score[0]];
+  
+      // Create PlayerMatch object
+      const playerMatch: PlayerMatch = {
+        date: newMatch.date,
+        eventId: newMatch.eventId,
+        matchId: newMatch.id,
+        opponent: {
+          id: opponent.id,
+          ratingAtTime: opponent.ratingBefore,
+          categoryAtTime: opponent.categoryBefore
+        },
+        result: {
+          score: [playerScore, opponentScore],
+          pr: newMatch.result.pr,
+          pdi: newMatch.result.pdi,
+          ds: newMatch.result.ds
+        },
+        ratingChange: {
+          before: player.currentRating,
+          after: isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter,
+          change: (isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter) - player.currentRating
+        },
+        categoryAtTime: isPlayer1 ? newMatch.player1.categoryBefore : newMatch.player2.categoryBefore
     };
 
     // Update player's matches and statistics
     const updatedPlayer: Player = {
       ...player,
       matches: [...player.matches, playerMatch],
-      statistics: StatisticsCalculator.updatePlayerStatistics(
-        player.statistics,
-        playerMatch
-      )
+      statistics: player.statistics
     };
 
-    return updatedPlayer;
-  }
+    // TODO: Implement logic to update player statistics based on the new match
+    // This is a placeholder, as the actual logic needs to be defined
 
-  /**
-   * Calculate event statistics
-   */
-  async calculateEventStats(eventId: string, matches: Match[], players: Player[]): Promise<EventStatistics> {
-    // Filter matches for specific event if needed
-    const eventMatches = matches.filter(match => match.id.startsWith(eventId));
-    
-    return EventStatisticsCalculator.calculateEventStatistics(eventMatches, players);
-  }
+    return updatedPlayer;
+    }
+
+    /**
+     * Calculate event statistics
+     */
+    async calculateEventStats(eventId: string, matches: Match[], players: Player[]): Promise<EventStatistics> {
+        // Filter matches for specific event
+        const eventMatches = matches.filter(match => match.eventId === eventId);
+
+        // Find the event
+        const event = {
+            id: eventId,
+            name: '', // Placeholder
+            startDate: new Date(), // Placeholder
+            endDate: new Date(), // Placeholder
+            type: 'league' as const, // Placeholder
+            type: 'league' as const, // TODO: Fetch correct event type
+        };
+
+        return EventStatisticsCalculator.calculate(event, eventMatches, players);
+    }
 
   /**
    * Calculate performance metrics for a player

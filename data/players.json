@@ -1,422 +1,424 @@
-[
-  {
-    "id": "elie-2025",
-    "name": "Elie",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
+{
+  "players": [
+    {
+      "id": "elie-2025",
+      "name": "Elie",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "divin-2025",
+      "name": "Divin",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "hermann-2025",
+      "name": "Hermann",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "trinite-2025",
+      "name": "Trinité",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "geraldo-2025",
+      "name": "Géraldo",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "oslie-2025",
+      "name": "Oslie",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "william-2025",
+      "name": "William",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "lorinda-2025",
+      "name": "Lorinda",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "oswalde-2025",
+      "name": "Oswalde",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "pinocche-2025",
+      "name": "Pinocché",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "foreol-2025",
+      "name": "Foréol",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "joaida-2025",
+      "name": "Joaïda",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "referil-2025",
+      "name": "Référil",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "rodrigue-2025",
+      "name": "Rodrigue",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "fructueux-2025",
+      "name": "Fructueux",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "alain-2025",
+      "name": "Alain",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "naofal-2025",
+      "name": "Naofal",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "mya-2025",
+      "name": "Mya",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "prosper-2025",
+      "name": "Prosper",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "leonel-2025",
+      "name": "Léonel",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "raissa-2025",
+      "name": "Raissa",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "stwill-2025",
+      "name": "StWill",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "mickael-2025",
+      "name": "Mickaël",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "charbel-2025",
+      "name": "Charbel",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "kevin-2025",
+      "name": "Kevin",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "joy-2025",
+      "name": "Joy",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "elonm-2025",
+      "name": "Elonm",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
+    },
+    {
+      "id": "solene-2025",
+      "name": "Solène",
+      "currentRating": 1000,
+      "category": "ONYX",
+      "statistics": {
+        "totalMatches": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "totalPR": 0,
+        "averageDS": 0,
+        "inactivityWeeks": 0
+      }
     }
-  },
-  {
-    "id": "divin-2025",
-    "name": "Divin",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "hermann-2025",
-    "name": "Hermann",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "trinite-2025",
-    "name": "Trinité",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "geraldo-2025",
-    "name": "Géraldo",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "oslie-2025",
-    "name": "Oslie",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "william-2025",
-    "name": "William",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "lorinda-2025",
-    "name": "Lorinda",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "oswalde-2025",
-    "name": "Oswalde",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "pinocche-2025",
-    "name": "Pinocché",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "foreol-2025",
-    "name": "Foréol",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "joaida-2025",
-    "name": "Joaïda",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "referil-2025",
-    "name": "Référil",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "rodrigue-2025",
-    "name": "Rodrigue",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "fructueux-2025",
-    "name": "Fructueux",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "alain-2025",
-    "name": "Alain",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "naofal-2025",
-    "name": "Naofal",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "mya-2025",
-    "name": "Mya",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "prosper-2025",
-    "name": "Prosper",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "leonel-2025",
-    "name": "Léonel",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "raissa-2025",
-    "name": "Raissa",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "stwill-2025",
-    "name": "StWill",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "mickael-2025",
-    "name": "Mickaël",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "charbel-2025",
-    "name": "Charbel",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "kevin-2025",
-    "name": "Kevin",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "joy-2025",
-    "name": "Joy",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "elonm-2025",
-    "name": "Elonm",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  },
-  {
-    "id": "solene-2025",
-    "name": "Solène",
-    "currentRating": 1000,
-    "category": "ONYX",
-    "statistics": {
-      "totalMatches": 0,
-      "wins": 0,
-      "draws": 0,
-      "losses": 0,
-      "totalPR": 0,
-      "averageDS": 0,
-      "inactivityWeeks": 0
-    }
-  }
-]
+  ]
+}

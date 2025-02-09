@@ -45,8 +45,8 @@ async function getPlayers(): Promise<Player[]> {
   try {
     const filePath = path.join(process.cwd(), 'data', 'players.json');
     const fileContent = await fs.readFile(filePath, 'utf-8');
-    const players = JSON.parse(fileContent);
-    return players;
+    const data = JSON.parse(fileContent);
+    return data.players || [];
   } catch (error) {
     console.error('Failed to fetch players:', error);
     return [];
