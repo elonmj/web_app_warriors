@@ -1,170 +1,281 @@
-import { Match, MatchResult } from '@/types/Match';
-import { PlayerRanking, EventRanking } from '@/types/Ranking';
-import { Player } from '@/types/Player';
-import * as fs from 'fs/promises';
-import path from 'path';
+import { BaseRepository } from '../repository/BaseRepository';
 import { MatchRepository } from '../repository/MatchRepository';
 import { PlayerRepository } from '../repository/playerRepository';
+import { EventRanking, PlayerRanking } from '@/types/Ranking';
+import { Match } from '@/types/Match';
+import { ValidationStatus } from '@/types/ValidationStatus';
+import { MatchStatus } from '@/types/MatchStatus';
+import path from 'path';
+import fs from 'fs/promises';
 
 export class RankingService {
   private matchRepository: MatchRepository;
   private playerRepository: PlayerRepository;
-  private readonly DATA_DIR = path.join(process.cwd(), 'data');
+  private baseRepo: BaseRepository;
 
   constructor() {
     this.matchRepository = new MatchRepository();
     this.playerRepository = new PlayerRepository();
+    this.baseRepo = new BaseRepository();
   }
 
-  private isWinner(match: Match & { result: MatchResult }, playerId: string): boolean {
-    if (match.player1.id === playerId) {
-      return match.result.score[0] > match.result.score[1];
-    }
-    if (match.player2.id === playerId) {
-      return match.result.score[1] > match.result.score[0];
-    }
-    return false;
-  }
-
-  private isLoser(match: Match & { result: MatchResult }, playerId: string): boolean {
-    if (match.player1.id === playerId) {
-      return match.result.score[0] < match.result.score[1];
-    }
-    if (match.player2.id === playerId) {
-      return match.result.score[1] < match.result.score[0];
-    }
-    return false;
-  }
-
-  private isDraw(match: Match & { result: MatchResult }): boolean {
-    return match.result.score[0] === match.result.score[1];
-  }
-
-  private async calculatePlayerRanking(
-    player: Player,
-    matches: Match[],
-    playerMatches: Match[]
-  ): Promise<PlayerRanking> {
-    // Filter completed matches with results
-    const completedMatches = playerMatches.filter(
-      (m): m is Match & { result: MatchResult } => 
-        (m.status === 'completed' || m.status === 'forfeit') && m.result !== undefined
-    );
-
-    const wins = completedMatches.filter(m => this.isWinner(m, player.id)).length;
-    const losses = completedMatches.filter(m => this.isLoser(m, player.id)).length;
-    const draws = completedMatches.filter(m => this.isDraw(m)).length;
-
-    // Calculate rating change from first to last match
-    const sortedMatches = playerMatches.sort((a, b) => 
-      new Date(a.metadata.createdAt).getTime() - new Date(b.metadata.createdAt).getTime()
-    );
-
-    const firstMatch = sortedMatches[0];
-    const lastMatch = sortedMatches[sortedMatches.length - 1];
-
-    const initialRating = firstMatch.player1.id === player.id 
-      ? firstMatch.player1.ratingBefore 
-      : firstMatch.player2.ratingBefore;
-
-    const currentRating = lastMatch.player1.id === player.id
-      ? lastMatch.player1.ratingAfter
-      : lastMatch.player2.ratingAfter;
-
-    // Calculate total points from PR
-    const totalPR = completedMatches.reduce((total, match) => total + match.result.pr, 0);
-
-    return {
-      playerId: player.id,
-      rank: 0, // Will be set after sorting
-      points: totalPR, // Use PR instead of wins/draws
-      matches: completedMatches.length,
-      wins,
-      losses,
-      draws,
-      rating: currentRating,
-      ratingChange: currentRating - initialRating,
-      category: player.category,
-      playerDetails: {
-        name: player.name,
-        currentRating: player.currentRating,
-        category: player.category
-      }
-    };
-  }
-
-  private sortRankings(rankings: PlayerRanking[]): PlayerRanking[] {
-    return rankings.sort((a, b) => {
-      // First by points (changed from rating)
-      if (b.points !== a.points) {
-        return b.points - a.points;
-      }
-      // Then by wins
-      if (b.wins !== a.wins) {
-        return b.wins - a.wins;
-      }
-      // Then by matches played (more matches = higher rank if tied)
-      if (b.matches !== a.matches) {
-        return b.matches - a.matches;
-      }
-      // Finally by rating if everything else is tied
-      if (b.rating !== a.rating) {
-        return b.rating - a.rating;
-      }
-      return 0;
-    });
-  }
-
-  async updateEventRankings(eventId: string): Promise<void> {
+  public async getGlobalRankings(): Promise<EventRanking> {
     try {
-      const matches = await this.matchRepository.getEventMatches(eventId);
+      // Get all players
       const players = await this.playerRepository.getAllPlayers();
       
-      // Get active players in this event
-      const activePlayerIds = new Set<string>();
-      matches.forEach(match => {
-        activePlayerIds.add(match.player1.id);
-        activePlayerIds.add(match.player2.id);
+      // Map players to ranking format
+      const rankings: PlayerRanking[] = players
+        .filter(player => player.active) // Only include active players
+        .map(player => ({
+          playerId: player.id,
+          rank: 0, // Will be calculated after sorting
+          points: 0, // Not used in global rankings
+          matches: player.statistics.totalMatches,
+          wins: player.statistics.wins,
+          draws: player.statistics.draws,
+          losses: player.statistics.losses,
+          rating: player.currentRating,
+          ratingChange: 0, // Could calculate from last match if needed
+          category: player.category,
+          playerDetails: {
+            name: player.name,
+            currentRating: player.currentRating,
+            category: player.category
+          }
+        }));
+
+      // Sort rankings by rating (descending)
+      rankings.sort((a, b) => {
+        // First by rating
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        // Then by win ratio for tiebreaking
+        const aWinRatio = a.wins / (a.matches || 1);
+        const bWinRatio = b.wins / (b.matches || 1);
+        return bWinRatio - aWinRatio;
       });
-      const activePlayers = players.filter(p => activePlayerIds.has(p.id));
 
-      // Calculate rankings for each player
-      const rankings: PlayerRanking[] = await Promise.all(
-        activePlayers.map(async player => {
-          const playerMatches = matches.filter(m => 
-            (m.player1.id === player.id || m.player2.id === player.id)
-          );
-          return this.calculatePlayerRanking(player, matches, playerMatches);
-        })
-      );
+      // Assign ranks with proper tie handling
+      let currentRank = 1;
+      let currentRating = -1;
+      let currentWinRatio = -1;
+      let tiedCount = 0;
 
-      // Sort and assign ranks
-      const sortedRankings = this.sortRankings(rankings);
-      sortedRankings.forEach((ranking, index) => {
-        ranking.rank = index + 1;
+      rankings.forEach((ranking, index) => {
+        const winRatio = ranking.wins / (ranking.matches || 1);
+        
+        if (ranking.rating === currentRating &&
+            winRatio === currentWinRatio) {
+          // Same rank for tied players
+          ranking.rank = currentRank;
+          tiedCount++;
+        } else {
+          // New rank, accounting for any previous ties
+          currentRank = index + 1;
+          ranking.rank = currentRank;
+          currentRating = ranking.rating;
+          currentWinRatio = winRatio;
+          tiedCount = 0;
+        }
       });
 
-      // Create rankings object
+      const globalRanking: EventRanking = {
+        eventId: 'global', // Special ID for global rankings
+        lastUpdated: new Date().toISOString(),
+        rankings
+      };
+
+      return globalRanking;
+    } catch (error) {
+      console.error('Error generating global rankings:', error);
+      throw new Error('Failed to generate global rankings');
+    }
+  }
+
+  public async updateEventRankings(eventId: string): Promise<EventRanking> {
+    try {
+      const matches = await this.matchRepository.getEventMatches(eventId);
+
+      // Filter for completed and validated matches
+      const completedMatches = matches.filter(match => {
+        return match.status === 'completed' &&
+               match.result !== undefined &&
+               ['valid', 'admin_validated', 'auto_validated'].includes(match.result.validation.status);
+      });
+
+      // Create performance map for each player
+      const playerPerformance = new Map<string, {
+        points: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        matches: number;
+        rating: number;
+        ratingChange: number;
+        category: string;
+      }>();
+
+      // Process each match to calculate points and statistics
+      for (const match of completedMatches) {
+        const { player1, player2, result } = match;
+        if (!result) continue;
+
+        const [p1Score, p2Score] = result.score;
+
+        // Initialize player records if not exist
+        if (!playerPerformance.has(player1.id)) {
+          playerPerformance.set(player1.id, {
+            points: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            matches: 0,
+            rating: player1.ratingAfter,
+            ratingChange: player1.ratingAfter - player1.ratingBefore,
+            category: player1.categoryAfter
+          });
+        }
+        if (!playerPerformance.has(player2.id)) {
+          playerPerformance.set(player2.id, {
+            points: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            matches: 0,
+            rating: player2.ratingAfter,
+            ratingChange: player2.ratingAfter - player2.ratingBefore,
+            category: player2.categoryAfter
+          });
+        }
+
+        const p1Stats = playerPerformance.get(player1.id)!;
+        const p2Stats = playerPerformance.get(player2.id)!;
+
+        // Update match counts
+        p1Stats.matches++;
+        p2Stats.matches++;
+
+        // Update win/draw/loss stats and points with improved distribution
+        if (p1Score > p2Score) {
+          p1Stats.wins++;
+          p2Stats.losses++;
+          p1Stats.points += result.pr;
+          // Add partial points for good performance even in loss
+          p2Stats.points += Math.floor(result.pr * 0.3);
+        } else if (p1Score < p2Score) {
+          p1Stats.losses++;
+          p2Stats.wins++;
+          p2Stats.points += result.pr;
+          // Add partial points for good performance even in loss
+          p1Stats.points += Math.floor(result.pr * 0.3);
+        } else {
+          p1Stats.draws++;
+          p2Stats.draws++;
+          // Split points for draws
+          p1Stats.points += Math.floor(result.pr * 0.5);
+          p2Stats.points += Math.floor(result.pr * 0.5);
+        }
+      }
+
+      // Get player details and create rankings array
+      const rankings: PlayerRanking[] = [];
+      const players = await this.playerRepository.getAllPlayers();
+
+      for (const [playerId, stats] of playerPerformance.entries()) {
+        const player = players.find(p => p.id === playerId);
+        if (!player) continue;
+
+        rankings.push({
+          playerId,
+          rank: 0, // Will be calculated after sorting
+          points: stats.points,
+          matches: stats.matches,
+          wins: stats.wins,
+          draws: stats.draws,
+          losses: stats.losses,
+          rating: stats.rating,
+          ratingChange: stats.ratingChange,
+          category: stats.category,
+          playerDetails: {
+            name: player.name,
+            currentRating: player.currentRating,
+            category: player.category
+          }
+        });
+      }
+
+      // Sort rankings by points (descending)
+      rankings.sort((a, b) => {
+        // First by points
+        if (b.points !== a.points) return b.points - a.points;
+        // Then by win ratio
+        const aWinRatio = a.wins / (a.matches || 1);
+        const bWinRatio = b.wins / (b.matches || 1);
+        if (bWinRatio !== aWinRatio) return bWinRatio - aWinRatio;
+        // Then by rating
+        return b.rating - a.rating;
+      });
+
+      // Assign ranks with proper tie handling
+      let currentRank = 1;
+      let currentPoints = -1;
+      let currentWinRatio = -1;
+      let currentRating = -1;
+      let tiedCount = 0;
+
+      rankings.forEach((ranking, index) => {
+        const winRatio = ranking.wins / (ranking.matches || 1);
+        
+        if (ranking.points === currentPoints && 
+            winRatio === currentWinRatio && 
+            ranking.rating === currentRating) {
+          // Same rank for tied players
+          ranking.rank = currentRank;
+          tiedCount++;
+        } else {
+          // New rank, accounting for any previous ties
+          currentRank = index + 1;
+          ranking.rank = currentRank;
+          currentPoints = ranking.points;
+          currentWinRatio = winRatio;
+          currentRating = ranking.rating;
+          tiedCount = 0;
+        }
+      });
+
       const eventRanking: EventRanking = {
         eventId,
         lastUpdated: new Date().toISOString(),
-        rankings: sortedRankings
+        rankings
       };
 
-      // Ensure rankings directory exists
-      const rankingsDir = path.join(this.DATA_DIR, 'rankings');
-      try {
-        await fs.access(rankingsDir);
-      } catch {
-        await fs.mkdir(rankingsDir, { recursive: true });
-      }
+      // Save rankings to file
+      await this.saveRankings(eventRanking);
 
-      // Save to file
-      const rankingsPath = path.join(rankingsDir, `${eventId}.json`);
-      await fs.writeFile(rankingsPath, JSON.stringify(eventRanking, null, 2));
+      return eventRanking;
     } catch (error) {
-      console.error('Error updating rankings:', error);
-      throw error;
+      console.error('Error updating event rankings:', error);
+      throw new Error('Failed to update event rankings');
+    }
+  }
+
+  private async saveRankings(eventRanking: EventRanking): Promise<void> {
+    const rankingsDir = path.join(process.cwd(), 'data', 'rankings');
+    const filePath = path.join(rankingsDir, `${eventRanking.eventId}.json`);
+    
+    try {
+      // Ensure rankings directory exists
+      await fs.mkdir(rankingsDir, { recursive: true });
+      
+      // Save rankings
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(eventRanking, null, 2),
+        'utf-8'
+      );
+    } catch (error) {
+      console.error('Error saving rankings:', error);
+      throw new Error('Failed to save rankings');
     }
   }
 }

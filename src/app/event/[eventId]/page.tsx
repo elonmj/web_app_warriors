@@ -55,9 +55,24 @@ async function getPlayers(): Promise<Player[]> {
 
 async function getRankings(eventId: string): Promise<EventRanking | null> {
   try {
-    const filePath = path.join(process.cwd(), 'data', 'rankings', `${eventId}.json`);
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const rankingData = JSON.parse(fileContent);
+    // Force recalculate rankings first
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    await fetch(`${baseUrl}/api/rankings/${eventId}`, {
+      method: 'POST',
+      cache: 'no-store'
+    });
+
+    // Then get the latest rankings
+    const response = await fetch(
+      `${baseUrl}/api/rankings/${eventId}`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch rankings');
+    }
+
+    const rankingData = await response.json();
     return rankingData;
   } catch (error) {
     console.error('Failed to fetch rankings:', error);
@@ -143,21 +158,24 @@ export default async function EventPage({ params }: { params: { eventId: string 
   const eventId = params.eventId;
 
   try {
-    const [eventData, players, eventRanking] = await Promise.all([
+    const [eventData, players] = await Promise.all([
       getEvent(eventId),
-      getPlayers(),
-      getRankings(eventId)
+      getPlayers()
     ]);
 
     if (!eventData) {
       throw new Error('Event not found');
     }
 
-    if (!eventRanking) {
-      throw new Error('Rankings not found');
-    }
-
+    // Get matches data
     const matches = await getMatches(eventId, players);
+
+    // Get rankings, with fallback to empty rankings if not available
+    let eventRanking = await getRankings(eventId) || {
+      eventId,
+      lastUpdated: new Date().toISOString(),
+      rankings: []
+    };
     const matchesForDisplay = matches.map(match => transformMatchForHistory(match, players));
     const stats = EventStatisticsCalculator.calculate(eventData, matches, players);
 

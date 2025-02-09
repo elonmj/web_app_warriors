@@ -3,6 +3,26 @@
 import { useEffect, useState } from 'react';
 import { Match, MatchResult } from '@/types/Match';
 import MatchResultForm from '@/app/components/MatchResultForm';
+import { MatchResultPopup } from '@/app/components/MatchResultPopup';
+import { PlayerCategoryType } from '@/types/Enums';
+
+interface MatchResponse {
+  match: Match;
+  updates: {
+    player1: {
+      id: string;
+      newRating: number;
+      newCategory: PlayerCategoryType;
+      ratingChange: number;
+    };
+    player2: {
+      id: string;
+      newRating: number;
+      newCategory: PlayerCategoryType;
+      ratingChange: number;
+    };
+  };
+}
 
 async function getMatch(eventId: string, matchId: string): Promise<Match | null> {
   try {
@@ -19,7 +39,7 @@ async function submitMatchResult(
   eventId: string, 
   matchId: string, 
   result: MatchResult
-): Promise<boolean> {
+): Promise<MatchResponse | { error: string }> {
   try {
     const res = await fetch('/api/matches/result', {
       method: 'POST',
@@ -35,17 +55,14 @@ async function submitMatchResult(
       }),
     });
 
-    if (!res.ok) throw new Error('Failed to submit result');
+    const data = await res.json();
+    if (!res.ok) {
+      return { error: data.error || 'Failed to submit result' };
+    }
     
-    // Trigger rankings update
-    await fetch(`/api/rankings/${eventId}`, {
-      method: 'POST',
-    });
-
-    return true;
+    return data as MatchResponse;
   } catch (error) {
-    console.error('Error submitting result:', error);
-    return false;
+    return { error: 'Failed to submit match result' };
   }
 }
 
@@ -56,14 +73,21 @@ export default function MatchResultPage({
 }) {
   const [match, setMatch] = useState<Match | null>(null);
   const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showCompletedPopup, setShowCompletedPopup] = useState(false);
+  const [ratingChanges, setRatingChanges] = useState<{
+    player1: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
+    player2: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
+  } | undefined>(undefined);
 
   useEffect(() => {
     async function loadMatch() {
       const matchData = await getMatch(params.eventId, params.matchId);
       if (matchData) {
         setMatch(matchData);
+        if (matchData.status === 'completed' && matchData.result) {
+          setShowCompletedPopup(true);
+        }
       } else {
         setError("Failed to load match details");
       }
@@ -75,47 +99,46 @@ export default function MatchResultPage({
 
   const handleSubmit = async (score: [number, number]) => {
     setError("");
-    setSuccess(false);
     
-    const success = await submitMatchResult(
-      params.eventId,
-      params.matchId,
-      {
-        score,
-        pr: 0, // These will be calculated on the server
-        pdi: 0,
-        ds: 0,
-        validation: {
-          player1Approved: false,
-          player2Approved: false,
-          timestamp: new Date().toISOString(),
-          status: 'pending'
-        }
-      }
-    );
-
-    if (success) {
-      setSuccess(true);
-      // Update local match data
-      if (match) {
-        setMatch({
-          ...match,
-          status: 'completed',
-          result: {
-            score,
-            pr: 0,
-            pdi: 0,
-            ds: 0,
-            validation: {
-              player1Approved: false,
-              player2Approved: false,
-              timestamp: new Date().toISOString(),
-              status: 'pending'
-            }
+    try {
+      const response = await submitMatchResult(
+        params.eventId,
+        params.matchId,
+        {
+          score,
+          pr: 0, // These will be calculated server-side
+          pdi: 0,
+          ds: 0,
+          validation: {
+            player1Approved: false,
+            player2Approved: false,
+            timestamp: new Date().toISOString(),
+            status: 'pending'
           }
-        });
+        }
+      );
+
+      if ('error' in response) {
+        setError(response.error);
+        return;
       }
-    } else {
+
+      // Update match with server response data
+      setMatch(response.match);
+      setRatingChanges({
+        player1: {
+          newRating: response.updates.player1.newRating,
+          newCategory: response.updates.player1.newCategory,
+          ratingChange: response.updates.player1.ratingChange
+        },
+        player2: {
+          newRating: response.updates.player2.newRating,
+          newCategory: response.updates.player2.newCategory,
+          ratingChange: response.updates.player2.ratingChange
+        }
+      });
+      setShowCompletedPopup(true);
+    } catch (err) {
       setError("Failed to submit match result");
     }
   };
@@ -128,14 +151,6 @@ export default function MatchResultPage({
     );
   }
 
-  if (error) {
-    return (
-      <div className="rounded-md bg-red-50 p-4">
-        <div className="text-sm text-red-700">{error}</div>
-      </div>
-    );
-  }
-
   if (!match) {
     return (
       <div className="rounded-md bg-yellow-50 p-4">
@@ -144,46 +159,40 @@ export default function MatchResultPage({
     );
   }
 
-  if (match.status === 'completed' && match.result) {
-    return (
-      <div className="rounded-md bg-green-50 p-4">
-        <div className="text-sm text-green-700">
-          Match result already submitted
-        </div>
-        <div className="mt-2">
-          {match.player1.id} vs {match.player2.id}
-        </div>
-        <div className="mt-2">
-          Score: {match.result.score[0]} - {match.result.score[1]}
-        </div>
-        <div className="mt-1">
-          <div>PR: {match.result.pr}</div>
-          <div>PDI: {match.result.pdi.toFixed(2)}</div>
-          <div>DS: {match.result.ds}</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Submit Match Result
+          {match.result ? 'Match Result' : 'Submit Match Result'}
         </h1>
       </div>
 
-      {success ? (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="text-sm text-green-700">
-            Match result submitted successfully
-          </div>
-        </div>
-      ) : (
+      {!match.result && (
         <MatchResultForm
           player1Name={match.player1.id}
           player2Name={match.player2.id}
           onSubmit={handleSubmit}
+          eventId={params.eventId}
+          error={error}
+        />
+      )}
+
+      {match.result && showCompletedPopup && (
+        <MatchResultPopup
+          isOpen={showCompletedPopup}
+          onClose={() => setShowCompletedPopup(false)}
+          matchResult={{
+            player1: { name: match.player1.id, score: match.result.score[0] },
+            player2: { name: match.player2.id, score: match.result.score[1] },
+            pr: match.result.pr,
+            pdi: match.result.pdi,
+            ds: match.result.ds,
+            ratingChanges: ratingChanges && {
+              player1: ratingChanges.player1,
+              player2: ratingChanges.player2
+            }
+          }}
+          eventId={params.eventId}
         />
       )}
     </div>

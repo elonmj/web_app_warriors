@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MatchService } from '@/api/services/MatchService';
 import { RankingService } from '@/api/services/RankingService';
 import { UpdateMatchResultInput, Match } from '@/types/Match';
-import { Player } from '@/types/Player';
+import { PlayerCategoryType } from '@/types/Enums';
 import { MatchRepository } from '@/api/repository/MatchRepository';
 
 const matchService = new MatchService();
@@ -12,7 +12,7 @@ const matchRepository = new MatchRepository();
 interface MatchUpdate {
   id: string;
   newRating: number;
-  newCategory: string;
+  newCategory: PlayerCategoryType;
   ratingChange: number;
 }
 
@@ -33,7 +33,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
     const input: UpdateMatchResultInput = await request.json();
     
     // Validate required fields
-    // Validate required fields with specific error messages
     if (!input.matchId) {
       return NextResponse.json(
         { error: 'Match ID is required' },
@@ -66,36 +65,32 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
     }
 
     try {
-      // Process match result
-      const processResult = await matchService.processMatchResult(
-        match,
-        input
-      );
+      // Process match result with all updates
+      const { updatedMatch, player1Update, player2Update } = await matchService.processMatchResult(match, input);
 
-      const { updatedMatch, player1Update, player2Update } = processResult;
-
-      // Update rankings for the event
-      await rankingService.updateEventRankings(match.eventId);
-
-      // Ensure we have valid categories and IDs
-      if (!player1Update.id || !player2Update.id) {
-        throw new Error('Missing player IDs in update');
+      // Update rankings
+      try {
+        await rankingService.updateEventRankings(match.eventId);
+      } catch (rankingError) {
+        console.error('Error updating rankings:', rankingError);
+        // Rankings update failure shouldn't block match result response
       }
 
+      // Return response with player updates
       const response: MatchResponse = {
         match: updatedMatch,
         updates: {
           player1: {
-            id: player1Update.id,
-            newRating: player1Update.currentRating || 0,
-            newCategory: player1Update.category || 'ONYX',
-            ratingChange: (player1Update.currentRating || 0) - (match.player1?.ratingBefore || 0)
+            id: player1Update.id || match.player1.id,
+            newRating: player1Update.currentRating || match.player1.ratingBefore,
+            newCategory: (player1Update.category || match.player1.categoryBefore || 'ONYX') as PlayerCategoryType,
+            ratingChange: (player1Update.currentRating || match.player1.ratingBefore) - match.player1.ratingBefore
           },
           player2: {
-            id: player2Update.id,
-            newRating: player2Update.currentRating || 0,
-            newCategory: player2Update.category || 'ONYX',
-            ratingChange: (player2Update.currentRating || 0) - (match.player2?.ratingBefore || 0)
+            id: player2Update.id || match.player2.id,
+            newRating: player2Update.currentRating || match.player2.ratingBefore,
+            newCategory: (player2Update.category || match.player2.categoryBefore || 'ONYX') as PlayerCategoryType,
+            ratingChange: (player2Update.currentRating || match.player2.ratingBefore) - match.player2.ratingBefore
           }
         }
       };
@@ -104,7 +99,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
     } catch (error) {
       console.error('Error processing match:', error);
       return NextResponse.json(
-        { error: 'Failed to process match result' },
+        { error: error instanceof Error ? error.message : 'Failed to process match result' },
         { status: 500 }
       );
     }

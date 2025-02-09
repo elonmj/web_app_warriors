@@ -3,9 +3,10 @@ import Link from "next/link";
 
 interface PlayerRankingsProps {
   eventRanking: EventRanking | null;
+  isGlobal?: boolean;
 }
 
-export default function PlayerRankings({ eventRanking }: PlayerRankingsProps) {
+export default function PlayerRankings({ eventRanking, isGlobal }: PlayerRankingsProps) {
   if (!eventRanking || !eventRanking.rankings) {
     return (
       <div className="mt-8 rounded-lg bg-white p-4 text-center shadow dark:bg-gray-800">
@@ -18,7 +19,7 @@ export default function PlayerRankings({ eventRanking }: PlayerRankingsProps) {
     <div className="mt-8 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
       <div className="px-4 py-5 sm:px-6">
         <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-          Current Rankings
+          {isGlobal ? 'Global Rankings' : 'Event Rankings'}
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Last updated: {new Date(eventRanking.lastUpdated).toLocaleString()}
@@ -46,59 +47,101 @@ export default function PlayerRankings({ eventRanking }: PlayerRankingsProps) {
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 W/D/L
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Win Rate
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-            {eventRanking.rankings.map((player, index) => (
-              <tr
-                key={player.playerId}
-                className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
-              >
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {player.rank}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <Link
-                    href={`/player/${player.playerId}`}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    {player.playerDetails?.name || 'Unknown'}
-                  </Link>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                      ${getCategoryStyle(player.category)}`}
-                  >
-                    {player.category}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {player.rating}
-                    </span>
-                    {player.ratingChange !== 0 && (
-                      <span 
-                        className={`ml-2 text-xs ${
-                          player.ratingChange > 0 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-red-600 dark:text-red-400'
-                        }`}
-                      >
-                        {player.ratingChange > 0 ? '+' : ''}{player.ratingChange}
+            {eventRanking.rankings.map((player, index) => {
+              const winRate = player.matches > 0
+                ? ((player.wins / player.matches) * 100).toFixed(1)
+                : "0.0";
+
+              return (
+                <tr
+                  key={player.playerId}
+                  className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
+                >
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {player.rank}
                       </span>
-                    )}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                  {player.points}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {player.wins}/{player.draws}/{player.losses}
-                </td>
-              </tr>
-            ))}
+                      {index > 0 && player.rank === eventRanking.rankings[index - 1].rank && (
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          (tied)
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <Link
+                      href={`/player/${player.playerId}`}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      {player.playerDetails?.name || 'Unknown'}
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                        ${getCategoryStyle(player.category)}`}
+                    >
+                      {player.category}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="flex items-center">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {player.rating}
+                      </span>
+                      {player.ratingChange !== 0 && (
+                        <div 
+                          className="ml-2 flex items-center gap-1 text-xs"
+                          title={`Rating change: ${player.ratingChange > 0 ? '+' : ''}${player.ratingChange}`}
+                        >
+                          <span 
+                            className={
+                              player.ratingChange > 0 
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }
+                          >
+                            {player.ratingChange > 0 ? '↑' : '↓'}
+                          </span>
+                          <span 
+                            className={
+                              player.ratingChange > 0 
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }
+                          >
+                            {Math.abs(player.ratingChange)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {player.points}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        pts
+                      </span>
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {player.wins}/{player.draws}/{player.losses}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {winRate}%
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

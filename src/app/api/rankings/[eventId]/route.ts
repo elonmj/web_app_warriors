@@ -1,69 +1,49 @@
-import { NextResponse } from 'next/server';
-import * as fs from 'fs/promises';
-import path from 'path';
-import { EventRanking } from '@/types/Ranking';
+import { NextRequest, NextResponse } from 'next/server';
 import { RankingService } from '@/api/services/RankingService';
+import path from 'path';
+import fs from 'fs/promises';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const rankingService = new RankingService();
 
+/**
+ * GET /api/rankings/[eventId]
+ * Get event rankings
+ */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
-  const eventId = params.eventId;
-  const rankingsPath = path.join(DATA_DIR, 'rankings', `${eventId}.json`);
-
   try {
-    // Try to read existing rankings
+    // Try to read existing rankings first
+    const rankingsPath = path.join(process.cwd(), 'data', 'rankings', `${params.eventId}.json`);
     try {
-      const rankingsContent = await fs.readFile(rankingsPath, 'utf-8');
-      const rankingData = JSON.parse(rankingsContent);
-
-      // If data is in EventRanking format, return it
-      if (rankingData.eventId && rankingData.rankings) {
-        return NextResponse.json(rankingData);
-      }
+      const rankingsData = await fs.readFile(rankingsPath, 'utf-8');
+      const rankings = JSON.parse(rankingsData);
+      return NextResponse.json(rankings);
     } catch (error) {
-      // If file doesn't exist, we'll generate rankings from matches
-      if ((error as any).code !== 'ENOENT') {
-        throw error;
-      }
+      // If file doesn't exist or is invalid, recalculate rankings
+      const rankings = await rankingService.updateEventRankings(params.eventId);
+      return NextResponse.json(rankings);
     }
-
-    // If we reach here, either the file doesn't exist or isn't in the right format
-    // Generate rankings from matches
-    const rankingService = new RankingService();
-    await rankingService.updateEventRankings(eventId);
-
-    // Now read and return the newly generated rankings
-    const updatedRankingsContent = await fs.readFile(rankingsPath, 'utf-8');
-    const updatedRankings: EventRanking = JSON.parse(updatedRankingsContent);
-
-    return NextResponse.json(updatedRankings);
   } catch (error) {
-    console.error('Error handling rankings:', error);
+    console.error('Error retrieving rankings:', error);
     return NextResponse.json(
-      { error: 'Failed to load rankings data' },
+      { error: 'Failed to retrieve rankings' },
       { status: 500 }
     );
   }
 }
 
+/**
+ * POST /api/rankings/[eventId]
+ * Force update event rankings
+ */
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
-  const eventId = params.eventId;
-  
   try {
-    // Force regenerate rankings
-    const rankingService = new RankingService();
-    await rankingService.updateEventRankings(eventId);
-
-    const rankingsPath = path.join(DATA_DIR, 'rankings', `${eventId}.json`);
-    const rankingsContent = await fs.readFile(rankingsPath, 'utf-8');
-    const rankings = JSON.parse(rankingsContent);
-
+    const rankings = await rankingService.updateEventRankings(params.eventId);
     return NextResponse.json(rankings);
   } catch (error) {
     console.error('Error updating rankings:', error);

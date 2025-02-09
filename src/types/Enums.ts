@@ -28,8 +28,11 @@ export const MatchStatus = {
 
 export const ValidationStatus = {
   PENDING: "pending",
-  APPROVED: "approved",
-  DISPUTED: "disputed"
+  VALID: "valid",
+  PARTIALLY_VALID: "partially_valid",
+  DISPUTED: "disputed",
+  ADMIN_VALIDATED: "admin_validated",
+  AUTO_VALIDATED: "auto_validated"
 } as const;
 
 // Type exports

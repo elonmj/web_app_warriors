@@ -17,13 +17,23 @@ export class PlayerRepository extends BaseRepository {
   async getAllPlayers(): Promise<Player[]> {
     try {
       const data = await this.readJsonFile<{ players: Player[] }>(this.PLAYERS_FILE);
-      return data.players;
+      return data?.players || [];
     } catch (error) {
       if ((error as Error).message.includes('not found')) {
-        await this.writeJsonFile(this.PLAYERS_FILE, { players: [] });
-        return [];
+        // Initialize players file if it doesn't exist
+        const initialData = { players: [] };
+        await this.writeJsonFile(this.PLAYERS_FILE, initialData);
+        return initialData.players;
       }
-      throw error;
+      console.error('Error reading players:', error);
+      return [];
+    }
+  }
+
+  private async ensurePlayersFile(): Promise<void> {
+    const exists = await this.fileExists(this.PLAYERS_FILE);
+    if (!exists) {
+      await this.writeJsonFile(this.PLAYERS_FILE, { players: [] });
     }
   }
 
@@ -39,6 +49,7 @@ export class PlayerRepository extends BaseRepository {
 
   async createPlayer(input: CreatePlayerInput): Promise<Player> {
     return await this.withLock('players', async () => {
+      await this.ensurePlayersFile();
       const players = await this.getAllPlayers();
       
       const initialRating = input.initialRating || PLAYER_CONSTANTS.DEFAULT_RATING;
@@ -83,6 +94,8 @@ export class PlayerRepository extends BaseRepository {
   }
 
   async updatePlayer(id: string, input: UpdatePlayerInput): Promise<Player> {
+    await this.ensurePlayersFile();
+    
     return await this.withLock('players', async () => {
       const players = await this.getAllPlayers();
       const playerIndex = players.findIndex(p => p.id === id);
@@ -91,9 +104,25 @@ export class PlayerRepository extends BaseRepository {
         throw new Error(`Player not found: ${id}`);
       }
 
+      const currentPlayer = players[playerIndex];
       const updatedPlayer = {
-        ...players[playerIndex],
-        ...input
+        ...currentPlayer,
+        ...input,
+        matches: currentPlayer.matches || [],
+        statistics: currentPlayer.statistics || {
+          totalMatches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          forfeits: { given: 0, received: 0 },
+          totalPR: 0,
+          averageDS: 0,
+          inactivityWeeks: 0,
+          bestRating: currentPlayer.currentRating || 1000,
+          worstRating: currentPlayer.currentRating || 1000,
+          categoryHistory: [],
+          eventParticipation: []
+        }
       };
 
       players[playerIndex] = updatedPlayer;
@@ -104,6 +133,8 @@ export class PlayerRepository extends BaseRepository {
   }
 
   async addMatchToPlayer(playerId: string, match: PlayerMatch): Promise<void> {
+    await this.ensurePlayersFile();
+    
     return await this.withLock('players', async () => {
       const players = await this.getAllPlayers();
       const playerIndex = players.findIndex(p => p.id === playerId);
@@ -113,6 +144,25 @@ export class PlayerRepository extends BaseRepository {
       }
 
       const player = players[playerIndex];
+
+      // Initialize arrays if they don't exist
+      if (!player.matches) player.matches = [];
+      if (!player.statistics) {
+        player.statistics = {
+          totalMatches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          forfeits: { given: 0, received: 0 },
+          totalPR: 0,
+          averageDS: 0,
+          inactivityWeeks: 0,
+          bestRating: player.currentRating || 1000,
+          worstRating: player.currentRating || 1000,
+          categoryHistory: [],
+          eventParticipation: []
+        };
+      }
       
       // Add match to history
       player.matches.push(match);
@@ -128,7 +178,7 @@ export class PlayerRepository extends BaseRepository {
       // Update category if changed
       const newCategory = CategoryManager.determineCategory(match.ratingChange.after);
       if (newCategory !== player.category) {
-        this.updatePlayerCategory(playerId, newCategory as PlayerCategoryType, 'rating_change');
+        await this.updatePlayerCategory(playerId, newCategory as PlayerCategoryType, 'rating_change');
       }
 
       players[playerIndex] = player;
@@ -138,6 +188,8 @@ export class PlayerRepository extends BaseRepository {
 
   private updatePlayerStatistics(player: Player, match: PlayerMatch): void {
     const stats = player.statistics;
+    if (!stats) return;
+
     const [playerScore, opponentScore] = match.result.score;
 
     stats.totalMatches++;
@@ -159,15 +211,33 @@ export class PlayerRepository extends BaseRepository {
     // Reset inactivity counter
     stats.inactivityWeeks = 0;
 
-    // Update event participation
-    const eventParticipation = stats.eventParticipation.find(e => e.eventId === match.eventId);
-    if (eventParticipation) {
-      eventParticipation.matchesPlayed++;
-      if (playerScore > opponentScore) eventParticipation.performance.wins++;
-      else if (playerScore === opponentScore) eventParticipation.performance.draws++;
-      else eventParticipation.performance.losses++;
-      eventParticipation.performance.pointsEarned += match.result.pr;
+    // Initialize event participation if needed
+    if (!stats.eventParticipation) {
+      stats.eventParticipation = [];
     }
+
+    // Update event participation
+    let eventParticipation = stats.eventParticipation.find(e => e.eventId === match.eventId);
+    if (!eventParticipation) {
+      eventParticipation = {
+        eventId: match.eventId,
+        finalRank: 0,
+        matchesPlayed: 0,
+        performance: {
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          pointsEarned: 0
+        }
+      };
+      stats.eventParticipation.push(eventParticipation);
+    }
+
+    eventParticipation.matchesPlayed++;
+    if (playerScore > opponentScore) eventParticipation.performance.wins++;
+    else if (playerScore === opponentScore) eventParticipation.performance.draws++;
+    else eventParticipation.performance.losses++;
+    eventParticipation.performance.pointsEarned += match.result.pr;
   }
 
   async updatePlayerCategory(
@@ -185,6 +255,11 @@ export class PlayerRepository extends BaseRepository {
 
       const player = players[playerIndex];
       
+      // Initialize category history if needed
+      if (!player.statistics.categoryHistory) {
+        player.statistics.categoryHistory = [];
+      }
+
       // Close current category period
       const currentCategoryHistory = player.statistics.categoryHistory;
       if (currentCategoryHistory.length > 0) {

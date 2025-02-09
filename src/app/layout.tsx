@@ -58,6 +58,12 @@ export default function RootLayout({
                     Events
                   </Link>
                   <Link
+                    href="/rankings"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Rankings
+                  </Link>
+                  <Link
                     href="/reglement"
                     className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >

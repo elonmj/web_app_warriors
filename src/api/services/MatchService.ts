@@ -5,61 +5,80 @@ import {
   CreateMatchInput,
   UpdateMatchResultInput
 } from '../../types/Match';
-import { Player } from '../../types/Player';
+import { Player, PlayerMatch } from '../../types/Player';
 import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from '../../types/Enums';
 import { RatingSystem } from '../../lib/RatingSystem';
 import { CategoryManager } from '../../lib/CategoryManager';
 import { StatisticsCalculator } from '../../lib/Statistics';
 import { PlayerRepository } from '../repository/playerRepository';
+import { MatchRepository } from '../repository/MatchRepository';
 
 export class MatchService {
   private ratingSystem: RatingSystem;
   private playerRepository: PlayerRepository;
+  private matchRepository: MatchRepository;
 
   constructor(ratingSystemConfig = {}) {
     this.ratingSystem = new RatingSystem(ratingSystemConfig);
     this.playerRepository = new PlayerRepository();
+    this.matchRepository = new MatchRepository();
+
+    // Initialize repositories
+    this.initializeRepositories().catch(error => {
+      console.error('Failed to initialize repositories:', error);
+    });
+  }
+
+  private async initializeRepositories() {
+    // This will ensure the players file exists and is properly structured
+    await this.playerRepository.getAllPlayers();
   }
 
   async createMatch(input: CreateMatchInput): Promise<Match> {
-    const { player1Id, player2Id, eventId, isRandom = false, round = 1 } = input;
-    const now = new Date().toISOString();
+    try {
+      const { player1Id, player2Id, eventId, isRandom = false, round = 1 } = input;
+      const now = new Date().toISOString();
 
-    const player1 = await this.playerRepository.getPlayer(player1Id);
-    const player2 = await this.playerRepository.getPlayer(player2Id);
+      const player1 = await this.playerRepository.getPlayer(player1Id);
+      const player2 = await this.playerRepository.getPlayer(player2Id);
 
-    if (!player1 || !player2) {
-      throw new Error("Players not found");
-    }
-
-    const match: Match = {
-      id: `${Date.now()}-${player1Id}-${player2Id}`,
-      eventId: eventId,
-      date: now.split('T')[0],
-      player1: {
-        id: player1.id,
-        ratingBefore: player1.currentRating,
-        ratingAfter: player1.currentRating,
-        categoryBefore: player1.category as PlayerCategoryType,
-        categoryAfter: player1.category as PlayerCategoryType
-      },
-      player2: {
-        id: player2.id,
-        ratingBefore: player2.currentRating,
-        ratingAfter: player2.currentRating,
-        categoryBefore: player2.category as PlayerCategoryType,
-        categoryAfter: player2.category as PlayerCategoryType
-      },
-      status: "pending" as MatchStatusType,
-      metadata: {
-        round: round,
-        isRandom: isRandom,
-        createdAt: now,
-        updatedAt: now
+      if (!player1 || !player2) {
+        throw new Error(`Players not found: ${!player1 ? player1Id : player2Id}`);
       }
-    };
 
-    return match;
+      const match: Match = {
+        id: `${Date.now()}-${player1Id}-${player2Id}`,
+        eventId: eventId,
+        date: now.split('T')[0],
+        player1: {
+          id: player1.id,
+          ratingBefore: player1.currentRating,
+          ratingAfter: player1.currentRating,
+          categoryBefore: player1.category as PlayerCategoryType,
+          categoryAfter: player1.category as PlayerCategoryType
+        },
+        player2: {
+          id: player2.id,
+          ratingBefore: player2.currentRating,
+          ratingAfter: player2.currentRating,
+          categoryBefore: player2.category as PlayerCategoryType,
+          categoryAfter: player2.category as PlayerCategoryType
+        },
+        status: "pending" as MatchStatusType,
+        metadata: {
+          round: round,
+          isRandom: isRandom,
+          createdAt: now,
+          updatedAt: now
+        }
+      };
+
+      await this.matchRepository.updateMatch(match);
+      return match;
+    } catch (error) {
+      console.error('Error creating match:', error);
+      throw new Error('Failed to create match');
+    }
   }
 
   private calculatePDI(score1: number, score2: number): number {
@@ -80,150 +99,142 @@ export class MatchService {
     return 0; // loss
   }
 
-  async processMatchResult(match: Match, input: UpdateMatchResultInput): Promise<{ updatedMatch: Match; player1Update: Partial<Player>; player2Update: Partial<Player>; }> {
-    const { score } = input;
-    const now = new Date().toISOString();
-
-    if (score.player1Score < 0 || score.player2Score < 0) {
-      throw new Error("Scores cannot be negative");
-    }
-
-    const isDraw = score.player1Score === score.player2Score;
-    const winnerId = isDraw ? null : score.player1Score > score.player2Score ? match.player1.id : match.player2.id;
-
-    const result: MatchResult = {
-      score: [score.player1Score, score.player2Score],
-      pr: this.calculatePR(score.player1Score, score.player2Score),
-      pdi: this.calculatePDI(score.player1Score, score.player2Score),
-      ds: this.calculateDS(score.player1Score, score.player2Score),
-      validation: {
-        player1Approved: false,
-        player2Approved: false,
-        status: "pending" as ValidationStatusType,
-        timestamp: now
-      }
-    };
-
-    // Create temporary match object with old structure for rating calculation
-    const ratingMatch = {
-      ...match,
-      player1Rating: match.player1.ratingBefore,
-      player2Rating: match.player2.ratingBefore,
-      player1Category: match.player1.categoryBefore,
-      player2Category: match.player2.categoryBefore,
-      isRandom: match.metadata.isRandom,
-      result
-    } as any; // Use type assertion since we're adapting to old interface
-
-    const [newRating1, newRating2] = this.ratingSystem.processMatchRatings(ratingMatch);
-
-    const newCategory1 = CategoryManager.determineCategory(newRating1);
-    const newCategory2 = CategoryManager.determineCategory(newRating2);
-
-    const updatedPlayer1 = { 
-      ...match.player1,
-      ratingAfter: newRating1,
-      categoryAfter: newCategory1 
-    };
-    const updatedPlayer2 = { 
-      ...match.player2,
-      ratingAfter: newRating2,
-      categoryAfter: newCategory2 
-    };
-
-    const updatedMatch: Match = {
-      ...match,
-      result: result,
-      status: "completed" as MatchStatusType,
-      player1: updatedPlayer1,
-      player2: updatedPlayer2,
-      metadata: { ...match.metadata, updatedAt: now }
-    };
-
-    return {
-      updatedMatch,
-      player1Update: { 
-        id: match.player1.id,
-        currentRating: newRating1, 
-        category: newCategory1 
-      },
-      player2Update: { 
-        id: match.player2.id,
-        currentRating: newRating2, 
-        category: newCategory2 
-      }
-    };
-  }
-
-  processForfeit(match: Match, winnerId: string, reason: string): { 
+  async processMatchResult(match: Match, input: UpdateMatchResultInput): Promise<{ 
     updatedMatch: Match; 
     player1Update: Partial<Player>; 
     player2Update: Partial<Player>; 
-  } {
-    const now = new Date().toISOString();
-    const isPlayer1Winner = match.player1.id === winnerId;
+  }> {
+    try {
+      const { score } = input;
+      const now = new Date().toISOString();
 
-    const result: MatchResult = {
-      score: isPlayer1Winner ? [1, 0] : [0, 1],
-      pr: isPlayer1Winner ? 3 : 0,
-      pdi: 1, // Maximum PDI for forfeit
-      ds: 100, // Maximum DS for forfeit
-      validation: {
-        player1Approved: false,
-        player2Approved: false,
-        status: "pending" as ValidationStatusType,
-        timestamp: now
+      if (score.player1Score < 0 || score.player2Score < 0) {
+        throw new Error("Scores cannot be negative");
       }
-    };
 
-    // Calculate rating changes (simplified for forfeits)
-    const ratingMatch = {
-      ...match,
-      player1Rating: match.player1.ratingBefore,
-      player2Rating: match.player2.ratingBefore,
-      player1Category: match.player1.categoryBefore,
-      player2Category: match.player2.categoryBefore,
-      isRandom: match.metadata.isRandom,
-      result
-    } as any;
+      const result: MatchResult = {
+        score: [score.player1Score, score.player2Score],
+        pr: this.calculatePR(score.player1Score, score.player2Score),
+        pdi: this.calculatePDI(score.player1Score, score.player2Score),
+        ds: this.calculateDS(score.player1Score, score.player2Score),
+        validation: {
+          player1Approved: false,
+          player2Approved: false,
+          status: "pending" as ValidationStatusType,
+          timestamp: now
+        }
+      };
 
-    const [newRating1, newRating2] = this.ratingSystem.processMatchRatings(ratingMatch);
-
-    // Determine new categories
-    const newCategory1 = CategoryManager.determineCategory(newRating1);
-    const newCategory2 = CategoryManager.determineCategory(newRating2);
-
-    const updatedPlayer1 = {
-      ...match.player1,
-      ratingAfter: newRating1,
-      categoryAfter: newCategory1
-    };
-
-    const updatedPlayer2 = {
-      ...match.player2,
-      ratingAfter: newRating2,
-      categoryAfter: newCategory2
-    };
-
-    return {
-      updatedMatch: {
+      // Calculate new ratings
+      const ratingMatch = {
         ...match,
-        status: "forfeit" as MatchStatusType,
-        result: result,
-        player1: updatedPlayer1,
-        player2: updatedPlayer2,
+        player1Rating: match.player1.ratingBefore,
+        player2Rating: match.player2.ratingBefore,
+        player1Category: match.player1.categoryBefore,
+        player2Category: match.player2.categoryBefore,
+        isRandom: match.metadata.isRandom,
+        result
+      } as any;
+
+      const [newRating1, newRating2] = this.ratingSystem.processMatchRatings(ratingMatch);
+      const newCategory1 = CategoryManager.determineCategory(newRating1);
+      const newCategory2 = CategoryManager.determineCategory(newRating2);
+
+      // Create player match records
+      const playerMatch1: PlayerMatch = {
+        date: now,
+        eventId: match.eventId,
+        matchId: match.id,
+        opponent: {
+          id: match.player2.id,
+          ratingAtTime: match.player2.ratingBefore,
+          categoryAtTime: match.player2.categoryBefore
+        },
+        result: {
+          score: [score.player1Score, score.player2Score],
+          pr: result.pr,
+          pdi: result.pdi,
+          ds: result.ds
+        },
+        ratingChange: {
+          before: match.player1.ratingBefore,
+          after: newRating1,
+          change: newRating1 - match.player1.ratingBefore
+        },
+        categoryAtTime: match.player1.categoryBefore
+      };
+
+      const playerMatch2: PlayerMatch = {
+        date: now,
+        eventId: match.eventId,
+        matchId: match.id,
+        opponent: {
+          id: match.player1.id,
+          ratingAtTime: match.player1.ratingBefore,
+          categoryAtTime: match.player1.categoryBefore
+        },
+        result: {
+          score: [score.player2Score, score.player1Score],
+          pr: score.player2Score > score.player1Score ? 3 : (score.player2Score === score.player1Score ? 1 : 0),
+          pdi: result.pdi,
+          ds: result.ds
+        },
+        ratingChange: {
+          before: match.player2.ratingBefore,
+          after: newRating2,
+          change: newRating2 - match.player2.ratingBefore
+        },
+        categoryAtTime: match.player2.categoryBefore
+      };
+
+      // Update the match
+      const updatedMatch: Match = {
+        ...match,
+        result,
+        status: "completed" as MatchStatusType,
+        player1: {
+          ...match.player1,
+          ratingAfter: newRating1,
+          categoryAfter: newCategory1
+        },
+        player2: {
+          ...match.player2,
+          ratingAfter: newRating2,
+          categoryAfter: newCategory2
+        },
         metadata: { ...match.metadata, updatedAt: now }
-      },
-      player1Update: {
+      };
+
+      // Save all updates
+      await this.matchRepository.updateMatch(updatedMatch);
+
+      const player1Update = { 
         id: match.player1.id,
         currentRating: newRating1,
         category: newCategory1
-      },
-      player2Update: {
+      };
+      const player2Update = {
         id: match.player2.id,
         currentRating: newRating2,
         category: newCategory2
-      }
-    };
+      };
+
+      // Update players
+      await this.playerRepository.updatePlayer(player1Update.id, player1Update);
+      await this.playerRepository.updatePlayer(player2Update.id, player2Update);
+      
+      // Add match to player histories
+      await this.playerRepository.addMatchToPlayer(match.player1.id, playerMatch1);
+      await this.playerRepository.addMatchToPlayer(match.player2.id, playerMatch2);
+
+      return {
+        updatedMatch,
+        player1Update,
+        player2Update
+      };
+    } catch (error) {
+      console.error('Error processing match result:', error);
+      throw new Error('Failed to process match result');
+    }
   }
 }
