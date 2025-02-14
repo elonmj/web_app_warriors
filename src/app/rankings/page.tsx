@@ -1,59 +1,69 @@
-'use client';
+import PlayerRankings from "@/app/components/PlayerRankings";
+import { Heading, Body } from "@/components/ui/Typography";
+import { TrophyIcon } from "@heroicons/react/24/outline";
 
-import { useEffect, useState } from 'react';
-import PlayerRankings from '@/app/components/PlayerRankings';
-import { EventRanking } from '@/types/Ranking';
+async function getGlobalRankings() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    // Force recalculate rankings first
+    await fetch(`${baseUrl}/api/rankings/global`, {
+      method: 'POST',
+      cache: 'no-store'
+    });
 
-export default function RankingsPage() {
-  const [rankings, setRankings] = useState<EventRanking | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRankings = async () => {
-      try {
-        const response = await fetch('/api/rankings/global');
-        if (!response.ok) throw new Error('Failed to fetch rankings');
-        const data = await response.json();
-        setRankings(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRankings();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading rankings...</p>
-        </div>
-      </div>
+    // Then get the latest rankings
+    const response = await fetch(
+      `${baseUrl}/api/rankings/global`,
+      { cache: 'no-store' }
     );
-  }
 
-  if (error) {
-    return (
-      <div className="mt-8 rounded-lg bg-red-50 p-4 text-center dark:bg-red-900/20">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
-      </div>
-    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch rankings');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Failed to fetch global rankings:', error);
+    return null;
   }
+}
+
+export default async function RankingsPage() {
+  const globalRankings = await getGlobalRankings();
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">
-        Global Rankings
-      </h1>
-      <p className="mb-8 text-gray-600 dark:text-gray-400">
-        Players ranked by their current rating
-      </p>
-      <PlayerRankings eventRanking={rankings} isGlobal={true} />
-    </main>
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Heading.H1 className="bg-clip-text text-transparent bg-gradient-to-r from-amethyste-500 to-amethyste-600">
+              Global Rankings
+            </Heading.H1>
+            <Body.Text className="text-onyx-600 dark:text-onyx-400">
+              Current standings across all events
+            </Body.Text>
+          </div>
+        </div>
+
+        {/* Rankings Table */}
+        {globalRankings ? (
+          <div className="bg-white shadow-sm rounded-lg dark:bg-onyx-900">
+            <PlayerRankings eventRanking={globalRankings} />
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="mx-auto w-12 h-12 rounded-full bg-onyx-100 flex items-center justify-center mb-4
+              dark:bg-onyx-800">
+              <TrophyIcon className="w-6 h-6 text-onyx-400" />
+            </div>
+            <Heading.H3 className="mb-2">No Rankings Available</Heading.H3>
+            <Body.Text className="text-onyx-600 dark:text-onyx-400">
+              Rankings data could not be loaded. Please try again later.
+            </Body.Text>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

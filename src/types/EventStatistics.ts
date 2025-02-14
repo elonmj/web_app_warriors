@@ -1,10 +1,15 @@
 export interface EventStatistics {
+  eventId: string;
   totalMatches: number;
-  totalPlayers: number;
-  matchesCompleted: number;
+  completedMatches: number;
   matchesInProgress: number;
-  averagePR: number;
+  activePlayers: number;
+  averageRating: number;
   averageDS: number;
+  averagePR: number;
+  matchesPerCategory: {
+    [key: string]: number;
+  };
   categoryDistribution: {
     [key: string]: number;
   };
@@ -15,7 +20,8 @@ export interface EventStatistics {
     wins: number;
     losses: number;
     draws: number;
-    averagePR: number;
+    averageRating: number;
     averageDS: number;
   }[];
+  lastUpdated?: string;
 }

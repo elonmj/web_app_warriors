@@ -7,9 +7,11 @@ export interface EventStatistics {
   eventId: string;
   totalMatches: number;
   completedMatches: number;
+  matchesInProgress: number;
   activePlayers: number;
   averageRating: number;
   averageDS: number;
+  averagePR: number;
   matchesPerCategory: {
     [key: string]: number;
   };
@@ -77,6 +79,10 @@ export class EventStatisticsCalculator {
       return acc;
     }, {} as { [key: string]: number });
 
+    // Calculate average PR from completed matches
+    const averagePR = completedMatches.reduce((acc, match) => acc + match.result.pr, 0) / 
+      (completedMatches.length || 1);
+
     const playerStats = eventPlayers.map((player: Player) => {
       const playerMatches = matches.filter(
         m => m.player1.id === player.id || m.player2.id === player.id
@@ -108,13 +114,18 @@ export class EventStatisticsCalculator {
       };
     });
 
+    const averageRating = StatisticsCalculator.calculateAverageRating(eventPlayers);
+    const averageDS = StatisticsCalculator.calculateAverageDS(playedMatches);
+
     return {
       eventId: event.id,
       totalMatches: matches.length,
       completedMatches: completedMatches.length,
+      matchesInProgress: matches.length - completedMatches.length,
       activePlayers: eventPlayers.length,
-      averageRating: StatisticsCalculator.calculateAverageRating(eventPlayers),
-      averageDS: StatisticsCalculator.calculateAverageDS(playedMatches),
+      averageRating,
+      averageDS,
+      averagePR,
       matchesPerCategory,
       categoryDistribution: StatisticsCalculator.calculateCategoryDistribution(eventPlayers),
       playerStats,

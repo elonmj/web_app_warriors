@@ -44,7 +44,7 @@ Le système de classement actuel se base sur plusieurs critères combinés : Poi
 
 ### 5. Catégorisation des Joueurs
 
-*   **ONYX :** 1000 ≤ E < 1400
+*   **ONYX :** 800 ≤ E < 1400
 *   **AMÉTHYSTE :** 1400 ≤ E < 1700
 *   **TOPAZE :** 1700 ≤ E < 1900
 *   **DIAMANT :** E ≥ 1900

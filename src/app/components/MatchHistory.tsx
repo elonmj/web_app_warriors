@@ -1,110 +1,158 @@
 "use client";
 
-import { FC } from 'react';
-import Link from 'next/link';
-import { MatchStatusType } from '@/types/Enums';
+import { format } from "date-fns";
+import Link from "next/link";
+import { MatchStatusType, PlayerCategory, PlayerCategoryType } from "@/types/Enums";
+import { TrophyIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { Heading, Body } from "@/components/ui/Typography";
 
-interface MatchData {
-  id: string;
-  eventId: string;
-  date: string;
-  status: MatchStatusType;
-  player1Id: string;
-  player2Id: string;
-  player1Details: {
-    name: string;
-    category: string;
-  };
-  player2Details: {
-    name: string;
-    category: string;
-  };
-  result?: {
-    score: [number, number];
-    pr: number;
-    pdi: number;
-    ds: number;
-  };
+interface MatchHistoryProps {
+  matches: Array<{
+    id: string;
+    eventId: string;
+    date: string;
+    status: MatchStatusType;
+    player1Id: string;
+    player2Id: string;
+    player1Details: {
+      name: string;
+      category: PlayerCategoryType;
+    };
+    player2Details: {
+      name: string;
+      category: PlayerCategoryType;
+    };
+    result?: {
+      score: [number, number];
+      pr: number;
+      pdi: number;
+      ds: number;
+    };
+  }>;
 }
 
-interface Props {
-  matches: MatchData[];
-}
-
-const MatchItem: FC<{ match: MatchData }> = ({ match }) => {
-  const statusClasses = match.status === 'completed'
-    ? 'bg-green-100 text-green-800'
-    : 'bg-yellow-100 text-yellow-800';
-
-  const linkClasses = match.status === 'pending'
-    ? 'text-blue-600 hover:text-blue-900'
-    : 'text-gray-600 hover:text-gray-900';
-
-  return (
-    <tr className="bg-white border-b hover:bg-gray-50">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {new Date(match.date).toLocaleDateString()}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm">
-          <div className="font-medium text-gray-900">{match.player1Details?.name || 'Unknown'}</div>
-          <div className="text-xs text-gray-500">({match.player1Details?.category || 'N/A'})</div>
-          <div className="text-xs text-gray-500 my-1">vs</div>
-          <div className="font-medium text-gray-900">{match.player2Details?.name || 'Unknown'}</div>
-          <div className="text-xs text-gray-500">({match.player2Details?.category || 'N/A'})</div>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses}`}>
-          {match.status}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {match.result ? `${match.result.score[0]} - ${match.result.score[1]}` : '-'}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        {match.result ? (
-          <div className="text-sm text-gray-900 space-y-1">
-            <div>PR: {match.result.pr}</div>
-            <div>PDI: {match.result.pdi.toFixed(2)}</div>
-            <div>DS: {match.result.ds}</div>
-          </div>
-        ) : (
-          <span className="text-sm text-gray-500">-</span>
-        )}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <Link
-          href={`/event/${match.eventId}/match/${match.id}`}
-          className={linkClasses}
-        >
-          {match.status === 'pending' ? 'Submit Result' : 'View Details'}
-        </Link>
-      </td>
-    </tr>
-  );
+const getCategoryColor = (category: PlayerCategoryType) => {
+  switch (category) {
+    case PlayerCategory.ONYX:
+      return "text-onyx-600 dark:text-onyx-400";
+    case PlayerCategory.AMÉTHYSTE:
+      return "text-amethyste-600 dark:text-amethyste-400";
+    case PlayerCategory.TOPAZE:
+      return "text-topaze-600 dark:text-topaze-400";
+    case PlayerCategory.DIAMANT:
+      return "text-diamant-600 dark:text-diamant-400";
+    default:
+      return "text-onyx-600 dark:text-onyx-400";
+  }
 };
 
-const MatchHistory: FC<Props> = ({ matches }) => {
+const MatchHistory = ({ matches }: MatchHistoryProps) => {
   return (
-    <div className="overflow-x-auto shadow-md sm:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Players</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {matches.map((match) => (
-            <MatchItem key={match.id} match={match} />
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4 sm:space-y-6">
+      {matches.map((match) => (
+        <Link 
+          key={match.id} 
+          href={`/event/${match.eventId}/match/${match.id}`}
+          className="block rounded-lg border border-onyx-200 bg-white p-4 sm:p-6
+            hover:border-amethyste-200 hover:shadow-sm transition-all duration-200
+            dark:bg-onyx-900 dark:border-onyx-800 dark:hover:border-amethyste-700"
+        >
+          {/* Match Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-onyx-500 dark:text-onyx-400">
+              <ClockIcon className="w-4 h-4" />
+              <Body.Caption>
+                {format(new Date(match.date), "MMM d, yyyy")}
+              </Body.Caption>
+            </div>
+            <div className={`flex items-center gap-2 ${
+              match.status === "completed" ? "text-green-600 dark:text-green-400" : "text-onyx-500 dark:text-onyx-400"
+            }`}>
+              <Body.Caption className="font-medium">
+                {match.status === "completed" ? "Completed" : "In Progress"}
+              </Body.Caption>
+            </div>
+          </div>
+
+          {/* Match Content */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-4 items-center">
+            {/* Player 1 */}
+            <div className="text-center sm:text-left">
+              <Body.Text className="font-medium">
+                {match.player1Details.name}
+              </Body.Text>
+              <Body.Caption className={getCategoryColor(match.player1Details.category)}>
+                {match.player1Details.category}
+              </Body.Caption>
+            </div>
+
+            {/* Score */}
+            <div className="flex items-center justify-center gap-3">
+              {match.result ? (
+                <>
+                  <Heading.H3 className="text-onyx-900 dark:text-white">
+                    {match.result.score[0]}
+                  </Heading.H3>
+                  <Body.Text className="text-onyx-400">vs</Body.Text>
+                  <Heading.H3 className="text-onyx-900 dark:text-white">
+                    {match.result.score[1]}
+                  </Heading.H3>
+                </>
+              ) : (
+                <Body.Text className="text-onyx-400">vs</Body.Text>
+              )}
+            </div>
+
+            {/* Player 2 */}
+            <div className="text-center sm:text-right">
+              <Body.Text className="font-medium">
+                {match.player2Details.name}
+              </Body.Text>
+              <Body.Caption className={getCategoryColor(match.player2Details.category)}>
+                {match.player2Details.category}
+              </Body.Caption>
+            </div>
+          </div>
+
+          {/* Match Stats */}
+          {match.result && (
+            <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <Body.Caption>PR</Body.Caption>
+                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
+                    {match.result.pr}
+                  </Body.Text>
+                </div>
+                <div className="text-center">
+                  <Body.Caption>PDI</Body.Caption>
+                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
+                    {(match.result.pdi * 100).toFixed(0)}%
+                  </Body.Text>
+                </div>
+                <div className="text-center">
+                  <Body.Caption>DS</Body.Caption>
+                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
+                    {match.result.ds}
+                  </Body.Text>
+                </div>
+              </div>
+            </div>
+          )}
+        </Link>
+      ))}
+
+      {matches.length === 0 && (
+        <div className="text-center py-12">
+          <div className="mx-auto w-12 h-12 rounded-full bg-onyx-100 flex items-center justify-center mb-4
+            dark:bg-onyx-800">
+            <TrophyIcon className="w-6 h-6 text-onyx-400" />
+          </div>
+          <Body.Text className="text-onyx-600 dark:text-onyx-400">
+            No matches found
+          </Body.Text>
+        </div>
+      )}
     </div>
   );
 };

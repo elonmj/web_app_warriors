@@ -1,7 +1,3 @@
-import EventHeader from "@/app/components/EventHeader";
-import EventStats from "@/app/components/EventStats";
-import PlayerRankings from "@/app/components/PlayerRankings";
-import MatchHistory from "@/app/components/MatchHistory";
 import { Event } from "@/types/Event";
 import { EventStatistics, EventStatisticsCalculator } from "@/lib/Statistics";
 import { EventRanking } from "@/types/Ranking";
@@ -16,6 +12,36 @@ import {
   EventTypeType,
   EventStatusType
 } from "@/types/Enums";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import EventHeader from "@/app/components/EventHeader";
+import StatsOverview from "@/app/components/StatsOverview";
+import TabNav from "@/app/components/TabNav";
+import PlayerRankings from "@/app/components/PlayerRankings";
+import MatchHistory from "@/app/components/MatchHistory";
+import EventStats from "@/app/components/EventStats";
+
+interface MatchDisplay {
+  id: string;
+  eventId: string;
+  date: string;
+  status: MatchStatusType;
+  player1Id: string;
+  player2Id: string;
+  player1Details: {
+    name: string;
+    category: PlayerCategoryType;
+  };
+  player2Details: {
+    name: string;
+    category: PlayerCategoryType;
+  };
+  result?: {
+    score: [number, number];
+    pr: number;
+    pdi: number;
+    ds: number;
+  };
+}
 
 async function getEvent(eventId: string): Promise<Event | null> {
   try {
@@ -55,14 +81,12 @@ async function getPlayers(): Promise<Player[]> {
 
 async function getRankings(eventId: string): Promise<EventRanking | null> {
   try {
-    // Force recalculate rankings first
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
     await fetch(`${baseUrl}/api/rankings/${eventId}`, {
       method: 'POST',
       cache: 'no-store'
     });
 
-    // Then get the latest rankings
     const response = await fetch(
       `${baseUrl}/api/rankings/${eventId}`,
       { cache: 'no-store' }
@@ -80,8 +104,7 @@ async function getRankings(eventId: string): Promise<EventRanking | null> {
   }
 }
 
-// Transform raw match data for the history component
-function transformMatchForHistory(match: Match, players: Player[]) {
+function transformMatchForHistory(match: Match, players: Player[]): MatchDisplay {
   const player1 = players.find(p => p.id === match.player1.id);
   const player2 = players.find(p => p.id === match.player2.id);
 
@@ -169,6 +192,7 @@ export default async function EventPage({ params }: { params: { eventId: string 
 
     // Get matches data
     const matches = await getMatches(eventId, players);
+    const matchesForDisplay = matches.map(match => transformMatchForHistory(match, players));
 
     // Get rankings, with fallback to empty rankings if not available
     let eventRanking = await getRankings(eventId) || {
@@ -176,61 +200,79 @@ export default async function EventPage({ params }: { params: { eventId: string 
       lastUpdated: new Date().toISOString(),
       rankings: []
     };
-    const matchesForDisplay = matches.map(match => transformMatchForHistory(match, players));
+
+    // Calculate statistics
     const stats = EventStatisticsCalculator.calculate(eventData, matches, players);
 
     return (
-      <div>
+      <div className="min-h-screen bg-onyx-50 dark:bg-onyx-950">
         <EventHeader event={eventData} />
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            {/* Event Details */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg dark:bg-gray-800">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-                  Event Details
-                </h3>
-                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Players</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{eventData.metadata?.totalPlayers || 0}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Matches</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{eventData.metadata?.totalMatches || 0}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Round</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{eventData.metadata?.currentRound || 1}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                      {new Date(eventData.metadata?.lastUpdated || '').toLocaleDateString()}
-                    </dd>
-                  </div>
-                </div>
-              </div>
-            </div>
+        
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+          {/* Stats Overview Section */}
+          <div className="mb-8">
+            <StatsOverview stats={stats} />
+          </div>
 
-            {/* Stats Section */}
-            <EventStats stats={stats} />
+          {/* Main Content Area */}
+          <div className="bg-white shadow-sm rounded-lg dark:bg-onyx-900">
+            <TabNav
+              defaultTab="matches"
+              tabs={[
+                {
+                  id: "matches",
+                  label: "Matches",
+                  content: matchesForDisplay.length > 0 ? (
+                    <MatchHistory matches={matchesForDisplay} />
+                  ) : (
+                    <div className="text-center py-8 text-onyx-500 dark:text-onyx-400">
+                      No matches played yet.
+                    </div>
+                  ),
+                },
+                {
+                  id: "rankings",
+                  label: "Rankings",
+                  content: (
+                    <div className="rounded-lg border border-onyx-200 dark:border-onyx-800">
+                      <PlayerRankings eventRanking={eventRanking} />
+                    </div>
+                  ),
+                },
+                {
+                  id: "statistics",
+                  label: "Statistics",
+                  content: (
+                    <div className="space-y-6">
+                      {/* Category Distribution */}
+                      <div>
+                        <h3 className="text-lg font-medium text-onyx-900 dark:text-white mb-4">
+                          Player Categories
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {Object.entries(stats.categoryDistribution).map(([category, count]) => (
+                            <div 
+                              key={category}
+                              className="bg-onyx-50 rounded-lg p-4 dark:bg-onyx-800/50"
+                            >
+                              <div className="text-sm font-medium text-onyx-600 dark:text-onyx-300">
+                                {category}
+                              </div>
+                              <div className="mt-1 text-2xl font-semibold text-onyx-900 dark:text-white">
+                                {count}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-            {/* Rankings Section */}
-            <div>
-              <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Rankings</h2>
-              <PlayerRankings eventRanking={eventRanking} />
-            </div>
-
-            {/* Match History Section */}
-            <div>
-              <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Match History</h2>
-              {matchesForDisplay.length > 0 ? (
-                <MatchHistory matches={matchesForDisplay} />
-              ) : (
-                <div className="text-center text-gray-500 dark:text-gray-400">No matches played yet.</div>
-              )}
-            </div>
+                      {/* Detailed Stats */}
+                      <EventStats stats={stats} />
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -238,9 +280,21 @@ export default async function EventPage({ params }: { params: { eventId: string 
   } catch (error) {
     console.error('Error loading event page:', error);
     return (
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="text-center text-red-500">
-          Error loading event data. Please try again later.
+      <div className="min-h-screen bg-onyx-50 dark:bg-onyx-950">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+            <div className="flex">
+              <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                  Error loading event
+                </h3>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                  Unable to load event details. Please try again later.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

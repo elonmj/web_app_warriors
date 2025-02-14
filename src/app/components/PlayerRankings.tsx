@@ -1,168 +1,126 @@
-import { EventRanking } from "@/types/Ranking";
-import Link from "next/link";
+"use client";
+
+import { EventRanking, PlayerRanking } from "@/types/Ranking";
+import { PlayerCategory } from "@/types/Enums";
+import { TrophyIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/outline";
+import { Body } from "@/components/ui/Typography";
 
 interface PlayerRankingsProps {
-  eventRanking: EventRanking | null;
-  isGlobal?: boolean;
+  eventRanking: EventRanking;
 }
 
-export default function PlayerRankings({ eventRanking, isGlobal }: PlayerRankingsProps) {
-  if (!eventRanking || !eventRanking.rankings) {
+const getRankingChangeColor = (change: number) => {
+  if (change > 0) return "text-green-600 dark:text-green-400";
+  if (change < 0) return "text-red-600 dark:text-red-400";
+  return "text-onyx-400 dark:text-onyx-500";
+};
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case PlayerCategory.ONYX:
+      return "text-onyx-600 dark:text-onyx-400";
+    case PlayerCategory.AMÉTHYSTE:
+      return "text-amethyste-600 dark:text-amethyste-400";
+    case PlayerCategory.TOPAZE:
+      return "text-topaze-600 dark:text-topaze-400";
+    case PlayerCategory.DIAMANT:
+      return "text-diamant-600 dark:text-diamant-400";
+    default:
+      return "text-onyx-600 dark:text-onyx-400";
+  }
+};
+
+const PlayerRankings: React.FC<PlayerRankingsProps> = ({ eventRanking }) => {
+  if (!eventRanking.rankings.length) {
     return (
-      <div className="mt-8 rounded-lg bg-white p-4 text-center shadow dark:bg-gray-800">
-        <p className="text-gray-500 dark:text-gray-400">No rankings available.</p>
+      <div className="text-center py-12">
+        <div className="mx-auto w-12 h-12 rounded-full bg-onyx-100 flex items-center justify-center mb-4
+          dark:bg-onyx-800">
+          <TrophyIcon className="w-6 h-6 text-onyx-400" />
+        </div>
+        <Body.Text className="text-onyx-600 dark:text-onyx-400">
+          No rankings available
+        </Body.Text>
       </div>
     );
   }
 
   return (
-    <div className="mt-8 overflow-hidden rounded-lg bg-white shadow dark:bg-gray-800">
-      <div className="px-4 py-5 sm:px-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-          {isGlobal ? 'Global Rankings' : 'Event Rankings'}
-        </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Last updated: {new Date(eventRanking.lastUpdated).toLocaleString()}
-        </p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Rank
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Player
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                {isGlobal ? 'Current Rating' : 'Rating'}
-              </th>
-              {!isGlobal && (
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Points
-                </th>
-              )}
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                W/D/L
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                Win Rate
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-            {eventRanking.rankings.map((player, index) => {
-              const winRate = player.matches > 0
-                ? ((player.wins / player.matches) * 100).toFixed(1)
-                : "0.0";
-
-              return (
-                <tr
-                  key={player.playerId}
-                  className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"}
-                >
-                  <td className="whitespace-nowrap px-6 py-4 text-sm">
-                    <div className="flex items-center">
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {player.rank}
-                      </span>
-                      {index > 0 && player.rank === eventRanking.rankings[index - 1].rank && (
-                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                          (tied)
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <Link
-                      href={`/player/${player.playerId}`}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      {player.playerDetails?.name || 'Unknown'}
-                    </Link>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                        ${getCategoryStyle(player.category)}`}
-                    >
-                      {player.category}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {player.rating}
-                      </span>
-                      {!isGlobal && player.ratingChange !== 0 && (
-                        <div
-                          className="ml-2 flex items-center gap-1 text-xs"
-                          title={`Rating change: ${player.ratingChange > 0 ? '+' : ''}${player.ratingChange}`}
-                        >
-                          <span
-                            className={
-                              player.ratingChange > 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }
-                          >
-                            {player.ratingChange > 0 ? '↑' : '↓'}
-                          </span>
-                          <span
-                            className={
-                              player.ratingChange > 0
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }
-                          >
-                            {Math.abs(player.ratingChange)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  {!isGlobal && (
-                    <td className="whitespace-nowrap px-6 py-4">
+    <div className="flow-root">
+      <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <div className="overflow-hidden shadow ring-1 ring-onyx-200 dark:ring-onyx-800 rounded-lg">
+            <table className="min-w-full divide-y divide-onyx-200 dark:divide-onyx-800">
+              <thead className="bg-onyx-50 dark:bg-onyx-900">
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-onyx-900 dark:text-white sm:pl-6">
+                    Position
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-onyx-900 dark:text-white">
+                    Player
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-onyx-900 dark:text-white">
+                    Category
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
+                    Rating
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
+                    Change
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-onyx-200 bg-white dark:divide-onyx-800 dark:bg-onyx-900">
+                {eventRanking.rankings.map((ranking: PlayerRanking) => (
+                  <tr key={ranking.playerId} className="hover:bg-onyx-50 dark:hover:bg-onyx-800/50 transition-colors">
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                       <div className="flex items-center">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {player.points}
-                        </span>
-                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                          pts
-                        </span>
+                        <Body.Text variant="sm" className="font-medium">
+                          {ranking.rank}
+                        </Body.Text>
                       </div>
                     </td>
-                  )}
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {player.wins}/{player.draws}/{player.losses}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {winRate}%
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    <td className="whitespace-nowrap px-3 py-4">
+                      <Body.Text variant="sm" className="font-medium">
+                        {ranking.playerDetails?.name || 'Unknown Player'}
+                      </Body.Text>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4">
+                      <Body.Text variant="sm" className={`${getCategoryColor(ranking.category)}`}>
+                        {ranking.category}
+                      </Body.Text>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-center">
+                      <Body.Text variant="sm" className="font-medium">
+                        {ranking.rating}
+                      </Body.Text>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4">
+                      <div className="flex items-center justify-center gap-1">
+                        {ranking.ratingChange !== 0 && (
+                          ranking.ratingChange > 0 ? (
+                            <ArrowTrendingUpIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <ArrowTrendingDownIcon className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          )
+                        )}
+                        <Body.Text 
+                          variant="sm" 
+                          className={`font-medium ${getRankingChangeColor(ranking.ratingChange)}`}
+                        >
+                          {ranking.ratingChange > 0 ? '+' : ''}{ranking.ratingChange}
+                        </Body.Text>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
 
-function getCategoryStyle(category: string): string {
-  switch (category) {
-    case "DIAMANT":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
-    case "TOPAZE":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-    case "AMÉTHYSTE":
-      return "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300";
-    case "ONYX":
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-  }
-}
+export default PlayerRankings;

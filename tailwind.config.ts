@@ -1,87 +1,125 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'media',
+  darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1rem' }],
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
+        'base': ['1rem', { lineHeight: '1.5rem' }],
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }],
+        'xl': ['1.25rem', { lineHeight: '1.75rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        // Typography components
+        h1: ['2.25rem', { lineHeight: '1.25', fontWeight: '700' }],
+        h2: ['1.875rem', { lineHeight: '1.3', fontWeight: '600' }],
+        h3: ['1.5rem', { lineHeight: '1.375', fontWeight: '600' }],
+        h4: ['1.25rem', { lineHeight: '1.4', fontWeight: '600' }],
+        h5: ['1.125rem', { lineHeight: '1.5', fontWeight: '600' }],
+        h6: ['1rem', { lineHeight: '1.5', fontWeight: '600' }],
+      },
+      screens: {
+        'xs': '475px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      spacing: {
+        'xs': '0.25rem',
+        'sm': '0.5rem',
+        'md': '1rem',
+        'lg': '1.5rem',
+        'xl': '2rem',
+        '2xl': '2.5rem',
+        '3xl': '3rem',
+      },
       colors: {
-        // Define custom colors for categories if needed
+        // Keep existing custom colors
         onyx: {
-          50: "#f7f7f7",
-          100: "#e3e3e3",
-          500: "#737373",
-          800: "#262626",
-          900: "#171717",
+          50: '#f7f7f8',
+          100: '#efeef1',
+          200: '#dbd8e0',
+          300: '#bdb7c6',
+          400: '#998fa7',
+          500: '#7c6f8f',
+          600: '#655978',
+          700: '#534862',
+          800: '#463c51',
+          900: '#3d3445',
+          950: '#26212b',
         },
         amethyste: {
-          50: "#fdf4ff",
-          100: "#fae8ff",
-          500: "#d946ef",
-          800: "#86198f",
-          900: "#701a75",
+          50: '#f5f3ff',
+          100: '#ede8ff',
+          200: '#dcd5ff',
+          300: '#c3b2ff',
+          400: '#a582ff',
+          500: '#8b55ff',
+          600: '#7c2cf5',
+          700: '#6a1ed6',
+          800: '#571bae',
+          900: '#491a8c',
+          950: '#2d0e63',
         },
         topaze: {
-          50: "#fefce8",
-          100: "#fef9c3",
-          500: "#eab308",
-          800: "#854d0e",
-          900: "#713f12",
+          50: '#fff9ed',
+          100: '#fff1d3',
+          200: '#ffdfa5',
+          300: '#ffc76d',
+          400: '#ffa535',
+          500: '#ff810d',
+          600: '#ff6b06',
+          700: '#cc4c07',
+          800: '#a13a0d',
+          900: '#82310e',
+          950: '#461604',
         },
         diamant: {
-          50: "#faf5ff",
-          100: "#f3e8ff",
-          500: "#a855f7",
-          800: "#6b21a8",
-          900: "#581c87",
+          50: '#effcff',
+          100: '#daf7ff',
+          200: '#bcf1ff',
+          300: '#8ae6ff',
+          400: '#4ed3ff',
+          500: '#24b5ff',
+          600: '#0992ff',
+          700: '#0075ff',
+          800: '#005ece',
+          900: '#0752a3',
+          950: '#0a325c',
         },
       },
-      typography: {
-        DEFAULT: {
-          css: {
-            maxWidth: 'none',
-            color: '#171717',
-            a: {
-              color: '#2563eb',
-              '&:hover': {
-                color: '#1d4ed8',
-              },
-            },
-            'h1, h2, h3, h4': {
-              color: '#171717',
-              fontWeight: '700',
-            },
-            code: {
-              color: '#171717',
-              backgroundColor: '#f3f4f6',
-              padding: '0.25rem',
-              borderRadius: '0.25rem',
-              fontWeight: '400',
-            },
-          },
+      container: {
+        center: true,
+        padding: {
+          DEFAULT: '1rem',
+          sm: '2rem',
+          lg: '4rem',
+          xl: '5rem',
         },
-        invert: {
-          css: {
-            color: '#ededed',
-            'h1, h2, h3, h4': {
-              color: '#ffffff',
-            },
-            code: {
-              color: '#ffffff',
-              backgroundColor: '#374151',
-            },
-          },
+        screens: {
+          sm: '640px',
+          md: '768px',
+          lg: '1024px',
+          xl: '1280px',
         },
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
+  plugins: [],
 };
 
 export default config;
