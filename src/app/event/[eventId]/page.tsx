@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { Match } from "@/types/Match";
 import { Player } from "@/types/Player";
-import { 
+import {
   PlayerCategoryType,
   MatchStatusType,
   ValidationStatusType,
@@ -17,8 +17,9 @@ import EventHeader from "@/app/components/EventHeader";
 import StatsOverview from "@/app/components/StatsOverview";
 import TabNav from "@/app/components/TabNav";
 import PlayerRankings from "@/app/components/PlayerRankings";
-import MatchHistory from "@/app/components/MatchHistory";
+import EventMatchHistory from "@/app/components/EventMatchHistory";
 import EventStats from "@/app/components/EventStats";
+import EventRoundPairings from "@/app/components/EventRoundPairings";
 
 interface MatchDisplay {
   id: string;
@@ -49,7 +50,7 @@ async function getEvent(eventId: string): Promise<Event | null> {
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const data = JSON.parse(fileContent);
     const rawEvent = data.find((e: any) => e.id === eventId);
-    
+
     if (!rawEvent) return null;
 
     return {
@@ -137,7 +138,7 @@ async function getMatches(eventId: string, players: Player[]): Promise<Match[]> 
     const filePath = path.join(process.cwd(), 'data', 'matches', `${eventId}.json`);
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const { matches } = JSON.parse(fileContent);
-    
+
     return matches.map((match: any) => ({
       id: match.id,
       eventId: match.eventId,
@@ -207,7 +208,7 @@ export default async function EventPage({ params }: { params: { eventId: string 
     return (
       <div className="min-h-screen bg-onyx-50 dark:bg-onyx-950">
         <EventHeader event={eventData} />
-        
+
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
           {/* Stats Overview Section */}
           <div className="mb-8">
@@ -223,7 +224,7 @@ export default async function EventPage({ params }: { params: { eventId: string 
                   id: "matches",
                   label: "Matches",
                   content: matchesForDisplay.length > 0 ? (
-                    <MatchHistory matches={matchesForDisplay} />
+                    <EventMatchHistory matches={matchesForDisplay} />
                   ) : (
                     <div className="text-center py-8 text-onyx-500 dark:text-onyx-400">
                       No matches played yet.
@@ -251,7 +252,7 @@ export default async function EventPage({ params }: { params: { eventId: string 
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           {Object.entries(stats.categoryDistribution).map(([category, count]) => (
-                            <div 
+                            <div
                               key={category}
                               className="bg-onyx-50 rounded-lg p-4 dark:bg-onyx-800/50"
                             >
@@ -268,6 +269,20 @@ export default async function EventPage({ params }: { params: { eventId: string 
 
                       {/* Detailed Stats */}
                       <EventStats stats={stats} />
+                    </div>
+                  ),
+                },
+                {
+                  id: "pairings",
+                  label: "Pairings",
+                  content: (
+                    <div className="rounded-lg border border-onyx-200 dark:border-onyx-800">
+                      <EventRoundPairings
+                        eventId={eventId}
+                        currentRound={eventData.metadata?.currentRound || 1}
+                        matches={matches.filter(m => m.metadata?.round)}
+                        isLoading={false}
+                      />
                     </div>
                   ),
                 },

@@ -1,11 +1,29 @@
-import { Player, PlayerStatistics } from "@/lib/Player";
+"use client";
+
+import { Player } from "@/types/Player";
+import PlayerStatsError from "./PlayerStatsError";
 
 interface PlayerStatsProps {
   player: Player;
 }
 
 export default function PlayerStats({ player }: PlayerStatsProps) {
-  const stats = player.statistics;
+  if (!player) {
+    return <PlayerStatsError message="Player data not found" />;
+  }
+
+  // Handle potentially undefined values
+  const currentRating = player.currentRating || 0;
+  const category = player.category || "ONYX";
+  const stats = player.statistics || {
+    totalMatches: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    totalPR: 0,
+    averageDS: 0,
+    inactivityWeeks: 0
+  };
   
   // Calculate win rate
   const winRate = stats.totalMatches > 0
@@ -25,13 +43,13 @@ export default function PlayerStats({ player }: PlayerStatsProps) {
           Current Rating
         </h3>
         <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
-          {player.currentRating}
+          {currentRating}
         </p>
         <span
           className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-            ${getCategoryStyle(player.category)}`}
+            ${getCategoryStyle(category)}`}
         >
-          {player.category}
+          {category}
         </span>
       </div>
 

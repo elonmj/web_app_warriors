@@ -26,7 +26,7 @@ export class BaseRepository {
     }
   }
 
-  protected async writeJsonFile<T>(filePath: string, data: T): Promise<void> {
+  protected async writeJsonFile<T>(filePath: string, data: T, createBackup = true): Promise<void> {
     try {
       const fullPath = path.join(this.dataDir, filePath);
       const dirPath = path.dirname(fullPath);
@@ -38,6 +38,11 @@ export class BaseRepository {
       const tempPath = `${fullPath}.tmp`;
       await fs.writeFile(tempPath, JSON.stringify(data, null, 2));
       await fs.rename(tempPath, fullPath);
+
+      // Create backup only if requested and not already in backups directory
+      if (createBackup && !filePath.startsWith('backups/')) {
+        await this.createBackup(filePath, data);
+      }
     } catch (error) {
       const fileError = error as FileError;
       throw new Error(`Failed to write file ${filePath}: ${fileError.message}`);
@@ -54,14 +59,14 @@ export class BaseRepository {
   }
 
   protected async createBackup<T>(filePath: string, data: T): Promise<void> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupPath = path.join(
-      this.dataDir,
-      'backups',
-      `${path.basename(filePath, '.json')}_${timestamp}.json`
-    );
-    
-    await this.writeJsonFile(backupPath, data);
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `backups/${path.basename(filePath, '.json')}_${timestamp}.json`;
+      await this.writeJsonFile(backupPath, data, false); // Pass false to prevent recursive backup creation
+    } catch (error) {
+      // Log backup failure but don't throw - backups are non-critical
+      console.warn(`Failed to create backup for ${filePath}:`, error);
+    }
   }
 
   protected async listFiles(dir: string): Promise<string[]> {

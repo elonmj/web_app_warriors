@@ -1,110 +1,139 @@
+import { Suspense } from "react";
 import PlayerStats from "@/app/components/PlayerStats";
-import MatchHistory from "@/app/components/MatchHistory";
-import { Player } from "@/lib/Player";
+import PlayerMatchHistory from "@/app/components/PlayerMatchHistory";
+import HeadToHeadStats from "@/app/components/HeadToHeadStats";
+import PlayerStatsSkeleton from "@/app/components/PlayerStatsSkeleton";
+import PlayerProfileError from "@/app/components/PlayerProfileError";
+import { Player } from "@/types/Player";
+import { Body, Heading } from "@/components/ui/Typography";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
-// Mock player data for development
-const mockPlayer: Player = {
-  id: "player-1",
-  name: "John Doe",
-  currentRating: 1450,
-  category: "AMÉTHYSTE",
-  statistics: {
-    totalMatches: 25,
-    wins: 15,
-    draws: 5,
-    losses: 5,
-    totalPR: 55,
-    averageDS: 62.5,
-    inactivityWeeks: 1,
-  },
-  matches: [
-    {
-      date: "2025-02-06",
-      opponent: "player-2",
-      opponentRating: 1380,
-      result: {
-        score: [450, 380],
-        pr: 3,
-        pdi: 3,
-        ds: 18.4,
-      },
-      ratingChange: 15,
-      categoryAtTime: "AMÉTHYSTE",
-    },
-    {
-      date: "2025-02-01",
-      opponent: "player-3",
-      opponentRating: 1520,
-      result: {
-        score: [420, 450],
-        pr: 1,
-        pdi: 1,
-        ds: 7.1,
-      },
-      ratingChange: -8,
-      categoryAtTime: "AMÉTHYSTE",
-    },
-    {
-      date: "2025-01-28",
-      opponent: "player-4",
-      opponentRating: 1420,
-      result: {
-        score: [400, 400],
-        pr: 2,
-        pdi: 2,
-        ds: 0,
-      },
-      ratingChange: 0,
-      categoryAtTime: "ONYX",
-    },
-    // Add more match history as needed
-  ],
-};
+async function getPlayerData(playerId: string): Promise<Player> {
+  if (!playerId || typeof playerId !== 'string') {
+    throw new Error('Invalid player ID');
+  }
 
-export default function PlayerProfilePage({
+  if (!playerId.match(/^[a-zA-Z0-9-]+$/)) {
+    throw new Error('Invalid player ID format');
+  }
+
+  // In server components, we need absolute URLs
+  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+  const host = process.env.VERCEL_URL || 'localhost:3000';
+  const baseUrl = `${protocol}://${host}`;
+  
+  console.log('Server fetching player data:', {
+    playerId,
+    url: `${baseUrl}/api/players/${playerId}`
+  });
+
+  const response = await fetch(
+    `${baseUrl}/api/players/${playerId}`,
+    {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json'
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch player data');
+  }
+
+  return response.json();
+}
+
+export default async function PlayerProfilePage({
   params,
 }: {
   params: { playerId: string };
 }) {
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white shadow dark:bg-gray-800">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {mockPlayer.name}
-              </h1>
-              <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Player ID: {mockPlayer.id}
+  try {
+    const player = await getPlayerData(params.playerId);
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Header */}
+        <div className="bg-white shadow dark:bg-gray-800">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Link
+                    href="/rankings"
+                    className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                  >
+                    <ChevronLeftIcon className="w-4 h-4 mr-1" />
+                    Back to Rankings
+                  </Link>
+                </div>
+                <Heading.H1 className="text-gray-900 dark:text-white">
+                  {player.name}
+                </Heading.H1>
+                <Body.Text className="text-gray-600 dark:text-gray-400">
+                  Player ID: {player.id}
+                </Body.Text>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-8">
-          {/* Statistics Section */}
-          <section>
-            <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">
-              Player Statistics
-            </h2>
-            <PlayerStats player={mockPlayer} />
-          </section>
+        {/* Main Content */}
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="space-y-8">
+            {/* Overview Section */}
+            <section>
+              <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
+                Overview
+              </Heading.H2>
+              <Suspense fallback={<PlayerStatsSkeleton />}>
+                <PlayerStats player={player} />
+              </Suspense>
+            </section>
 
-          {/* Match History Section */}
-          <section>
-            <h2 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">
-              Match History
-            </h2>
-            <MatchHistory matches={mockPlayer.matches} playerId={mockPlayer.id} />
-          </section>
+            {/* Head-to-Head Records Section */}
+            <section>
+              <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
+                Head-to-Head Records
+              </Heading.H2>
+              <Suspense fallback={<PlayerStatsSkeleton />}>
+                <HeadToHeadStats playerId={player.id} />
+              </Suspense>
+            </section>
+
+            {/* Match History Section */}
+            <section>
+              <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
+                Match History
+              </Heading.H2>
+              <Suspense fallback={<PlayerStatsSkeleton />}>
+                <PlayerMatchHistory playerId={player.id} />
+              </Suspense>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('Player profile error:', {
+      playerId: params.playerId,
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    let errorMessage = "Failed to load player profile";
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid player ID')) {
+        errorMessage = `Invalid player ID: ${params.playerId}`;
+      } else if (error.message.includes('fetch')) {
+        errorMessage = `Network error: Could not load player data. Please try again.`;
+      }
+    }
+
+    return (
+      <PlayerProfileError message={errorMessage} />
+    );
+  }
 }

@@ -3,32 +3,126 @@
     {
       "id": "elie-2025",
       "name": "Elie",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "losses": 1,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 100,
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-1",
+          "opponent": {
+            "id": "divin-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              204,
+              461
+            ],
+            "pr": 1,
+            "pdi": 1,
+            "ds": 100
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "divin-2025",
       "name": "Divin",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 100,
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-1",
+          "opponent": {
+            "id": "elie-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              461,
+              204
+            ],
+            "pr": 1,
+            "pdi": 1,
+            "ds": 100
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "hermann-2025",
@@ -36,14 +130,61 @@
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
-        "draws": 0,
+        "draws": 1,
         "losses": 0,
-        "totalPR": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 1,
+              "losses": 0,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-2",
+          "opponent": {
+            "id": "trinite-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              0
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1000,
+            "change": 0
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "trinite-2025",
@@ -51,44 +192,185 @@
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
-        "draws": 0,
+        "draws": 1,
         "losses": 0,
-        "totalPR": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 1,
+              "losses": 0,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-2",
+          "opponent": {
+            "id": "hermann-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              0
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1000,
+            "change": 0
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "geraldo-2025",
       "name": "Géraldo",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-3",
+          "opponent": {
+            "id": "oslie-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "oslie-2025",
       "name": "Oslie",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-3",
+          "opponent": {
+            "id": "geraldo-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "william-2025",
@@ -100,10 +382,19 @@
         "wins": 0,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": []
+      },
+      "matches": []
     },
     {
       "id": "lorinda-2025",
@@ -115,100 +406,391 @@
         "wins": 0,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": []
+      },
+      "matches": []
     },
     {
       "id": "oswalde-2025",
       "name": "Oswalde",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-5",
+          "opponent": {
+            "id": "pinocche-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "pinocche-2025",
       "name": "Pinocché",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-5",
+          "opponent": {
+            "id": "oswalde-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "foreol-2025",
       "name": "Foréol",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-6",
+          "opponent": {
+            "id": "joaida-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "joaida-2025",
       "name": "Joaïda",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-6",
+          "opponent": {
+            "id": "foreol-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "referil-2025",
       "name": "Référil",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 3,
+        "averageDS": 16,
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-7",
+          "opponent": {
+            "id": "rodrigue-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              223,
+              191
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 16
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "rodrigue-2025",
       "name": "Rodrigue",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "averageDS": 16,
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-7",
+          "opponent": {
+            "id": "referil-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              191,
+              223
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 16
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "fructueux-2025",
@@ -220,10 +802,19 @@
         "wins": 0,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": []
+      },
+      "matches": []
     },
     {
       "id": "alain-2025",
@@ -235,40 +826,143 @@
         "wins": 0,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": []
+      },
+      "matches": []
     },
     {
       "id": "naofal-2025",
       "name": "Naofal",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "losses": 1,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 8,
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-9",
+          "opponent": {
+            "id": "mya-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              350,
+              380
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 8
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "mya-2025",
       "name": "Mya",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 8,
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-9",
+          "opponent": {
+            "id": "naofal-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              380,
+              350
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 8
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "prosper-2025",
@@ -276,149 +970,619 @@
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
         "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "averageDS": 51,
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-10",
+          "opponent": {
+            "id": "leonel-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              102,
+              317
+            ],
+            "pr": 0,
+            "pdi": 0.513126491646778,
+            "ds": 51
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1000,
+            "change": 0
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "leonel-2025",
       "name": "Léonel",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 3,
+        "averageDS": 51,
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-10",
+          "opponent": {
+            "id": "prosper-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              317,
+              102
+            ],
+            "pr": 3,
+            "pdi": 0.513126491646778,
+            "ds": 51
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "raissa-2025",
       "name": "Raissa",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-11",
+          "opponent": {
+            "id": "stwill-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "stwill-2025",
       "name": "StWill",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-11",
+          "opponent": {
+            "id": "raissa-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "mickael-2025",
       "name": "Mickaël",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "losses": 1,
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 100,
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-12",
+          "opponent": {
+            "id": "charbel-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              154,
+              512
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 100
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "charbel-2025",
       "name": "Charbel",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
-        "totalPR": 0,
-        "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "forfeits": {
+          "given": 0,
+          "received": 0
+        },
+        "totalPR": 1,
+        "averageDS": 100,
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 1
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-12",
+          "opponent": {
+            "id": "mickael-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              512,
+              154
+            ],
+            "pr": 1,
+            "pdi": 0,
+            "ds": 100
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "kevin-2025",
       "name": "Kevin",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-13",
+          "opponent": {
+            "id": "joy-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "joy-2025",
       "name": "Joy",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-13",
+          "opponent": {
+            "id": "kevin-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "elonm-2025",
       "name": "Elonm",
-      "currentRating": 1000,
+      "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
+        "totalMatches": 1,
         "wins": 0,
         "draws": 0,
-        "losses": 0,
-        "totalPR": 0,
+        "losses": 1,
+        "forfeits": {
+          "given": 1,
+          "received": 0
+        },
+        "totalPR": 3,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1000,
+        "worstRating": 980,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 0,
+              "draws": 0,
+              "losses": 1,
+              "pointsEarned": 3
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-14",
+          "opponent": {
+            "id": "solene-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              0,
+              1
+            ],
+            "pr": 3,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 980,
+            "change": -20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     },
     {
       "id": "solene-2025",
       "name": "Solène",
-      "currentRating": 1000,
+      "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 0,
-        "wins": 0,
+        "totalMatches": 1,
+        "wins": 1,
         "draws": 0,
         "losses": 0,
+        "forfeits": {
+          "given": 0,
+          "received": 1
+        },
         "totalPR": 0,
         "averageDS": 0,
-        "inactivityWeeks": 0
-      }
+        "inactivityWeeks": 0,
+        "bestRating": 1020,
+        "worstRating": 1000,
+        "categoryHistory": [],
+        "eventParticipation": [
+          {
+            "eventId": "mentoring-league-2025-02",
+            "finalRank": 0,
+            "matchesPlayed": 1,
+            "performance": {
+              "wins": 1,
+              "draws": 0,
+              "losses": 0,
+              "pointsEarned": 0
+            }
+          }
+        ]
+      },
+      "matches": [
+        {
+          "date": "2025-02-02",
+          "eventId": "mentoring-league-2025-02",
+          "matchId": "match-14",
+          "opponent": {
+            "id": "elonm-2025",
+            "ratingAtTime": 1000,
+            "categoryAtTime": "ONYX"
+          },
+          "result": {
+            "score": [
+              1,
+              0
+            ],
+            "pr": 0,
+            "pdi": 0,
+            "ds": 0
+          },
+          "ratingChange": {
+            "before": 1000,
+            "after": 1020,
+            "change": 20
+          },
+          "categoryAtTime": "ONYX"
+        }
+      ]
     }
   ]
 }

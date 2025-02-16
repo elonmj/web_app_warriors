@@ -1,7 +1,17 @@
 import { StatisticsCalculator, EventStatisticsCalculator, EventStatistics } from '../../lib/Statistics';
-import { Match, Player, PlayerMatch, Event } from '../..types';
+import { Match } from '@/types/Match';
+import { Event } from '@/types/Event';
+import { Player, PlayerMatch } from '@/types/Player';
+import { PlayerRepository } from '@/api/repository/playerRepository';
+import { EventTypeType, EventStatusType } from '@/types/Enums';
 
 export class StatisticsService {
+  private playerRepo: PlayerRepository;
+
+  constructor() {
+    this.playerRepo = new PlayerRepository();
+  }
+
   /**
    * Calculate and update player statistics
    */
@@ -11,34 +21,34 @@ export class StatisticsService {
     }
 
     // Get opponent data
-      const isPlayer1 = newMatch.player1.id === player.id;
-      const opponent = isPlayer1 ? newMatch.player2 : newMatch.player1;
-      const [playerScore, opponentScore] = isPlayer1 ?
-        newMatch.result.score :
-        [newMatch.result.score[1], newMatch.result.score[0]];
-  
-      // Create PlayerMatch object
-      const playerMatch: PlayerMatch = {
-        date: newMatch.date,
-        eventId: newMatch.eventId,
-        matchId: newMatch.id,
-        opponent: {
-          id: opponent.id,
-          ratingAtTime: opponent.ratingBefore,
-          categoryAtTime: opponent.categoryBefore
-        },
-        result: {
-          score: [playerScore, opponentScore],
-          pr: newMatch.result.pr,
-          pdi: newMatch.result.pdi,
-          ds: newMatch.result.ds
-        },
-        ratingChange: {
-          before: player.currentRating,
-          after: isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter,
-          change: (isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter) - player.currentRating
-        },
-        categoryAtTime: isPlayer1 ? newMatch.player1.categoryBefore : newMatch.player2.categoryBefore
+    const isPlayer1 = newMatch.player1.id === player.id;
+    const opponent = isPlayer1 ? newMatch.player2 : newMatch.player1;
+    const [playerScore, opponentScore] = isPlayer1 ?
+      newMatch.result.score :
+      [newMatch.result.score[1], newMatch.result.score[0]];
+
+    // Create PlayerMatch object
+    const playerMatch: PlayerMatch = {
+      date: newMatch.date,
+      eventId: newMatch.eventId,
+      matchId: newMatch.id,
+      opponent: {
+        id: opponent.id,
+        ratingAtTime: opponent.ratingBefore,
+        categoryAtTime: opponent.categoryBefore
+      },
+      result: {
+        score: [playerScore, opponentScore],
+        pr: newMatch.result.pr,
+        pdi: newMatch.result.pdi,
+        ds: newMatch.result.ds
+      },
+      ratingChange: {
+        before: player.currentRating,
+        after: isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter,
+        change: (isPlayer1 ? newMatch.player1.ratingAfter : newMatch.player2.ratingAfter) - player.currentRating
+      },
+      categoryAtTime: isPlayer1 ? newMatch.player1.categoryBefore : newMatch.player2.categoryBefore
     };
 
     // Update player's matches and statistics
@@ -48,31 +58,28 @@ export class StatisticsService {
       statistics: player.statistics
     };
 
-    // TODO: Implement logic to update player statistics based on the new match
-    // This is a placeholder, as the actual logic needs to be defined
-
     return updatedPlayer;
-    }
+  }
 
-    /**
-     * Calculate event statistics
-     */
-    async calculateEventStats(eventId: string, matches: Match[], players: Player[]): Promise<EventStatistics> {
-        // Filter matches for specific event
-        const eventMatches = matches.filter(match => match.eventId === eventId);
+  /**
+   * Calculate event statistics
+   */
+  async calculateEventStats(eventId: string, matches: Match[], players: Player[]): Promise<EventStatistics> {
+    // Filter matches for specific event
+    const eventMatches = matches.filter(match => match.eventId === eventId);
 
-        // Find the event
-        const event = {
-            id: eventId,
-            name: '', // Placeholder
-            startDate: new Date(), // Placeholder
-            endDate: new Date(), // Placeholder
-            type: 'league' as const, // Placeholder
-            type: 'league' as const, // TODO: Fetch correct event type
-        };
+    // Create a placeholder event with minimum required fields
+    const event: Event = {
+      id: eventId,
+      name: '', // Placeholder
+      startDate: new Date(), // Placeholder
+      endDate: new Date(), // Placeholder
+      type: 'league' as EventTypeType, // Using the correct type from Enums
+      status: 'open' as EventStatusType // Using the correct type from Enums
+    };
 
-        return EventStatisticsCalculator.calculate(event, eventMatches, players);
-    }
+    return EventStatisticsCalculator.calculate(event, eventMatches, players);
+  }
 
   /**
    * Calculate performance metrics for a player
@@ -95,9 +102,10 @@ export class StatisticsService {
       Number((statistics.totalPR / totalGames).toFixed(1)) : 0;
 
     // Calculate consistency (standard deviation of DS)
-    const dsValues = matches.map(m => m.result.ds);
+    const dsValues = matches.map((m: PlayerMatch) => m.result.ds);
     const avgDS = statistics.averageDS;
-    const variance = dsValues.reduce((acc, ds) => acc + Math.pow(ds - avgDS, 2), 0) / dsValues.length;
+    const variance = dsValues.reduce((acc: number, ds: number) => 
+      acc + Math.pow(ds - avgDS, 2), 0) / dsValues.length;
     const consistency = 100 - Number((Math.sqrt(variance)).toFixed(1));
 
     return {
@@ -151,5 +159,106 @@ export class StatisticsService {
       matchesPerWeek: Number((matches.length / totalWeeks).toFixed(1)),
       inactivityPeriods
     };
+  }
+
+  /**
+   * Get detailed player statistics including performance metrics,
+   * activity data, and historical trends
+   */
+  async getDetailedPlayerStatistics(playerId: string): Promise<{
+    performance: {
+      winRate: number;
+      averageDS: number;
+      prPerMatch: number;
+      consistency: number;
+    };
+    activity: {
+      totalMatches: number;
+      activeWeeks: number;
+      matchesPerWeek: number;
+      inactivityPeriods: number;
+    };
+    trends: {
+      ratingProgression: {
+        minRating: number;
+        maxRating: number;
+        averageRating: number;
+        volatility: number;
+      };
+      performanceByCategory: {
+        [category: string]: {
+          matches: number;
+          wins: number;
+          draws: number;
+          losses: number;
+          averageRatingChange: number;
+        };
+      };
+    };
+  }> {
+    const player = await this.playerRepo.getPlayer(playerId);
+    if (!player) {
+      throw new Error('Player not found');
+    }
+
+    const performance = await this.calculatePlayerPerformance(player);
+    const activity = await this.generateActivityReport(player);
+    
+    // Calculate rating trends
+    const ratingChanges = player.matches.map((m: PlayerMatch) => m.ratingChange);
+    const ratings = ratingChanges.map((r: { after: number }) => r.after);
+    const ratingProgression = {
+      minRating: Math.min(...ratings),
+      maxRating: Math.max(...ratings),
+      averageRating: ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length,
+      volatility: this.calculateRatingVolatility(ratingChanges)
+    };
+
+    // Calculate performance by category
+    const performanceByCategory = player.matches.reduce((acc: Record<string, any>, match: PlayerMatch) => {
+      const category = match.categoryAtTime;
+      if (!acc[category]) {
+        acc[category] = {
+          matches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          totalRatingChange: 0,
+        };
+      }
+
+      acc[category].matches++;
+      if (match.result.score[0] > match.result.score[1]) acc[category].wins++;
+      else if (match.result.score[0] < match.result.score[1]) acc[category].losses++;
+      else acc[category].draws++;
+      
+      acc[category].totalRatingChange += match.ratingChange.change;
+
+      return acc;
+    }, {});
+
+    // Calculate averages for each category
+    Object.keys(performanceByCategory).forEach(category => {
+      performanceByCategory[category].averageRatingChange = 
+        performanceByCategory[category].totalRatingChange / 
+        performanceByCategory[category].matches;
+      delete performanceByCategory[category].totalRatingChange;
+    });
+
+    return {
+      performance,
+      activity,
+      trends: {
+        ratingProgression,
+        performanceByCategory
+      }
+    };
+  }
+
+  private calculateRatingVolatility(ratingChanges: Array<{change: number}>): number {
+    const changes = ratingChanges.map(r => r.change);
+    const mean = changes.reduce((a, b) => a + b, 0) / changes.length;
+    const variance = changes.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / changes.length;
+    return Math.sqrt(variance);
   }
 }

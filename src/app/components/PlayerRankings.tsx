@@ -4,6 +4,7 @@ import { EventRanking, PlayerRanking } from "@/types/Ranking";
 import { PlayerCategory } from "@/types/Enums";
 import { TrophyIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from "@heroicons/react/24/outline";
 import { Body } from "@/components/ui/Typography";
+import Link from "next/link";
 
 interface PlayerRankingsProps {
   eventRanking: EventRanking;
@@ -81,9 +82,18 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({ eventRanking }) => {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4">
-                      <Body.Text variant="sm" className="font-medium">
-                        {ranking.playerDetails?.name || 'Unknown Player'}
-                      </Body.Text>
+                      <Link
+                        href={`/player/${ranking.playerId}`}
+                        className="group block"
+                        aria-label={`View ${ranking.playerDetails?.name || 'Unknown Player'}'s statistics`}
+                      >
+                        <Body.Text
+                          variant="sm"
+                          className="font-medium transition-colors group-hover:text-amethyste-600 dark:group-hover:text-amethyste-400 focus-visible:text-amethyste-600 dark:focus-visible:text-amethyste-400"
+                        >
+                          {ranking.playerDetails?.name || 'Unknown Player'}
+                        </Body.Text>
+                      </Link>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4">
                       <Body.Text variant="sm" className={`${getCategoryColor(ranking.category)}`}>
