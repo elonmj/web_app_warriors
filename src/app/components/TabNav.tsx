@@ -35,14 +35,13 @@ export default function TabNav({ tabs, defaultTab }: TabNavProps) {
                   }`}
                 aria-current={activeTab === tab.id ? "page" : undefined}
               >
-                <Body.Label className={`truncate ${
-                  activeTab === tab.id ? "text-amethyste-600 dark:text-amethyste-400" : ""
-                }`}>
+                <Body.Label className={`truncate ${activeTab === tab.id ? "text-amethyste-600 dark:text-amethyste-400" : ""
+                  }`}>
                   {tab.label}
                 </Body.Label>
                 {/* Active indicator ring for mobile tap states */}
                 <span className="absolute inset-0 rounded-md sm:rounded-none
-                  group-focus:ring-2 group-focus:ring-inset group-focus:ring-amethyste-500 sm:group-focus:ring-0" 
+                  group-focus:ring-2 group-focus:ring-inset group-focus:ring-amethyste-500 sm:group-focus:ring-0"
                 />
               </button>
             ))}
@@ -55,11 +54,10 @@ export default function TabNav({ tabs, defaultTab }: TabNavProps) {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={`transition-opacity duration-200 ${
-              activeTab === tab.id 
-                ? "opacity-100" 
+            className={`transition-opacity duration-200 ${activeTab === tab.id
+                ? "opacity-100"
                 : "absolute inset-0 opacity-0 pointer-events-none"
-            }`}
+              }`}
             role="tabpanel"
             aria-labelledby={`tab-${tab.id}`}
           >
