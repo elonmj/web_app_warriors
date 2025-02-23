@@ -1,4 +1,5 @@
 import { EventTypeType, EventStatusType } from './Enums';
+import type { EventRanking } from './Ranking';
 
 export interface ByeHistory {
   playerId: string;
@@ -11,6 +12,18 @@ export interface RoundStats {
   totalMatches: number;
   completedMatches: number;
   byePlayerId?: string;
+  rankings?: EventRanking | null | undefined;
+  completedAt?: string;  // ISO-8601 date of round completion
+}
+
+export interface RoundCompletion {
+  round: number;
+  timestamp: string;     // ISO-8601 date
+  totalMatches: number;
+  completionHistory?: { round: number; timestamp: string; totalMatches: number; completedMatches: number }[];
+  lastCompletedRound?: number;
+
+  completedMatches: number;
 }
 
 export interface EventMetadata {
@@ -18,10 +31,14 @@ export interface EventMetadata {
   totalMatches: number;
   currentRound: number;
   totalRounds: number;
+  maxRounds?: number;
   lastUpdated: string;
   roundDates?: { [round: number]: string };  // ISO-8601 dates for each round
   roundHistory: { [round: number]: RoundStats };
   byeHistory: ByeHistory[];
+  lastCompletedRound?: number;
+  completionHistory?: RoundCompletion[];
+  category?: string;
 }
 
 export interface Event {

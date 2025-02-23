@@ -1,10 +1,35 @@
 import { BaseRepository } from './BaseRepository';
 import { Event, CreateEventInput, UpdateEventInput } from '../../types/Event';
 import { Match } from '../../types/Match';
-import { RankingSnapshot } from '../../types/Ranking';
+import { EventRanking } from '../../types/Ranking';
+import { Player } from '../../types/Player';
+import { EventStatus } from '../../types/Enums';
+import path from 'path';
 
 export class EventRepository extends BaseRepository {
   private readonly EVENTS_FILE = 'events.json';
+  private readonly PLAYERS_FILE = 'players.json';
+
+  private getRoundMatchesPath(eventId: string, round: number): string {
+    return path.join('matches', eventId, `${round}.json`);
+  }
+
+  private getRoundRankingsPath(eventId: string, round: number): string {
+    return path.join('rankings', eventId, `${round}.json`);
+  }
+
+  async getPlayers(): Promise<Player[]> {
+    try {
+      const data = await this.readJsonFile<{ players: Player[] }>(this.PLAYERS_FILE);
+      return data.players || [];
+    } catch (error) {
+      if ((error as Error).message.includes('not found')) {
+        await this.writeJsonFile(this.PLAYERS_FILE, { players: [] });
+        return [];
+      }
+      throw error;
+    }
+  }
 
   async getAllEvents(): Promise<Event[]> {
     try {
@@ -12,7 +37,6 @@ export class EventRepository extends BaseRepository {
       return data.events;
     } catch (error) {
       if ((error as Error).message.includes('not found')) {
-        // Initialize empty events file if it doesn't exist
         await this.writeJsonFile(this.EVENTS_FILE, { events: [] });
         return [];
       }
@@ -28,58 +52,80 @@ export class EventRepository extends BaseRepository {
   async createEvent(input: CreateEventInput): Promise<Event> {
     return await this.withLock('events', async () => {
       const events = await this.getAllEvents();
-      
+
       const newEvent: Event = {
         id: `event-${Date.now()}`,
         name: input.name,
         startDate: input.startDate,
         endDate: input.endDate,
         type: input.type,
-        status: 'draft',
+        status: EventStatus.OPEN,
         metadata: {
           totalPlayers: 0,
           totalMatches: 0,
           currentRound: 0,
-          lastUpdated: new Date().toISOString()
+          totalRounds: 0,
+          lastUpdated: new Date().toISOString(),
+          roundHistory: {},
+          byeHistory: []
         }
       };
 
       events.push(newEvent);
       await this.writeJsonFile(this.EVENTS_FILE, { events });
 
-      // Create empty matches and rankings files for this event
-      await this.writeJsonFile(`matches/${newEvent.id}.json`, {
+      // Create initial files
+      await this.writeJsonFile(`matches/${newEvent.id}/info.json`, {
         eventId: newEvent.id,
-        matches: []
+        created: new Date().toISOString()
       });
-      
-      await this.writeJsonFile(`rankings/${newEvent.id}.json`, {
+
+      await this.writeJsonFile(`rankings/${newEvent.id}/info.json`, {
         eventId: newEvent.id,
-        lastUpdated: new Date().toISOString(),
-        rankings: []
+        created: new Date().toISOString()
       });
 
       return newEvent;
     });
   }
 
+
   async updateEvent(id: string, input: UpdateEventInput): Promise<Event> {
     return await this.withLock('events', async () => {
       const events = await this.getAllEvents();
       const eventIndex = events.findIndex(e => e.id === id);
-      
+
       if (eventIndex === -1) {
         throw new Error(`Event not found: ${id}`);
       }
 
-      const updatedEvent = {
-        ...events[eventIndex],
-        ...input,
-        metadata: {
-          ...events[eventIndex].metadata,
-          ...input.metadata,
-          lastUpdated: new Date().toISOString()
-        }
+      const currentEvent = events[eventIndex];
+
+      // Ensure metadata exists and all required fields are preserved
+      const currentMetadata = currentEvent.metadata || {
+        totalPlayers: 0,
+        totalMatches: 0,
+        currentRound: 0,
+        totalRounds: 0,
+        lastUpdated: new Date().toISOString(),
+        roundHistory: {},
+        byeHistory: []
+      };
+
+      const updatedMetadata = {
+        ...currentMetadata,
+        ...(input.metadata || {}),
+        lastUpdated: new Date().toISOString()
+      };
+
+      const updatedEvent: Event = {
+        ...currentEvent,
+        ...(input.name && { name: input.name }),
+        ...(input.startDate && { startDate: input.startDate }),
+        ...(input.endDate && { endDate: input.endDate }),
+        ...(input.type && { type: input.type }),
+        ...(input.status && { status: input.status }),
+        metadata: updatedMetadata
       };
 
       events[eventIndex] = updatedEvent;
@@ -91,7 +137,41 @@ export class EventRepository extends BaseRepository {
 
   async getEventMatches(eventId: string): Promise<Match[]> {
     try {
-      const data = await this.readJsonFile<{ matches: Match[] }>(`matches/${eventId}.json`);
+      // First try round-based structure
+      const event = await this.getEvent(eventId);
+      if (!event) throw new Error(`Event not found: ${eventId}`);
+
+      const rounds = Array.from(
+        { length: event.metadata?.totalRounds || 0 },
+        (_, i) => i + 1
+      );
+
+      const allMatches: Match[] = [];
+      for (const round of rounds) {
+        try {
+          const roundMatches = await this.getRoundMatches(eventId, round);
+          allMatches.push(...roundMatches);
+        } catch (error) {
+          // Skip if round file doesn't exist
+          if (!(error as Error).message.includes('not found')) {
+            throw error;
+          }
+        }
+      }
+
+      return allMatches;
+    } catch (error) {
+      if ((error as Error).message.includes('not found')) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async getRoundMatches(eventId: string, round: number): Promise<Match[]> {
+    try {
+      const filePath = this.getRoundMatchesPath(eventId, round);
+      const data = await this.readJsonFile<{ matches: Match[] }>(filePath);
       return data.matches;
     } catch (error) {
       if ((error as Error).message.includes('not found')) {
@@ -102,47 +182,95 @@ export class EventRepository extends BaseRepository {
   }
 
   async addEventMatch(eventId: string, match: Match): Promise<void> {
-    return await this.withLock(`matches-${eventId}`, async () => {
-      const matches = await this.getEventMatches(eventId);
-      matches.push(match);
-      
-      await this.writeJsonFile(`matches/${eventId}.json`, {
+    const round = match.metadata.round;
+    if (!round) {
+      throw new Error('Match must have a round number');
+    }
+
+    return await this.withLock(`matches-${eventId}-${round}`, async () => {
+      const roundMatches = await this.getRoundMatches(eventId, round);
+      roundMatches.push(match);
+
+      const filePath = this.getRoundMatchesPath(eventId, round);
+      await this.writeJsonFile(filePath, {
         eventId,
-        matches
+        round,
+        matches: roundMatches
       });
 
       // Update event metadata
       const event = await this.getEvent(eventId);
-      if (event) {
-        await this.updateEvent(eventId, {
-          id: eventId,
-          metadata: {
-            ...event.metadata,
-            totalMatches: matches.length
-          }
-        });
+      if (event && event.metadata) {
+        const allMatches = await this.getEventMatches(eventId);
+        const metadata = {
+          ...event.metadata,
+          totalMatches: allMatches.length
+        };
+        await this.updateEvent(eventId, { id: eventId, metadata });
       }
     });
   }
 
-  async saveRankingSnapshot(eventId: string, snapshot: RankingSnapshot): Promise<void> {
-    const filename = `rankings/snapshots/${eventId}/${Date.now()}.json`;
-    await this.writeJsonFile(filename, snapshot);
+  async updateEventMatch(eventId: string, matchId: string, updates: Partial<Match>): Promise<Match> {
+    const event = await this.getEvent(eventId);
+    if (!event || !event.metadata) throw new Error(`Event not found: ${eventId}`);
+
+    // Find the match in the current round first
+    const currentRound = event.metadata.currentRound;
+    if (!currentRound) throw new Error('Event has no current round');
+
+    return await this.withLock(`matches-${eventId}-${currentRound}`, async () => {
+      const roundMatches = await this.getRoundMatches(eventId, currentRound);
+      const matchIndex = roundMatches.findIndex(m => m.id === matchId);
+
+      if (matchIndex === -1) {
+        throw new Error(`Match not found: ${matchId}`);
+      }
+
+      const updatedMatch = {
+        ...roundMatches[matchIndex],
+        ...updates
+      };
+
+      roundMatches[matchIndex] = updatedMatch;
+
+      const filePath = this.getRoundMatchesPath(eventId, currentRound);
+      await this.writeJsonFile(filePath, {
+        eventId,
+        round: currentRound,
+        matches: roundMatches
+      });
+
+      return updatedMatch;
+    });
   }
 
-  async getEventRankingSnapshots(eventId: string): Promise<RankingSnapshot[]> {
+  async getRoundRankings(eventId: string, round: number): Promise<EventRanking | null> {
     try {
-      const files = await this.listFiles(`rankings/snapshots/${eventId}`);
-      const snapshots = await Promise.all(
-        files.map(file => 
-          this.readJsonFile<RankingSnapshot>(`rankings/snapshots/${eventId}/${file}`)
-        )
-      );
-      return snapshots.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-    } catch {
-      return [];
+      const filePath = this.getRoundRankingsPath(eventId, round);
+      return await this.readJsonFile<EventRanking>(filePath);
+    } catch (error) {
+      if ((error as Error).message.includes('not found')) {
+        return null;
+      }
+      throw error;
     }
   }
+
+  async saveRoundRankings(eventId: string, round: number, rankings: EventRanking): Promise<void> {
+    const filePath = this.getRoundRankingsPath(eventId, round);
+    await this.writeJsonFile(filePath, {
+      ...rankings,
+      lastUpdated: new Date().toISOString()
+    });
+  }
+  async deleteRoundData(eventId: string, round: number): Promise<void> {
+    const matchesFilePath = this.getRoundMatchesPath(eventId, round);
+    const rankingsFilePath = this.getRoundRankingsPath(eventId, round);
+
+    await this.deleteFile(matchesFilePath);
+    await this.deleteFile(rankingsFilePath);
+  }
+
+
 }

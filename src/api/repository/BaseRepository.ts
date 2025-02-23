@@ -83,6 +83,21 @@ export class BaseRepository {
     }
   }
 
+  protected async deleteFile(filePath: string): Promise<void> {
+    try {
+      const fullPath = path.join(this.dataDir, filePath);
+      await fs.unlink(fullPath);
+    } catch (error) {
+      const fileError = error as FileError;
+      if (fileError.code === 'ENOENT') {
+        // File not found, which is fine for delete operation
+        return;
+      }
+      throw error;
+    }
+  }
+
+
   // Lock file mechanism for concurrent write operations
   protected async acquireLock(resourceId: string): Promise<void> {
     const lockFile = path.join(this.dataDir, 'locks', `${resourceId}.lock`);

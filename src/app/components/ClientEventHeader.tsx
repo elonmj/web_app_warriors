@@ -5,6 +5,7 @@ import { EventStatus } from "@/types/Enums";
 import { format } from "date-fns";
 import { CalendarIcon, UsersIcon, PlusIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { Heading, Body } from "@/components/ui/Typography";
+import CompleteRoundButton from "./CompleteRoundButton";
 
 interface ClientEventHeaderProps {
   event: Event;
@@ -46,23 +47,49 @@ export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
-            <button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold 
-              text-onyx-900 shadow-sm ring-1 ring-inset ring-onyx-300 hover:bg-onyx-50 
-              dark:bg-onyx-800 dark:text-white dark:ring-onyx-700 dark:hover:bg-onyx-700 
-              transition-colors gap-2"
-            >
-              <PencilIcon className="w-4 h-4" />
-              <span>Edit Event</span>
-            </button>
-            <button className="inline-flex items-center rounded-md bg-amethyste-500 px-3 py-2 text-sm 
-              font-semibold text-white shadow-sm hover:bg-amethyste-600 focus:outline-none 
-              focus:ring-2 focus:ring-amethyste-500 focus:ring-offset-2 dark:hover:bg-amethyste-600 
-              transition-colors gap-2"
-            >
-              <PlusIcon className="w-4 h-4" />
-              <span>Add Match</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <CompleteRoundButton
+              event={event}
+              totalMatches={event.metadata?.totalMatches || 0}
+              completedMatches={event.metadata?.roundHistory?.[event.metadata.currentRound]?.completedMatches || 0}
+            />
+            <div className="flex gap-3">
+              {event.metadata?.currentRound === 1 && event.metadata?.totalMatches === 0 ? (
+                <button 
+                  onClick={() => {
+                    fetch(`/api/events/${event.id}/rounds/generate`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        options: {
+                          isFirstRound: true,
+                          avoidRematches: true,
+                          balanceCategories: true
+                        }
+                      })
+                    });
+                  }}
+                  className="inline-flex items-center rounded-md bg-amethyste-500 px-3 py-2 text-sm
+                    font-semibold text-white shadow-sm hover:bg-amethyste-600 focus:outline-none
+                    focus:ring-2 focus:ring-amethyste-500 focus:ring-offset-2 dark:hover:bg-amethyste-600
+                    transition-colors gap-2"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span>Configure First Round</span>
+                </button>
+              ) : (
+                <button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold
+                  text-onyx-900 shadow-sm ring-1 ring-inset ring-onyx-300 hover:bg-onyx-50
+                  dark:bg-onyx-800 dark:text-white dark:ring-onyx-700 dark:hover:bg-onyx-700
+                  transition-colors gap-2"
+                >
+                  <PencilIcon className="w-4 h-4" />
+                  <span>Edit Event</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         

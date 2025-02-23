@@ -2,10 +2,7 @@
 export type {
   Player,
   PlayerMatch,
-  PlayerStatistics,
-  UpdatePlayerCategoryInput,
-  UpdatePlayerRatingInput,
-  UpdatePlayerStatisticsInput
+  PlayerStatistics
 } from '../types/Player';
 
 export type { Match, MatchScore, MatchResult } from '../types/Match';
@@ -18,3 +15,4 @@ export type { EventStatistics } from './Statistics';
 export { RatingSystem } from './RatingSystem';
 export { StatisticsCalculator, EventStatisticsCalculator } from './Statistics';
 export { CategoryManager } from './CategoryManager';
+export { MatchManager } from './MatchManager';

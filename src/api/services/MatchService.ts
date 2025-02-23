@@ -11,17 +11,17 @@ import { RatingSystem } from '../../lib/RatingSystem';
 import { CategoryManager } from '../../lib/CategoryManager';
 import { StatisticsCalculator } from '../../lib/Statistics';
 import { PlayerRepository } from '../repository/playerRepository';
-import { MatchRepository } from '../repository/MatchRepository';
+import { EventRepository } from '../repository/eventRepository';
 
 export class MatchService {
   private ratingSystem: RatingSystem;
   private playerRepository: PlayerRepository;
-  private matchRepository: MatchRepository;
+  private eventRepository: EventRepository;
 
   constructor(ratingSystemConfig = {}) {
     this.ratingSystem = new RatingSystem(ratingSystemConfig);
     this.playerRepository = new PlayerRepository();
-    this.matchRepository = new MatchRepository();
+    this.eventRepository = new EventRepository();
 
     // Initialize repositories
     this.initializeRepositories().catch(error => {
@@ -36,19 +36,35 @@ export class MatchService {
 
   async createMatch(input: CreateMatchInput): Promise<Match> {
     try {
-      const { player1Id, player2Id, eventId, isRandom = false, round = 1 } = input;
-      const now = new Date().toISOString();
+      const { player1Id, player2Id, eventId, isRandom = false, round } = input;
+      
+      // Verify event and round
+      const event = await this.eventRepository.getEvent(eventId);
+      if (!event || !event.metadata) {
+        throw new Error('Event not found');
+      }
 
-      const player1 = await this.playerRepository.getPlayer(player1Id);
-      const player2 = await this.playerRepository.getPlayer(player2Id);
+      if (!round) {
+        throw new Error('Round number is required');
+      }
+
+      if (round !== event.metadata.currentRound) {
+        throw new Error('Can only create matches in current round');
+      }
+
+      const now = new Date().toISOString();
+      const [player1, player2] = await Promise.all([
+        this.playerRepository.getPlayer(player1Id),
+        this.playerRepository.getPlayer(player2Id)
+      ]);
 
       if (!player1 || !player2) {
         throw new Error(`Players not found: ${!player1 ? player1Id : player2Id}`);
       }
 
       const match: Match = {
-        id: `${Date.now()}-${player1Id}-${player2Id}`,
-        eventId: eventId,
+        id: `${eventId}-R${round}-${Date.now()}-${player1Id}-${player2Id}`,
+        eventId,
         date: now.split('T')[0],
         player1: {
           id: player1.id,
@@ -66,14 +82,14 @@ export class MatchService {
         },
         status: "pending" as MatchStatusType,
         metadata: {
-          round: round,
-          isRandom: isRandom,
+          round,
+          isRandom,
           createdAt: now,
           updatedAt: now
         }
       };
 
-      await this.matchRepository.updateMatch(match);
+      await this.eventRepository.addEventMatch(eventId, match);
       return match;
     } catch (error) {
       console.error('Error creating match:', error);
@@ -105,6 +121,16 @@ export class MatchService {
     player2Update: Partial<Player>; 
   }> {
     try {
+      // Verify event and round
+      const event = await this.eventRepository.getEvent(match.eventId);
+      if (!event || !event.metadata) {
+        throw new Error('Event not found');
+      }
+
+      if (match.metadata.round !== event.metadata.currentRound) {
+        throw new Error('Can only update matches in current round');
+      }
+
       const { score } = input;
       const now = new Date().toISOString();
 
@@ -206,7 +232,7 @@ export class MatchService {
       };
 
       // Save all updates
-      await this.matchRepository.updateMatch(updatedMatch);
+      await this.eventRepository.updateEventMatch(match.eventId, match.id, updatedMatch);
 
       const player1Update = { 
         id: match.player1.id,
@@ -220,12 +246,12 @@ export class MatchService {
       };
 
       // Update players
-      await this.playerRepository.updatePlayer(player1Update.id, player1Update);
-      await this.playerRepository.updatePlayer(player2Update.id, player2Update);
-      
-      // Add match to player histories
-      await this.playerRepository.addMatchToPlayer(match.player1.id, playerMatch1);
-      await this.playerRepository.addMatchToPlayer(match.player2.id, playerMatch2);
+      await Promise.all([
+        this.playerRepository.updatePlayer(player1Update.id, player1Update),
+        this.playerRepository.updatePlayer(player2Update.id, player2Update),
+        this.playerRepository.addMatchToPlayer(match.player1.id, playerMatch1),
+        this.playerRepository.addMatchToPlayer(match.player2.id, playerMatch2)
+      ]);
 
       return {
         updatedMatch,
@@ -235,6 +261,34 @@ export class MatchService {
     } catch (error) {
       console.error('Error processing match result:', error);
       throw new Error('Failed to process match result');
+    }
+  }
+
+  async getMatchById(eventId: string, matchId: string): Promise<Match | null> {
+    try {
+      const event = await this.eventRepository.getEvent(eventId);
+      if (!event || !event.metadata) {
+        throw new Error('Event not found');
+      }
+
+      // Check current round first
+      const currentRound = event.metadata.currentRound;
+      const matches = await this.eventRepository.getRoundMatches(eventId, currentRound);
+      const match = matches.find(m => m.id === matchId);
+      if (match) return match;
+
+      // If not found, check other rounds
+      for (let round = 1; round <= event.metadata.totalRounds; round++) {
+        if (round === currentRound) continue;
+        const roundMatches = await this.eventRepository.getRoundMatches(eventId, round);
+        const match = roundMatches.find(m => m.id === matchId);
+        if (match) return match;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error getting match:', error);
+      return null;
     }
   }
 }

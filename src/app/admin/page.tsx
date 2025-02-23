@@ -1,6 +1,42 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AdminPasswordDialog from "@/app/components/AdminPasswordDialog";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [showDialog, setShowDialog] = useState(false);
+  const [targetPath, setTargetPath] = useState("");
+
+  const handleClick = (path: string) => {
+    setTargetPath(path);
+    setShowDialog(true);
+  };
+
+  const handlePasswordConfirm = async (password: string) => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid password');
+      }
+
+      // If password is valid, navigate to the target page
+      setShowDialog(false);
+      router.push(targetPath);
+    } catch (error) {
+      console.error('Password verification failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -24,23 +60,11 @@ export default function AdminDashboardPage() {
               Create, modify, or close events. Review event statistics and history.
             </p>
             <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <button
+                onClick={() => handleClick('/admin/events')}
+                className="inline-block rounded bg-amethyste-600 px-4 py-2 text-sm font-medium text-white hover:bg-amethyste-700"
+              >
                 Manage Events
-              </button>
-            </div>
-          </div>
-
-          {/* Dispute Resolution Card */}
-          <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Dispute Resolution
-            </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Handle match result disputes and player complaints.
-            </p>
-            <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                View Disputes
               </button>
             </div>
           </div>
@@ -54,23 +78,11 @@ export default function AdminDashboardPage() {
               Manage player categories, review ratings, and handle appeals.
             </p>
             <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <button
+                onClick={() => handleClick('/admin/players')}
+                className="inline-block rounded bg-amethyste-600 px-4 py-2 text-sm font-medium text-white hover:bg-amethyste-700"
+              >
                 Manage Players
-              </button>
-            </div>
-          </div>
-
-          {/* System Configuration Card */}
-          <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              System Configuration
-            </h2>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Configure rating calculations, categories, and system parameters.
-            </p>
-            <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                Configure System
               </button>
             </div>
           </div>
@@ -84,7 +96,10 @@ export default function AdminDashboardPage() {
               View and modify match history, handle result corrections.
             </p>
             <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <button
+                onClick={() => handleClick('/admin/matches')}
+                className="inline-block rounded bg-amethyste-600 px-4 py-2 text-sm font-medium text-white hover:bg-amethyste-700"
+              >
                 View History
               </button>
             </div>
@@ -99,13 +114,24 @@ export default function AdminDashboardPage() {
               Access system logs, audit trails, and modification history.
             </p>
             <div className="mt-4">
-              <button className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <button
+                onClick={() => handleClick('/admin/logs')}
+                className="inline-block rounded bg-amethyste-600 px-4 py-2 text-sm font-medium text-white hover:bg-amethyste-700"
+              >
                 View Logs
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <AdminPasswordDialog
+        isOpen={showDialog}
+        onClose={() => setShowDialog(false)}
+        onConfirm={handlePasswordConfirm}
+        title="Admin Access Required"
+        description="Please enter your admin password to continue."
+      />
     </div>
   );
 }

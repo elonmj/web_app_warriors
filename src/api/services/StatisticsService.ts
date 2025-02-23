@@ -3,13 +3,16 @@ import { Match } from '@/types/Match';
 import { Event } from '@/types/Event';
 import { Player, PlayerMatch } from '@/types/Player';
 import { PlayerRepository } from '@/api/repository/playerRepository';
+import { EventRepository } from '@/api/repository/eventRepository';
 import { EventTypeType, EventStatusType } from '@/types/Enums';
 
 export class StatisticsService {
   private playerRepo: PlayerRepository;
+  private eventRepo: EventRepository;
 
   constructor() {
     this.playerRepo = new PlayerRepository();
+    this.eventRepo = new EventRepository();
   }
 
   /**
@@ -64,21 +67,24 @@ export class StatisticsService {
   /**
    * Calculate event statistics
    */
-  async calculateEventStats(eventId: string, matches: Match[], players: Player[]): Promise<EventStatistics> {
-    // Filter matches for specific event
-    const eventMatches = matches.filter(match => match.eventId === eventId);
+  async calculateEventStats(eventId: string): Promise<EventStatistics> {
+    // Get event and validate
+    const event = await this.eventRepo.getEvent(eventId);
+    if (!event || !event.metadata) {
+      throw new Error('Event not found or invalid');
+    }
 
-    // Create a placeholder event with minimum required fields
-    const event: Event = {
-      id: eventId,
-      name: '', // Placeholder
-      startDate: new Date(), // Placeholder
-      endDate: new Date(), // Placeholder
-      type: 'league' as EventTypeType, // Using the correct type from Enums
-      status: 'open' as EventStatusType // Using the correct type from Enums
-    };
+    // Get all matches from all rounds
+    const matches: Match[] = [];
+    for (let round = 1; round <= event.metadata.totalRounds; round++) {
+      const roundMatches = await this.eventRepo.getRoundMatches(eventId, round);
+      matches.push(...roundMatches);
+    }
 
-    return EventStatisticsCalculator.calculate(event, eventMatches, players);
+    // Get all players involved in the event
+    const players = await this.eventRepo.getPlayers();
+
+    return EventStatisticsCalculator.calculate(event, matches, players);
   }
 
   /**

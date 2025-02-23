@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EventService } from '@/api/services/EventService';
+import { EventRepository } from '@/api/repository/eventRepository';
 
-const eventService = new EventService();
+const eventRepository = new EventRepository();
 
 export async function GET(
   request: NextRequest,
@@ -10,26 +10,48 @@ export async function GET(
   try {
     const { eventId } = params;
 
-    // Get current round number
-    const currentRound = await eventService.getCurrentRound(eventId);
-
-    // Get pairings for the current round
-    const pairings = await eventService.getRoundPairings(eventId, currentRound);
-
-    return NextResponse.json({
-      currentRound,
-      pairings
-    });
-  } catch (error: any) {
-    console.error('Error getting current round:', error);
-
-    if (error.message === 'Event not found') {
+    // Get event to check existence and metadata
+    const event = await eventRepository.getEvent(eventId);
+    if (!event || !event.metadata) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }
       );
     }
 
+    const currentRound = event.metadata.currentRound;
+
+    // Get matches for current round
+    const matches = await eventRepository.getRoundMatches(eventId, currentRound);
+    
+    // Calculate round statistics
+    const stats = {
+      totalMatches: matches.length,
+      completedMatches: matches.filter(m => m.status === 'completed').length,
+      pendingMatches: matches.filter(m => m.status === 'pending').length,
+    };
+
+    // Get round metadata from event
+    const roundStats = event.metadata.roundHistory[currentRound] || {
+      date: event.metadata.roundDates?.[currentRound],
+      totalMatches: stats.totalMatches,
+      completedMatches: stats.completedMatches
+    };
+
+    return NextResponse.json({
+      currentRound,
+      matches,
+      metadata: {
+        ...stats,
+        scheduledDate: roundStats.date,
+        byePlayerId: roundStats.byePlayerId,
+        roundProgress: stats.completedMatches / stats.totalMatches,
+        status: stats.completedMatches === stats.totalMatches ? 'completed' : 'in-progress'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting current round:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

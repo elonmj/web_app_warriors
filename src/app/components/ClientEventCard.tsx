@@ -11,6 +11,33 @@ interface ClientEventCardProps {
 }
 
 export default function ClientEventCard({ event }: ClientEventCardProps) {
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case "open":
+        return {
+          text: "Active",
+          classes: "bg-green-100 text-green-800 ring-1 ring-green-600/20 dark:bg-green-900/30 dark:text-green-200"
+        };
+      case "in_progress":
+        return {
+          text: "In Progress",
+          classes: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-200"
+        };
+      case "closed":
+        return {
+          text: "Closed",
+          classes: "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
+        };
+      default:
+        return {
+          text: "Unknown",
+          classes: "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
+        };
+    }
+  };
+
+  const status = getStatusDisplay(event.status);
+
   return (
     <div 
       className="block rounded-lg border border-onyx-200 bg-white
@@ -26,13 +53,9 @@ export default function ClientEventCard({ event }: ClientEventCardProps) {
           </Heading.H3>
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
-              transition-colors duration-150 ${
-              event.status === "open"
-                ? "bg-green-100 text-green-800 ring-1 ring-green-600/20 dark:bg-green-900/30 dark:text-green-200"
-                : "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
-            }`}
+              transition-colors duration-150 ${status.classes}`}
           >
-            {event.status === "open" ? "Active" : "Closed"}
+            {status.text}
           </span>
         </div>
 

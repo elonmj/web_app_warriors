@@ -1,29 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RankingService } from '@/api/services/RankingService';
-import path from 'path';
-import fs from 'fs/promises';
+import { EventRepository } from '@/api/repository/eventRepository';
 
 const rankingService = new RankingService();
+const eventRepository = new EventRepository();
 
 /**
  * GET /api/rankings/[eventId]
- * Get event rankings
+ * Get event rankings with optional round parameter
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
-    // Try to read existing rankings first
-    const rankingsPath = path.join(process.cwd(), 'data', 'rankings', `${params.eventId}.json`);
+    const eventId = params.eventId;
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Check if event exists and get metadata
+    const event = await eventRepository.getEvent(eventId);
+    if (!event || !event.metadata) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
+    }
+
+    // Handle round parameter
+    const roundParam = searchParams.get('round');
+    const round = roundParam 
+      ? parseInt(roundParam, 10)
+      : event.metadata.currentRound;
+
+    // Validate round number
+    if (isNaN(round) || round < 1 || round > event.metadata.totalRounds) {
+      return NextResponse.json(
+        { error: 'Invalid round number' },
+        { status: 400 }
+      );
+    }
+
     try {
-      const rankingsData = await fs.readFile(rankingsPath, 'utf-8');
-      const rankings = JSON.parse(rankingsData);
-      return NextResponse.json(rankings);
+      // Get rankings for the specified round
+      const rankings = await rankingService.getRoundRankings(eventId, round);
+      return NextResponse.json({
+        ...rankings,
+        metadata: {
+          round,
+          isCurrentRound: round === event.metadata.currentRound,
+          totalRounds: event.metadata.totalRounds
+        }
+      });
     } catch (error) {
-      // If file doesn't exist or is invalid, recalculate rankings
-      const rankings = await rankingService.updateEventRankings(params.eventId);
-      return NextResponse.json(rankings);
+      // If rankings don't exist, calculate them
+      const rankings = await rankingService.updateRoundRankings(eventId, round);
+      return NextResponse.json({
+        ...rankings,
+        metadata: {
+          round,
+          isCurrentRound: round === event.metadata.currentRound,
+          totalRounds: event.metadata.totalRounds
+        }
+      });
     }
   } catch (error) {
     console.error('Error retrieving rankings:', error);
@@ -36,15 +74,50 @@ export async function GET(
 
 /**
  * POST /api/rankings/[eventId]
- * Force update event rankings
+ * Force update event rankings for a specific round
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
-    const rankings = await rankingService.updateEventRankings(params.eventId);
-    return NextResponse.json(rankings);
+    const eventId = params.eventId;
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Get event and validate
+    const event = await eventRepository.getEvent(eventId);
+    if (!event || !event.metadata) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
+    }
+
+    // Handle round parameter
+    const roundParam = searchParams.get('round');
+    const round = roundParam 
+      ? parseInt(roundParam, 10)
+      : event.metadata.currentRound;
+
+    // Validate round number
+    if (isNaN(round) || round < 1 || round > event.metadata.totalRounds) {
+      return NextResponse.json(
+        { error: 'Invalid round number' },
+        { status: 400 }
+      );
+    }
+
+    // Update rankings for the specified round
+    const rankings = await rankingService.updateRoundRankings(eventId, round);
+    
+    return NextResponse.json({
+      ...rankings,
+      metadata: {
+        round,
+        isCurrentRound: round === event.metadata.currentRound,
+        totalRounds: event.metadata.totalRounds
+      }
+    });
   } catch (error) {
     console.error('Error updating rankings:', error);
     return NextResponse.json(

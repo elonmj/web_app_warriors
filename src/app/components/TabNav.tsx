@@ -12,13 +12,42 @@ interface Tab {
 interface TabNavProps {
   tabs: Tab[];
   defaultTab?: string;
+  currentRound: number;
+  totalRounds: number;
+  onRoundChange: (round: number) => void;
 }
 
-export default function TabNav({ tabs, defaultTab }: TabNavProps) {
+export default function TabNav({ 
+  tabs, 
+  defaultTab,
+  currentRound,
+  totalRounds,
+  onRoundChange 
+}: TabNavProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0].id);
 
   return (
     <div>
+      {/* Round Navigation */}
+      <div className="flex justify-between items-center px-4 py-3 bg-onyx-50 dark:bg-onyx-800/50 border-b border-onyx-200 dark:border-onyx-800">
+        <div className="flex items-center gap-2">
+          <Body.Text variant="sm" className="text-onyx-600 dark:text-onyx-400">
+            Round
+          </Body.Text>
+          <select
+            value={currentRound}
+            onChange={(e) => onRoundChange(Number(e.target.value))}
+            className="bg-white dark:bg-onyx-900 border border-onyx-300 dark:border-onyx-700 rounded-md px-2 py-1 text-sm"
+          >
+            {Array.from({ length: totalRounds }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                Round {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Tab Navigation */}
       <div className="border-b border-onyx-200 dark:border-onyx-800 overflow-x-auto">
         <div className="min-w-full sm:min-w-0">
@@ -35,13 +64,14 @@ export default function TabNav({ tabs, defaultTab }: TabNavProps) {
                   }`}
                 aria-current={activeTab === tab.id ? "page" : undefined}
               >
-                <Body.Label className={`truncate ${activeTab === tab.id ? "text-amethyste-600 dark:text-amethyste-400" : ""
-                  }`}>
+                <Body.Label className={`truncate ${
+                  activeTab === tab.id ? "text-amethyste-600 dark:text-amethyste-400" : ""
+                }`}>
                   {tab.label}
                 </Body.Label>
                 {/* Active indicator ring for mobile tap states */}
                 <span className="absolute inset-0 rounded-md sm:rounded-none
-                  group-focus:ring-2 group-focus:ring-inset group-focus:ring-amethyste-500 sm:group-focus:ring-0"
+                  group-focus:ring-2 group-focus:ring-inset group-focus:ring-amethyste-500 sm:group-focus:ring-0" 
                 />
               </button>
             ))}
@@ -54,10 +84,11 @@ export default function TabNav({ tabs, defaultTab }: TabNavProps) {
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={`transition-opacity duration-200 ${activeTab === tab.id
-                ? "opacity-100"
+            className={`transition-opacity duration-200 ${
+              activeTab === tab.id 
+                ? "opacity-100" 
                 : "absolute inset-0 opacity-0 pointer-events-none"
-              }`}
+            }`}
             role="tabpanel"
             aria-labelledby={`tab-${tab.id}`}
           >
