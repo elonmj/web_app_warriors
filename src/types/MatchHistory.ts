@@ -1,4 +1,31 @@
 import { Match } from './Match';
+import { PlayerCategoryType } from './Enums';
+
+export interface MatchHistoryResponse {
+  matches: MatchDisplay[];
+  pagination: {
+    hasMore: boolean;
+    total: number;
+  };
+  statistics: {
+    totalMatches: number;
+    wins: number;
+    losses: number;
+    draws: number;
+  };
+}
+
+export interface PlayerDetails {
+  name: string;
+  iscUsername?: string;
+  category: PlayerCategoryType;
+}
+
+export interface MatchDisplay extends Match {
+  player1Details?: PlayerDetails;
+  player2Details?: PlayerDetails;
+}
+
 
 export interface PlayerPairHistory {
   playerIds: [string, string];  // Sorted for consistent lookup

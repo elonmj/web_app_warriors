@@ -1,16 +1,19 @@
 import { PlayerCategory, PlayerCategoryType } from "@/types/Enums";
 
-export const getCategoryColor = (category: PlayerCategoryType) => {
+
+
+export function getCategoryColor(category: PlayerCategoryType): string {
   switch (category) {
     case PlayerCategory.ONYX:
-      return "text-onyx-600 dark:text-onyx-400";
+      return "text-onyx-900 dark:text-white";
     case PlayerCategory.AMÉTHYSTE:
-      return "text-amethyste-600 dark:text-amethyste-400";
+      return "text-amethyst-900 dark:text-white";
     case PlayerCategory.TOPAZE:
-      return "text-topaze-600 dark:text-topaze-400";
+      return "text-topaz-900 dark:text-white";
     case PlayerCategory.DIAMANT:
-      return "text-diamant-600 dark:text-diamant-400";
+      return "text-diamond-900 dark:text-white";
     default:
-      return "text-onyx-600 dark:text-onyx-400";
+      return "text-onyx-400"; // Fallback color
   }
-};
+}
+

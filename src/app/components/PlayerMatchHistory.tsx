@@ -9,6 +9,7 @@ import PlayerStatsSkeleton from "./PlayerStatsSkeleton";
 import MatchHistoryError from "./MatchHistoryError";
 import { getCategoryColor } from "./utils/styles";
 import { MatchDisplay, MatchHistoryResponse } from "@/types/MatchHistory";
+import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
 interface PlayerMatchHistoryProps {
   playerId: string;
@@ -58,7 +59,7 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
       }
 
       const newData = await response.json();
-      setData(prevData => {
+      setData((prevData: MatchHistoryResponse | null) => {
         if (!prevData) return newData;
         return {
           matches: [...prevData.matches, ...newData.matches],
@@ -114,7 +115,7 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {matches.map((match) => (
+      {matches.map((match: MatchDisplay) => (
         <Link 
           key={match.id} 
           href={`/event/${match.eventId}/match/${match.id}`}
@@ -143,12 +144,17 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
           <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-4 items-center">
             {/* Player 1 */}
             <div className="text-center sm:text-left">
-              <Body.Text className="font-medium">
-                {match.player1Details.name}
-              </Body.Text>
-              <Body.Caption className={getCategoryColor(match.player1Details.category)}>
-                {match.player1Details.category}
-              </Body.Caption>
+              {match.player1Details && (
+                <>
+                  <PlayerNameDisplay
+                    name={match.player1Details.name}
+                    iscUsername={match.player1Details.iscUsername}
+                  />
+                  <Body.Caption className={getCategoryColor(match.player1Details.category)}>
+                    {match.player1Details.category}
+                  </Body.Caption>
+                </>
+              )}
             </div>
 
             {/* Score */}
@@ -170,12 +176,17 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
 
             {/* Player 2 */}
             <div className="text-center sm:text-right">
-              <Body.Text className="font-medium">
-                {match.player2Details.name}
-              </Body.Text>
-              <Body.Caption className={getCategoryColor(match.player2Details.category)}>
-                {match.player2Details.category}
-              </Body.Caption>
+              {match.player2Details && (
+                <>
+                  <PlayerNameDisplay
+                    name={match.player2Details.name}
+                    iscUsername={match.player2Details.iscUsername}
+                  />
+                  <Body.Caption className={getCategoryColor(match.player2Details.category)}>
+                    {match.player2Details.category}
+                  </Body.Caption>
+                </>
+              )}
             </div>
           </div>
 

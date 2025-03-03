@@ -3,6 +3,7 @@
     {
       "id": "elie-2025",
       "name": "Elie",
+      "iscUsername": "Colin22",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -65,6 +66,7 @@
     {
       "id": "divin-2025",
       "name": "Divin",
+      "iscUsername": "Divino",
       "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
@@ -189,6 +191,7 @@
     {
       "id": "trinite-2025",
       "name": "Trinité",
+      "iscUsername": "Gerse3",
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
@@ -313,6 +316,7 @@
     {
       "id": "oslie-2025",
       "name": "Oslie",
+      "iscUsername": "sessi7",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -399,6 +403,7 @@
     {
       "id": "lorinda-2025",
       "name": "Lorinda",
+      "iscUsername": "fofolle24",
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
@@ -423,6 +428,7 @@
     {
       "id": "oswalde-2025",
       "name": "Oswalde",
+      "iscUsername": "Oswalde",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -485,6 +491,7 @@
     {
       "id": "pinocche-2025",
       "name": "Pinocché",
+      "iscUsername": "Kpanligan",
       "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
@@ -547,6 +554,7 @@
     {
       "id": "foreol-2025",
       "name": "Foréol",
+      "iscUsername": "Jinwoo",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -609,6 +617,7 @@
     {
       "id": "joaida-2025",
       "name": "Joaïda",
+      "iscUsername": "Ida0505",
       "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
@@ -795,6 +804,7 @@
     {
       "id": "fructueux-2025",
       "name": "Fructueux",
+      "iscUsername": "Chezrac",
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
@@ -819,6 +829,7 @@
     {
       "id": "alain-2025",
       "name": "Alain",
+      "iscUsername": "bado",
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
@@ -846,18 +857,6 @@
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
-        "totalMatches": 1,
-        "wins": 0,
-        "draws": 0,
-        "losses": 1,
-        "forfeits": {
-          "given": 0,
-          "received": 0
-        },
-        "totalPR": 1,
-        "averageDS": 8,
-        "inactivityWeeks": 0,
-        "bestRating": 1000,
         "worstRating": 980,
         "categoryHistory": [],
         "eventParticipation": [
@@ -905,6 +904,7 @@
     {
       "id": "mya-2025",
       "name": "Mya",
+      "iscUsername": "Mya17",
       "currentRating": 1020,
       "category": "ONYX",
       "statistics": {
@@ -967,6 +967,7 @@
     {
       "id": "prosper-2025",
       "name": "Prosper",
+      "iscUsername": "friez",
       "currentRating": 1000,
       "category": "ONYX",
       "statistics": {
@@ -1215,6 +1216,7 @@
     {
       "id": "mickael-2025",
       "name": "Mickaël",
+      "iscUsername": "Fadel",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -1463,6 +1465,7 @@
     {
       "id": "elonm-2025",
       "name": "Elonm",
+      "iscUsername": "joselonm",
       "currentRating": 980,
       "category": "ONYX",
       "statistics": {
@@ -1525,6 +1528,7 @@
     {
       "id": "solene-2025",
       "name": "Solène",
+      "iscUsername": "20067s",
       "currentRating": 1020,
       "category": "ONYX",
       "statistics": {

@@ -5,6 +5,7 @@ import ClientEventTabs from "@/app/components/ClientEventTabs"; // Import the ne
 import { EventRepository } from "@/api/repository/eventRepository";
 import { EventStatisticsCalculator } from "@/lib/Statistics";
 import { EventRanking } from "@/types/Ranking";
+import { MatchDisplay } from "@/types/MatchHistory";
 
 const eventRepository = new EventRepository();
 
@@ -36,7 +37,7 @@ export default async function EventPage({
     ]);
 
     // Enrich matches with player details
-    const enrichedMatches = roundMatches.map(match => {
+    const enrichedMatches: MatchDisplay[] = roundMatches.map(match => {
       const player1 = players.find(p => p.id === match.player1.id);
       const player2 = players.find(p => p.id === match.player2.id);
 

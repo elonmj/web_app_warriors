@@ -1,11 +1,12 @@
 "use client";
 
 import TabNav from "./TabNav";
-import EventMatchHistory from "./EventMatchHistory";
+import EventRoundPairings from "./EventRoundPairings";
 import { PlayerRankings } from "./PlayerRankings";
 import EventStats from "./EventStats";
 import ProjectedPairings from "./ProjectedPairings";
 import { Match } from "@/types/Match";
+import { MatchDisplay } from "@/types/MatchHistory";
 import { Event } from "@/types/Event";
 import { Player } from "@/types/Player";
 import { EventRanking } from "@/types/Ranking";
@@ -14,7 +15,7 @@ import { EventStatistics } from "@/types/EventStatistics";
 interface ClientEventTabsProps {
   event: Event;
   currentRound: number;
-  roundMatches: Match[];
+  roundMatches: MatchDisplay[];
   roundRankings: EventRanking;
   stats: EventStatistics;
 }
@@ -26,6 +27,9 @@ export default function ClientEventTabs({
   roundRankings,
   stats
 }: ClientEventTabsProps) {
+  // Add console.log right at the start of the component
+  console.log(roundMatches);
+  
   const handleRoundChange = (round: number) => {
     const params = new URLSearchParams(window.location.search);
     params.set('round', round.toString());
@@ -44,13 +48,11 @@ export default function ClientEventTabs({
           label: "Matches",
           content: (
             <div className="p-4">
-              {roundMatches.length > 0 ? (
-                <EventMatchHistory matches={roundMatches} />
-              ) : (
-                <div className="text-center py-8 text-onyx-500 dark:text-onyx-400">
-                  No matches available for round {currentRound}
-                </div>
-              )}
+              <EventRoundPairings
+                eventId={event.id}
+                currentRound={currentRound}
+                matches={roundMatches}
+              />
             </div>
           ),
         },

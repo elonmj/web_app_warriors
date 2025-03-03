@@ -59,6 +59,7 @@ export interface PlayerStatistics {
 export interface Player {
   id: string;
   name: string;
+  iscUsername?: string;  // Optional to maintain compatibility with existing data
   currentRating: number;
   category: PlayerCategoryType;
   joinDate?: string;
@@ -69,12 +70,14 @@ export interface Player {
 
 export interface CreatePlayerInput {
   name: string;
+  iscUsername?: string;
   initialRating?: number;
   initialCategory?: PlayerCategoryType;
 }
 
 export interface UpdatePlayerInput {
   name?: string;
+  iscUsername?: string;
   currentRating?: number;
   category?: PlayerCategoryType;
   active?: boolean;

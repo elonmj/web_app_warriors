@@ -2,6 +2,8 @@ import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from './Enu
 
 interface PlayerMatchInfo {
   id: string;
+  name?: string;
+  category?: PlayerCategoryType;
   ratingBefore: number;
   ratingAfter: number;
   categoryBefore: PlayerCategoryType;

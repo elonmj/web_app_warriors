@@ -6,6 +6,7 @@ import { TrophyIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Body, Heading } from "@/components/ui/Typography";
 import { getCategoryColor } from "./utils/styles";
 import { MatchDisplay } from "@/types/MatchHistory";
+import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
 interface EventMatchHistoryProps {
   matches: MatchDisplay[];
@@ -56,14 +57,19 @@ const EventMatchHistory = ({ matches }: EventMatchHistoryProps) => {
           {/* Match Content */}
           <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-4 items-center">
             {/* Player 1 */}
-            <div className="text-center sm:text-left">
-              <Body.Text className="font-medium">
-                {match.player1Details.name}
-              </Body.Text>
-              <Body.Caption className={getCategoryColor(match.player1Details.category)}>
-                {match.player1Details.category}
-              </Body.Caption>
-            </div>
+           <div className="text-center sm:text-left">
+             {match.player1Details && (
+               <>
+                 <PlayerNameDisplay
+                   name={match.player1Details.name}
+                   iscUsername={match.player1Details.iscUsername}
+                 />
+                 <Body.Caption className={getCategoryColor(match.player1Details.category)}>
+                   {match.player1Details.category}
+                 </Body.Caption>
+               </>
+             )}
+           </div>
 
             {/* Score */}
             <div className="flex items-center justify-center gap-3">
@@ -83,14 +89,19 @@ const EventMatchHistory = ({ matches }: EventMatchHistoryProps) => {
             </div>
 
             {/* Player 2 */}
-            <div className="text-center sm:text-right">
-              <Body.Text className="font-medium">
-                {match.player2Details.name}
-              </Body.Text>
-              <Body.Caption className={getCategoryColor(match.player2Details.category)}>
-                {match.player2Details.category}
-              </Body.Caption>
-            </div>
+           <div className="text-center sm:text-right">
+             {match.player2Details && (
+               <>
+                 <PlayerNameDisplay
+                   name={match.player2Details.name}
+                   iscUsername={match.player2Details.iscUsername}
+                 />
+                 <Body.Caption className={getCategoryColor(match.player2Details.category)}>
+                   {match.player2Details.category}
+                 </Body.Caption>
+               </>
+             )}
+           </div>
           </div>
 
           {/* Match Stats */}
