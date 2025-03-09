@@ -1,7 +1,7 @@
 import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from './Enums';
 
 interface PlayerMatchInfo {
-  id: string;
+  id: number;
   name?: string;
   category?: PlayerCategoryType;
   ratingBefore: number;
@@ -31,7 +31,7 @@ interface MatchResult {
 }
 
 export interface Match {
-  id: string;
+  id: number;
   eventId: string;
   date: string;        // ISO-8601
   player1: PlayerMatchInfo;
@@ -48,26 +48,26 @@ export interface Match {
 
 export interface CreateMatchInput {
   eventId: string;
-  player1Id: string;
-  player2Id: string;
+  player1Id: number;
+  player2Id: number;
   isRandom?: boolean;
   round?: number;
 }
 
 export interface UpdateMatchResultInput {
-  matchId: string;
+  matchId: number;
   eventId: string;
   score: MatchScore;
   forfeit?: {
-    winner: string;
+    winner: number;  // Winner's player ID
     reason: string;
   };
 }
 
 export interface ApproveMatchResultInput {
-  matchId: string;
+  matchId: number;
   eventId: string;
-  playerId: string;
+  playerId: number;
 }
 
 // Constants

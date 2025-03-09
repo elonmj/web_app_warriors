@@ -12,7 +12,7 @@ import { MatchDisplay, MatchHistoryResponse } from "@/types/MatchHistory";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
 interface PlayerMatchHistoryProps {
-  playerId: string;
+  playerId: string | number;
 }
 
 const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
@@ -28,8 +28,8 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
         throw new Error('Invalid player ID');
       }
 
-      if (!playerId.match(/^[a-zA-Z0-9-]+$/)) {
-        throw new Error('Invalid player ID format');
+      if (!playerId.match(/^\d+$/)) {
+        throw new Error('Invalid player ID format - must be a number');
       }
 
       setIsLoading(true);
@@ -45,6 +45,7 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
 
       const encodedPlayerId = encodeURIComponent(playerId);
       const url = `/api/players/${encodedPlayerId}/matches?limit=${limit}&offset=${offset}`;
+      console.log('Fetching matches from:', url);
       
       console.log('Constructed URL:', url);
 

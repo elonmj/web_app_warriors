@@ -9,13 +9,13 @@ import { Body, Heading } from "@/components/ui/Typography";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
-async function getPlayerData(playerId: string): Promise<Player> {
+async function getPlayerData(playerId: string): Promise<Player & { id: number }> {
   if (!playerId || typeof playerId !== 'string') {
     throw new Error('Invalid player ID');
   }
 
-  if (!playerId.match(/^[a-zA-Z0-9-]+$/)) {
-    throw new Error('Invalid player ID format');
+  if (!playerId.match(/^\d+$/)) {
+    throw new Error('Invalid player ID format - must be a number');
   }
 
   // In server components, we need absolute URLs
@@ -98,7 +98,7 @@ export default async function PlayerProfilePage({
                 Head-to-Head Records
               </Heading.H2>
               <Suspense fallback={<PlayerStatsSkeleton />}>
-                <HeadToHeadStats playerId={player.id} />
+                <HeadToHeadStats playerId={Number(player.id)} />
               </Suspense>
             </section>
 

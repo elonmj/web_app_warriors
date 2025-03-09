@@ -28,7 +28,7 @@ export interface MatchDisplay extends Match {
 
 
 export interface PlayerPairHistory {
-  playerIds: [string, string];  // Sorted for consistent lookup
+  playerIds: [number, number];  // Sorted for consistent lookup
   rounds: number[];            // Rounds where they played
   lastMatchDate: string;       // ISO-8601 date
 }
@@ -38,16 +38,16 @@ export interface MatchHistoryRecord {
   history: PlayerPairHistory[];
 }
 
-export function createPlayerPairKey(player1Id: string, player2Id: string): string {
+export function createPlayerPairKey(player1Id: number, player2Id: number): string {
   // Sort IDs to ensure consistent key regardless of player order
-  const [id1, id2] = [player1Id, player2Id].sort();
+  const [id1, id2] = [player1Id, player2Id].sort((a, b) => a - b);
   return `${id1}-${id2}`;
 }
 
 export function getRecentMatches(
   history: PlayerPairHistory[],
-  player1Id: string,
-  player2Id: string,
+  player1Id: number,
+  player2Id: number,
   lookbackRounds: number = 3
 ): number[] {
   const pair = history.find(h => 
@@ -65,8 +65,8 @@ export function getRecentMatches(
 
 export function shouldAvoidRematch(
   history: PlayerPairHistory[],
-  player1Id: string,
-  player2Id: string,
+  player1Id: number,
+  player2Id: number,
   currentRound: number,
   minRoundsBetweenMatches: number = 3
 ): boolean {

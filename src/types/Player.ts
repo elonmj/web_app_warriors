@@ -1,11 +1,12 @@
 import { PlayerCategoryType } from './Enums';
+import { PlayerISCStats } from './ISC';
 
 export interface PlayerMatch {
   date: string;
   eventId: string;
   matchId: string;
   opponent: {
-    id: string;
+    id: number;
     ratingAtTime: number;
     categoryAtTime: string;
   };
@@ -54,10 +55,11 @@ export interface PlayerStatistics {
       pointsEarned: number;
     };
   }[];
+  iscData?: PlayerISCStats;
 }
 
 export interface Player {
-  id: string;
+  id: number;
   name: string;
   iscUsername?: string;  // Optional to maintain compatibility with existing data
   currentRating: number;
@@ -86,7 +88,7 @@ export interface UpdatePlayerInput {
 }
 
 export interface PlayerPreferences {
-  id: string;
+  id: number;
   theme: 'light' | 'dark';
   notifications: boolean;
 }

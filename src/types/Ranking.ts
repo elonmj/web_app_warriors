@@ -1,5 +1,5 @@
 export interface PlayerRanking {
-  playerId: string;
+  playerId: number;
   rank: number;
   points: number;
   matches: number;
@@ -22,7 +22,7 @@ export interface RoundMetadata {
   totalRounds?: number;
   scheduledDate?: string;
   completed?: boolean;
-  byePlayerId?: string;
+  byePlayerId?: number;
 }
 
 export interface EventRanking {

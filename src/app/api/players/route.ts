@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { PlayerRepository } from '@/api/repository/playerRepository';
+import { PlayerService } from '@/api/services/PlayerService';
+import { CreatePlayerInput } from '@/types/Player';
 
 const playerRepo = new PlayerRepository();
+const playerService = new PlayerService(playerRepo);
 
 export async function GET() {
   try {
@@ -28,6 +31,54 @@ export async function GET() {
     
     return NextResponse.json(
       { error: 'Failed to fetch players' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    // Parse and validate input
+    const body = await request.json();
+    
+    if (!body.name) {
+      return NextResponse.json(
+        { error: 'Player name is required' },
+        { status: 400 }
+      );
+    }
+
+    const input: CreatePlayerInput = {
+      name: body.name,
+      iscUsername: body.iscUsername,
+      initialRating: body.initialRating,
+      initialCategory: body.initialCategory
+    };
+
+    // Create player
+    const newPlayer = await playerService.createPlayer(input);
+
+    return NextResponse.json(newPlayer, { status: 201 });
+  } catch (error) {
+    console.error("Error creating player:", error);
+
+    if (error instanceof Error) {
+      // Handle known error cases
+      if (error.message.includes('already exists')) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 409 } // Conflict
+        );
+      }
+      
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to create player' },
       { status: 500 }
     );
   }

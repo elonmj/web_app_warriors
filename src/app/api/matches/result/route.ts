@@ -4,6 +4,8 @@ import { RankingService } from '@/api/services/RankingService';
 import { UpdateMatchResultInput, Match } from '@/types/Match';
 import { PlayerCategoryType } from '@/types/Enums';
 import { MatchRepository } from '@/api/repository/MatchRepository';
+import { iscService } from '@/api/services/ISCService'; // Import ISCService
+import { ISCPlayerIdentifier } from '@/types/ISC';
 
 const matchService = new MatchService();
 const rankingService = new RankingService();
@@ -31,7 +33,7 @@ interface MatchResponse {
 export async function POST(request: NextRequest): Promise<NextResponse<MatchResponse | { error: string }>> {
   try {
     const input: UpdateMatchResultInput = await request.json();
-    
+
     // Validate required fields
     if (!input.matchId) {
       return NextResponse.json(
@@ -39,14 +41,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
         { status: 400 }
       );
     }
-    
+
     if (!input.score) {
       return NextResponse.json(
         { error: 'Score is required' },
         { status: 400 }
       );
     }
-    
+
     if (typeof input.score.player1Score !== 'number' || typeof input.score.player2Score !== 'number') {
       return NextResponse.json(
         { error: 'Player scores must be numbers' },
@@ -61,6 +63,49 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
       return NextResponse.json(
         { error: 'Match not found' },
         { status: 404 }
+      );
+    }
+
+    // Construct player identifiers for ISC fetch
+    const player1: ISCPlayerIdentifier = {
+      iscUsername: match.player1.id, // Use id as fallback.  Ideally, populate iscUsername.
+    };
+
+    const player2: ISCPlayerIdentifier = {
+      iscUsername: match.player2.id, // Use id as fallback.  Ideally, populate iscUsername.
+    };
+
+    // Fetch match result from ISC *before* processing
+    try {
+      const iscResult = await iscService.fetchMatchResult(player1, player2, {
+        username: process.env.ISC_USERNAME!,
+        password: process.env.ISC_PASSWORD!,
+      });
+
+      // Validate the fetched scores against the submitted scores
+      if (
+        iscResult.player1Score !== input.score.player1Score ||
+        iscResult.player2Score !== input.score.player2Score
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Submitted scores do not match ISC results. Please check the scores and try again.',
+          },
+          { status: 400 }
+        );
+      }
+    } catch (iscError) {
+      console.error('Error fetching from ISC:', iscError);
+      // Handle ISC fetch errors specifically, returning a 503 Service Unavailable
+      return NextResponse.json(
+        {
+          error:
+            'Failed to fetch match result from ISC. Please try again later.',
+          // Include more details for debugging if in development
+          details: process.env.NODE_ENV === 'development' ? (iscError instanceof Error ? iscError.message : 'Unknown ISC error') : undefined
+        },
+        { status: 503 } // Service Unavailable
       );
     }
 

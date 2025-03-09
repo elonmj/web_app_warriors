@@ -4,7 +4,7 @@
   "lastUpdated": "2025-02-16T21:08:47.844Z",
   "rankings": [
     {
-      "playerId": "geraldo-2025",
+      "playerId": 8,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -21,7 +21,7 @@
       }
     },
     {
-      "playerId": "pinocche-2025",
+      "playerId": 20,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -38,7 +38,7 @@
       }
     },
     {
-      "playerId": "joaida-2025",
+      "playerId": 10,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -55,7 +55,7 @@
       }
     },
     {
-      "playerId": "referil-2025",
+      "playerId": 23,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -72,7 +72,7 @@
       }
     },
     {
-      "playerId": "stwill-2025",
+      "playerId": 26,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -89,7 +89,7 @@
       }
     },
     {
-      "playerId": "joy-2025",
+      "playerId": 11,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -106,7 +106,7 @@
       }
     },
     {
-      "playerId": "solene-2025",
+      "playerId": 25,
       "rank": 1,
       "points": 3,
       "matches": 1,
@@ -123,7 +123,7 @@
       }
     },
     {
-      "playerId": "divin-2025",
+      "playerId": 3,
       "rank": 8,
       "points": 1,
       "matches": 1,
@@ -140,7 +140,7 @@
       }
     },
     {
-      "playerId": "mya-2025",
+      "playerId": 16,
       "rank": 8,
       "points": 1,
       "matches": 1,
@@ -157,7 +157,7 @@
       }
     },
     {
-      "playerId": "charbel-2025",
+      "playerId": 2,
       "rank": 8,
       "points": 1,
       "matches": 1,
@@ -174,7 +174,7 @@
       }
     },
     {
-      "playerId": "elie-2025",
+      "playerId": 4,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -191,7 +191,7 @@
       }
     },
     {
-      "playerId": "oslie-2025",
+      "playerId": 18,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -208,7 +208,7 @@
       }
     },
     {
-      "playerId": "oswalde-2025",
+      "playerId": 19,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -225,7 +225,7 @@
       }
     },
     {
-      "playerId": "foreol-2025",
+      "playerId": 6,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -242,7 +242,7 @@
       }
     },
     {
-      "playerId": "rodrigue-2025",
+      "playerId": 24,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -259,7 +259,7 @@
       }
     },
     {
-      "playerId": "naofal-2025",
+      "playerId": 17,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -276,7 +276,7 @@
       }
     },
     {
-      "playerId": "raissa-2025",
+      "playerId": 22,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -293,7 +293,7 @@
       }
     },
     {
-      "playerId": "mickael-2025",
+      "playerId": 15,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -310,7 +310,7 @@
       }
     },
     {
-      "playerId": "kevin-2025",
+      "playerId": 12,
       "rank": 11,
       "points": 0,
       "matches": 1,
@@ -327,7 +327,7 @@
       }
     },
     {
-      "playerId": "elonm-2025",
+      "playerId": 5,
       "rank": 11,
       "points": 0,
       "matches": 1,

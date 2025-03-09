@@ -1,7 +1,7 @@
 {
   "players": [
     {
-      "id": "elie-2025",
+      "id": 4,
       "name": "Elie",
       "iscUsername": "Colin22",
       "currentRating": 980,
@@ -41,7 +41,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-1",
           "opponent": {
-            "id": "divin-2025",
+            "id": 3,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "id": "divin-2025",
+      "id": 3,
       "name": "Divin",
       "iscUsername": "Divino",
       "currentRating": 1020,
@@ -104,7 +104,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-1",
           "opponent": {
-            "id": "elie-2025",
+            "id": 4,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -127,7 +127,7 @@
       ]
     },
     {
-      "id": "hermann-2025",
+      "id": 9,
       "name": "Hermann",
       "currentRating": 1000,
       "category": "ONYX",
@@ -166,7 +166,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-2",
           "opponent": {
-            "id": "trinite-2025",
+            "id": 27,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -189,7 +189,7 @@
       ]
     },
     {
-      "id": "trinite-2025",
+      "id": 27,
       "name": "Trinité",
       "iscUsername": "Gerse3",
       "currentRating": 1000,
@@ -229,7 +229,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-2",
           "opponent": {
-            "id": "hermann-2025",
+            "id": 9,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -252,7 +252,7 @@
       ]
     },
     {
-      "id": "geraldo-2025",
+      "id": 8,
       "name": "Géraldo",
       "currentRating": 1020,
       "category": "ONYX",
@@ -291,7 +291,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-3",
           "opponent": {
-            "id": "oslie-2025",
+            "id": 18,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -314,7 +314,7 @@
       ]
     },
     {
-      "id": "oslie-2025",
+      "id": 18,
       "name": "Oslie",
       "iscUsername": "sessi7",
       "currentRating": 980,
@@ -354,7 +354,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-3",
           "opponent": {
-            "id": "geraldo-2025",
+            "id": 8,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -377,7 +377,7 @@
       ]
     },
     {
-      "id": "william-2025",
+      "id": 28,
       "name": "William",
       "currentRating": 1000,
       "category": "ONYX",
@@ -401,7 +401,7 @@
       "matches": []
     },
     {
-      "id": "lorinda-2025",
+      "id": 14,
       "name": "Lorinda",
       "iscUsername": "fofolle24",
       "currentRating": 1000,
@@ -426,7 +426,7 @@
       "matches": []
     },
     {
-      "id": "oswalde-2025",
+      "id": 19,
       "name": "Oswalde",
       "iscUsername": "Oswalde",
       "currentRating": 980,
@@ -466,7 +466,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-5",
           "opponent": {
-            "id": "pinocche-2025",
+            "id": 20,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -489,7 +489,7 @@
       ]
     },
     {
-      "id": "pinocche-2025",
+      "id": 20,
       "name": "Pinocché",
       "iscUsername": "Kpanligan",
       "currentRating": 1020,
@@ -529,7 +529,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-5",
           "opponent": {
-            "id": "oswalde-2025",
+            "id": 19,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -552,7 +552,7 @@
       ]
     },
     {
-      "id": "foreol-2025",
+      "id": 6,
       "name": "Foréol",
       "iscUsername": "Jinwoo",
       "currentRating": 980,
@@ -592,7 +592,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-6",
           "opponent": {
-            "id": "joaida-2025",
+            "id": 10,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -615,7 +615,7 @@
       ]
     },
     {
-      "id": "joaida-2025",
+      "id": 10,
       "name": "Joaïda",
       "iscUsername": "Ida0505",
       "currentRating": 1020,
@@ -655,7 +655,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-6",
           "opponent": {
-            "id": "foreol-2025",
+            "id": 6,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -678,7 +678,7 @@
       ]
     },
     {
-      "id": "referil-2025",
+      "id": 23,
       "name": "Référil",
       "currentRating": 1020,
       "category": "ONYX",
@@ -717,7 +717,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-7",
           "opponent": {
-            "id": "rodrigue-2025",
+            "id": 24,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -740,7 +740,7 @@
       ]
     },
     {
-      "id": "rodrigue-2025",
+      "id": 24,
       "name": "Rodrigue",
       "currentRating": 980,
       "category": "ONYX",
@@ -779,7 +779,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-7",
           "opponent": {
-            "id": "referil-2025",
+            "id": 23,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -802,7 +802,7 @@
       ]
     },
     {
-      "id": "fructueux-2025",
+      "id": 7,
       "name": "Fructueux",
       "iscUsername": "Chezrac",
       "currentRating": 1000,
@@ -827,7 +827,7 @@
       "matches": []
     },
     {
-      "id": "alain-2025",
+      "id": 1,
       "name": "Alain",
       "iscUsername": "bado",
       "currentRating": 1000,
@@ -852,7 +852,7 @@
       "matches": []
     },
     {
-      "id": "naofal-2025",
+      "id": 17,
       "name": "Naofal",
       "currentRating": 980,
       "category": "ONYX",
@@ -879,7 +879,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-9",
           "opponent": {
-            "id": "mya-2025",
+            "id": 16,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -902,7 +902,7 @@
       ]
     },
     {
-      "id": "mya-2025",
+      "id": 16,
       "name": "Mya",
       "iscUsername": "Mya17",
       "currentRating": 1020,
@@ -942,7 +942,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-9",
           "opponent": {
-            "id": "naofal-2025",
+            "id": 17,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -965,7 +965,7 @@
       ]
     },
     {
-      "id": "prosper-2025",
+      "id": 21,
       "name": "Prosper",
       "iscUsername": "friez",
       "currentRating": 1000,
@@ -1005,7 +1005,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-10",
           "opponent": {
-            "id": "leonel-2025",
+            "id": 13,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1028,7 +1028,7 @@
       ]
     },
     {
-      "id": "leonel-2025",
+      "id": 13,
       "name": "Léonel",
       "currentRating": 1020,
       "category": "ONYX",
@@ -1067,7 +1067,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-10",
           "opponent": {
-            "id": "prosper-2025",
+            "id": 21,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1090,7 +1090,7 @@
       ]
     },
     {
-      "id": "raissa-2025",
+      "id": 22,
       "name": "Raissa",
       "currentRating": 980,
       "category": "ONYX",
@@ -1129,7 +1129,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-11",
           "opponent": {
-            "id": "stwill-2025",
+            "id": 26,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1152,7 +1152,7 @@
       ]
     },
     {
-      "id": "stwill-2025",
+      "id": 26,
       "name": "StWill",
       "currentRating": 1020,
       "category": "ONYX",
@@ -1191,7 +1191,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-11",
           "opponent": {
-            "id": "raissa-2025",
+            "id": 22,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1214,7 +1214,7 @@
       ]
     },
     {
-      "id": "mickael-2025",
+      "id": 15,
       "name": "Mickaël",
       "iscUsername": "Fadel",
       "currentRating": 980,
@@ -1254,7 +1254,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-12",
           "opponent": {
-            "id": "charbel-2025",
+            "id": 2,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1277,7 +1277,7 @@
       ]
     },
     {
-      "id": "charbel-2025",
+      "id": 2,
       "name": "Charbel",
       "currentRating": 1020,
       "category": "ONYX",
@@ -1316,7 +1316,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-12",
           "opponent": {
-            "id": "mickael-2025",
+            "id": 15,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1339,7 +1339,7 @@
       ]
     },
     {
-      "id": "kevin-2025",
+      "id": 12,
       "name": "Kevin",
       "currentRating": 980,
       "category": "ONYX",
@@ -1378,7 +1378,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-13",
           "opponent": {
-            "id": "joy-2025",
+            "id": 11,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1401,7 +1401,7 @@
       ]
     },
     {
-      "id": "joy-2025",
+      "id": 11,
       "name": "Joy",
       "currentRating": 1020,
       "category": "ONYX",
@@ -1440,7 +1440,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-13",
           "opponent": {
-            "id": "kevin-2025",
+            "id": 12,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1463,7 +1463,7 @@
       ]
     },
     {
-      "id": "elonm-2025",
+      "id": 5,
       "name": "Elonm",
       "iscUsername": "joselonm",
       "currentRating": 980,
@@ -1503,7 +1503,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-14",
           "opponent": {
-            "id": "solene-2025",
+            "id": 25,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },
@@ -1526,7 +1526,7 @@
       ]
     },
     {
-      "id": "solene-2025",
+      "id": 25,
       "name": "Solène",
       "iscUsername": "20067s",
       "currentRating": 1020,
@@ -1566,7 +1566,7 @@
           "eventId": "mentoring-league-2025-02",
           "matchId": "match-14",
           "opponent": {
-            "id": "elonm-2025",
+            "id": 5,
             "ratingAtTime": 1000,
             "categoryAtTime": "ONYX"
           },

@@ -2,20 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlayerCategoryType } from '@/types/Enums';
 import { Label } from '@/components/ui/Typography';
-import { ISCCredentials } from '@/types/ISC';
+import { ISCCredentials, ISCGameData } from '@/types/ISC';
 
 import PlayerNameDisplay from '@/components/shared/PlayerNameDisplay';
+import ScoreProgressionChart from './ScoreProgressionChart';
+import MoveList from './MoveList';
 
 interface PlayerDetails {
   name: string;
   iscUsername?: string;
+  id?: number; // Updated to use number type
 }
 
-// Helper function to fetch individual player details
-const fetchPlayerDetails = async (playerId: string): Promise<PlayerDetails> => {
+// Missing function - adding placeholder based on context
+const fetchPlayerDetails = async (playerId: number): Promise<PlayerDetails> => {
   const response = await fetch(`/api/players/${playerId}`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch details for player: ${playerId}`);
+    throw new Error(`Failed to fetch player details: ${response.statusText}`);
   }
   return response.json();
 };
@@ -24,6 +27,8 @@ interface MatchResultPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (score: [number, number]) => Promise<void>;
+  player1Id: number;
+  player2Id: number;
   player1Name: string;
   player2Name: string;
   eventId: string;
@@ -40,18 +45,18 @@ interface MatchResultPopupProps {
   };
 }
 
-// Keep PDI as internal helper for DS calculation
-const calculatePDI = (score1: number, score2: number) => {
-  const totalPoints = score1 + score2;
-  if (totalPoints === 0) return 0;
-  return Math.abs(score1 - score2) / totalPoints;
-};
-
 // Calculate Points Ranking (PR)
 const calculatePR = (score1: number, score2: number) => {
   if (score1 > score2) return 3;
   if (score1 === score2) return 1;
   return 0;
+};
+
+// Keep PDI as internal helper for DS calculation
+const calculatePDI = (score1: number, score2: number) => {
+  const totalPoints = score1 + score2;
+  if (totalPoints === 0) return 0;
+  return Math.abs(score1 - score2) / totalPoints;
 };
 
 // Calculate Dominant Score (DS) based on PDI
@@ -61,16 +66,13 @@ const calculateDS = (score1: number, score2: number) => {
   return pdi >= threshold ? 100 : Math.floor(pdi * 100);
 };
 
-// Helper to get the correct player ID format
-const getPlayerId = (name: string): string => {
-  return name.includes('-2025') ? name : `${name.split(' ')[0]}-2025`;
-};
-
 export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
   isOpen,
   onClose,
   onSubmit,
   player1Name,
+  player1Id,
+  player2Id,
   player2Name,
   matchResult,
   eventId,
@@ -81,18 +83,28 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
   const [iscError, setIscError] = useState<string | null>(null);
   const [player1Details, setPlayer1Details] = useState<PlayerDetails | null>(null);
   const [player2Details, setPlayer2Details] = useState<PlayerDetails | null>(null);
+  const [gameData, setGameData] = useState<ISCGameData | null>(null);
   const router = useRouter();
 
   // Load player details on mount
   useEffect(() => {
     const loadPlayerDetails = async () => {
       try {
-        const [p1Details, p2Details] = await Promise.all([
-          fetchPlayerDetails(getPlayerId(player1Name)),
-          fetchPlayerDetails(getPlayerId(player2Name))
+        // Fetch complete player details using numeric IDs
+        const [player1Response, player2Response] = await Promise.all([
+          fetchPlayerDetails(player1Id),
+          fetchPlayerDetails(player2Id)
         ]);
-        setPlayer1Details(p1Details);
-        setPlayer2Details(p2Details);
+
+        setPlayer1Details({
+          ...player1Response,
+          name: player1Name // Use provided name for consistency
+        });
+
+        setPlayer2Details({
+          ...player2Response,
+          name: player2Name // Use provided name for consistency
+        });
       } catch (error) {
         console.error('Failed to load player details:', error);
         setIscError('Failed to load player details');
@@ -158,8 +170,7 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                     // Validate ISC usernames
                     if (!player1Details?.iscUsername || !player2Details?.iscUsername) {
                       throw new Error(
-                        `Missing ISC username for ${
-                          !player1Details?.iscUsername ? player1Name : player2Name
+                        `Missing ISC username for ${!player1Details?.iscUsername ? player1Name : player2Name
                         }. Please ensure both players have ISC usernames configured.`
                       );
                     }
@@ -169,12 +180,14 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         player1: {
-                          iscId: player1Name,
-                          iscUsername: player1Details.iscUsername
+                          name: player1Name,
+                          iscUsername: player1Details.iscUsername,
+                          id: player1Details.id // Include ID if available
                         },
                         player2: {
-                          iscId: player2Name,
-                          iscUsername: player2Details.iscUsername
+                          name: player2Name,
+                          iscUsername: player2Details.iscUsername,
+                          id: player2Details.id // Include ID if available
                         }
                       })
                     });
@@ -184,7 +197,18 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                       throw new Error(data.error || 'Failed to fetch match result from ISC');
                     }
 
-                    setScores([data.data.player1Score, data.data.player2Score]);
+                    // Set game data and scores
+                    setGameData(data.data.gameData);
+                    setScores([
+                      data.data.gameData.scores[player1Details!.iscUsername!],
+                      data.data.gameData.scores[player2Details!.iscUsername!]
+                    ]);
+                    
+                    // Update match result
+                    await onSubmit([
+                      data.data.gameData.scores[player1Details!.iscUsername!],
+                      data.data.gameData.scores[player2Details!.iscUsername!]
+                    ]);
                   } catch (error) {
                     setIscError(error instanceof Error ? error.message : 'Failed to fetch from ISC');
                     console.error('ISC fetch error:', error);
@@ -237,7 +261,7 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                       onChange={(e) => {
                         // Only allow positive numbers or empty string
                         if (e.target.value === '' || /^\d+$/.test(e.target.value)) {
-                          const newScore = [...scores] as [number, number];
+                          const newScore: [number, number] = [...scores] as [number, number];
                           newScore[0] = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                           setScores(newScore);
                         }
@@ -287,7 +311,7 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                       onChange={(e) => {
                         // Only allow positive numbers or empty string
                         if (e.target.value === '' || /^\d+$/.test(e.target.value)) {
-                          const newScore = [...scores] as [number, number];
+                          const newScore: [number, number] = [...scores] as [number, number];
                           newScore[1] = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                           setScores(newScore);
                         }
@@ -347,6 +371,14 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
                 <div className="text-sm text-gray-600 mb-1">DS</div>
                 <div className="text-xl font-bold text-blue-600">{calculateDS(scores[0], scores[1])}</div>
               </div>
+            </div>
+          )}
+
+          {/* Detailed Match View */}
+          {gameData && (
+            <div className="space-y-6 mt-6 pt-6 border-t border-gray-200">
+              <ScoreProgressionChart gameData={gameData} />
+              <MoveList moves={gameData.move_history} players={gameData.players} />
             </div>
           )}
         </div>

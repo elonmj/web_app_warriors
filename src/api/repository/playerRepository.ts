@@ -19,15 +19,33 @@ export class PlayerRepository extends BaseRepository {
     }
   }
 
-  async getPlayer(id: string): Promise<Player | null> {
+  async getPlayer(id: number | string): Promise<Player | null> {
+    const numericId = typeof id === 'string' ? parseInt(id) : id;
     const players = await this.getAllPlayers();
-    return players.find(p => p.id === id) || null;
+    return players.find(p => p.id === numericId) || null;
   }
 
-  async updatePlayer(id: string, updates: Partial<Player>): Promise<Player> {
+  async createPlayer(player: Player): Promise<Player> {
     return await this.withLock('players', async () => {
       const players = await this.getAllPlayers();
-      const index = players.findIndex(p => p.id === id);
+      
+      // Check if player with same ID already exists
+      if (players.some(p => p.id === player.id)) {
+        throw new Error(`Player with ID ${player.id} already exists`);
+      }
+
+      players.push(player);
+      await this.writeJsonFile(this.PLAYERS_FILE, { players });
+
+      return player;
+    });
+  }
+
+  async updatePlayer(id: number | string, updates: Partial<Player>): Promise<Player> {
+    return await this.withLock('players', async () => {
+      const numericId = typeof id === 'string' ? parseInt(id) : id;
+      const players = await this.getAllPlayers();
+      const index = players.findIndex(p => p.id === numericId);
       
       if (index === -1) {
         throw new Error(`Player not found: ${id}`);
@@ -46,11 +64,12 @@ export class PlayerRepository extends BaseRepository {
     });
   }
 
-  private getPlayerMatchHistoryPath(playerId: string): string {
+  private getPlayerMatchHistoryPath(playerId: number | string): string {
     return path.join(this.PLAYER_MATCHES_DIR, `${playerId}.json`);
   }
 
-  async getPlayerMatchHistory(playerId: string): Promise<PlayerMatch[]> {
+  async getPlayerMatchHistory(playerId: number | string): Promise<PlayerMatch[]> {
+    console.log('Getting match history for player:', playerId);
     try {
       const filePath = this.getPlayerMatchHistoryPath(playerId);
       const data = await this.readJsonFile<{ matches: PlayerMatch[] }>(filePath);
@@ -63,7 +82,7 @@ export class PlayerRepository extends BaseRepository {
     }
   }
 
-  async addMatchToPlayer(playerId: string, match: PlayerMatch): Promise<void> {
+  async addMatchToPlayer(playerId: number | string, match: PlayerMatch): Promise<void> {
     return await this.withLock(`player_matches_${playerId}`, async () => {
       const filePath = this.getPlayerMatchHistoryPath(playerId);
       const currentMatches = await this.getPlayerMatchHistory(playerId);
@@ -85,7 +104,7 @@ export class PlayerRepository extends BaseRepository {
     });
   }
 
-  async getPlayerStats(playerId: string): Promise<{
+  async getPlayerStats(playerId: number | string): Promise<{
     totalMatches: number;
     wins: number;
     losses: number;

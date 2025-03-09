@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Match } from '@/types/Match';
 import { MatchDisplay } from '@/types/MatchHistory';
 import { MatchStatus } from '@/types/MatchStatus';
@@ -7,6 +8,23 @@ import { TrophyIcon } from "@heroicons/react/24/outline";
 import { getCategoryColor } from "./utils/styles";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
+interface PlayerDetails {
+  name: string;
+  iscUsername?: string;
+}
+
+async function fetchPlayerDetails(playerId: number): Promise<PlayerDetails | null> {
+  try {
+    const response = await fetch(`/api/players/${playerId}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch details for player ${playerId}:`, error);
+    return null;
+  }
+}
+
 interface PairingCardProps {
   match: MatchDisplay;
   isCurrentRound: boolean;
@@ -15,9 +33,43 @@ interface PairingCardProps {
 
 const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) => {
   const router = useRouter();
+  const [player1Details, setPlayer1Details] = useState<PlayerDetails | null>(null);
+  const [player2Details, setPlayer2Details] = useState<PlayerDetails | null>(null);
+
+  // Fetch player details if they're not available in match object
+  useEffect(() => {
+    async function loadPlayerDetails() {
+      // Only fetch if we don't have the details from the match object
+      if (!match.player1Details?.name) {
+        const details = await fetchPlayerDetails(match.player1.id);
+        if (details) {
+          setPlayer1Details(details);
+        }
+      }
+
+      // Only fetch player 2 details if it's not a bye match and we don't have the details
+      if (match.player2.id !== -1 && !match.player2Details?.name) {
+        const details = await fetchPlayerDetails(match.player2.id);
+        if (details) {
+          setPlayer2Details(details);
+        }
+      }
+    }
+
+    loadPlayerDetails();
+  }, [match.player1.id, match.player2.id, match.player1Details, match.player2Details]);
+
+  // Get the best available name for each player
+  const player1Name = match.player1Details?.name || 
+    player1Details?.name || 
+    `Player ${match.player1.id}`;
+
+  const player2Name = match.player2Details?.name || 
+    player2Details?.name || 
+    `Player ${match.player2.id}`;
 
   // Check if this is a bye match
-  const isByeMatch = match.player2.id === 'BYE';
+  const isByeMatch = match.player2.id === -1; // Use -1 as the numeric ID for BYE
   
   const getStatusDisplay = (status: MatchStatus) => {
     if (isProjected) {
@@ -98,8 +150,8 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
         {/* Player 1 */}
         <div className="text-center sm:text-left">
           <PlayerNameDisplay
-            name={match.player1Details?.name || match.player1.id.replace(/-\d+$/, '')}
-            iscUsername={match.player1Details?.iscUsername}
+            name={player1Name}
+            iscUsername={match.player1Details?.iscUsername || player1Details?.iscUsername}
           />
           {match.player1.categoryBefore && (
             <Body.Caption className={getCategoryColor(match.player1.categoryBefore)}>
@@ -135,8 +187,8 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
           ) : (
             <>
               <PlayerNameDisplay
-                name={match.player2Details?.name || match.player2.id.replace(/-\d+$/, '')}
-                iscUsername={match.player2Details?.iscUsername}
+                name={player2Name}
+                iscUsername={match.player2Details?.iscUsername || player2Details?.iscUsername}
               />
               {match.player2.categoryBefore && (
                 <Body.Caption className={getCategoryColor(match.player2.categoryBefore)}>

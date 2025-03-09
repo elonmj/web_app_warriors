@@ -6,7 +6,7 @@ import PlayerStatsSkeleton from "./PlayerStatsSkeleton";
 import MatchHistoryError from "./MatchHistoryError";
 
 interface HeadToHeadRecord {
-  opponentId: string;
+  opponentId: number;
   matches: number;
   wins: number;
   losses: number;
@@ -23,7 +23,7 @@ interface HeadToHeadRecord {
 }
 
 interface HeadToHeadStatsProps {
-  playerId: string;
+  playerId: string | number;
 }
 
 export default function HeadToHeadStats({ playerId }: HeadToHeadStatsProps) {
@@ -35,6 +35,12 @@ export default function HeadToHeadStats({ playerId }: HeadToHeadStatsProps) {
     try {
       setIsLoading(true);
       setError(null);
+      
+      if (!String(playerId).match(/^\d+$/)) {
+        throw new Error('Invalid player ID format - must be a number');
+      }
+      
+      console.log('Fetching head-to-head data for player:', playerId);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
       const response = await fetch(`${baseUrl}/api/players/${playerId}/head-to-head`);
 

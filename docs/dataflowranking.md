@@ -1,134 +1,64 @@
-# Dual Ranking System Architecture Documentation
+# Data Flow and Ranking System
 
-## 1. Event Rankings Flow
+This document describes the data flow of the application, with a particular focus on how player rankings are calculated and updated.
 
-### Data Processing Pipeline
+## Overall Data Flow
+
+The application manages data related to events, players, matches, and rankings. The data flow can be visualized as follows:
+
 ```mermaid
-sequenceDiagram
-    Match Result -> RatingService: Calculate new ratings
-    RatingService -> StatisticsService: Update player stats
-    StatisticsService -> RankingService: Process event rankings
-    RankingService -> FileSystem: Save rankings JSON
+graph LR
+    subgraph Frontend
+        A[Next.js App] --> B(Components)
+        B --> C(API Endpoints)
+    end
+    subgraph Backend
+        C --> D(Services)
+        D --> E(Repositories)
+        E --> F(JSON Files)
+        D --> G(lib)
+    end
+    subgraph External
+        D -- "ISC API" --> H[ISC]
+    end
+
 ```
 
-### API Endpoints
-1. GET `/api/rankings/[eventId]`
-- Returns: EventRanking object
-- Caching: File-based with recalculation fallback
-- Error handling: 500 for system errors
+**Explanation:**
 
-2. POST `/api/rankings/[eventId]`
-- Purpose: Force ranking recalculation
-- Authorization: Required
-- Returns: Updated EventRanking
+-   **Frontend:** The Next.js application (A) uses components (B) to render the UI. These components interact with the backend through API endpoints (C).
+-   **Backend:** The API endpoints (C) use service classes (D) to perform operations. The services use repository classes (E) to access and modify data stored in JSON files (F). The services also utilize core logic from the `lib` directory (G).
+-   **External:** The `MatchService` interacts with the ISC API (H) to validate match results.
+-   **Data Flow:** Data flows from the JSON files (F) to the frontend (A) through the repositories, services, and API endpoints. Data also flows from the frontend to the backend when users interact with the application (e.g., submitting match results). The ISC API is used to validate match data.
 
-### Data Model
-```typescript
-EventRanking {
-  eventId: string
-  lastUpdated: string
-  rankings: PlayerRanking[]
-}
+## Ranking-Specific Data Flow
 
-PlayerRanking {
-  playerId: string
-  rank: number
-  points: number
-  matches: number
-  rating: number
-  ratingChange: number
-  category: string
-  playerDetails: {...}
-}
-```
+The ranking system is a crucial part of the application. Here's a breakdown of how it works:
 
-### Performance Optimizations
-- File-based caching with atomic writes
-- Batch processing for multiple matches
-- O(1) player performance lookups
-- Efficient tie handling algorithm
+1.  **Data Sources:**
+    -   Player data (including ratings) is stored in `data/players.json`.
+    -   Match results are stored in `data/matches/{eventId}/{round}.json`.
+    -   Event-specific rankings are stored in `data/rankings/{eventId}/{round}.json`.
 
-## 2. Global Rankings Flow
+2.  **Ranking Calculation:**
+    -   The `RankingService` is responsible for calculating and updating rankings.
+    -   It uses the `RatingSystem` (from `src/lib/RatingSystem.ts`) to calculate rating changes based on match results.  The rating system is based on the Elo rating system.
+    -   It uses the `MatchManager` (from `src/lib/MatchManager.ts`) to determine the expected outcome of a match.
+    -   `RankingService.updateRoundRankings` updates the rankings for a specific event and round.
+    -   `RankingService.getRoundRankings` retrieves the rankings for a specific event and round.
+    -   `RankingService.updateGlobalRankings` calculates and updates the global rankings based on all player data.
+    -   `RankingService.getGlobalRankings` retrieves the global rankings.
 
-### Calculation Methodology
-- Aggregates player statistics across all events
-- Uses weighted rating system based on:
-  - Current rating
-  - Win ratio
-  - Total matches played
+3.  **API Endpoints:**
+    -   `/api/rankings/{eventId}?round={round}` (GET): Retrieves event-specific rankings.
+    -   `/api/rankings/{eventId}` (POST): Forces an update of event-specific rankings.
+    -   `/api/rankings/global` (GET): Retrieves global rankings.
+    -   `/api/rankings/global` (POST): Updates global rankings.
 
-### Data Integration
-```mermaid
-graph TD
-    A[Event Rankings] --> C[Global Rankings Service]
-    B[Player Statistics] --> C
-    C --> D[Global Rankings]
-```
+4.  **Frontend Display:**
+    -   The `RankingsPage` component (`src/app/rankings/page.tsx`) displays the global rankings.
+    -   The `ClientEventTabs` component (`src/app/components/ClientEventTabs.tsx`) likely displays event-specific rankings within the event details page.
+    -   The `PlayerRankings` component (`src/app/components/PlayerRankings.tsx`) is used to render the ranking tables.
 
-### API Interface
-1. GET `/api/rankings/global`
-- Returns: Global ranking list
-- Performance: Cached calculation
-- Error handling: 500 for failures
-
-### Statistical Processing
-```typescript
-Service Boundaries:
-- RatingService: ELO calculations
-- StatisticsService: Performance metrics
-- RankingService: Ranking aggregation
-```
-
-### Monitoring Points
-1. Rating Calculations
-- Input validation
-- Rating bounds checking
-- K-factor appropriateness
-
-2. Statistical Processing
-- Performance metrics
-- Data consistency
-- Calculation accuracy
-
-3. API Performance
-- Response times
-- Error rates
-- Cache hit ratios
-
-### SLA Targets
-- API Response: < 200ms
-- Ranking Updates: < 30s
-- Data Consistency: 100%
-- System Availability: 99.9%
-
-### Error Handling
-1. Data Validation
-- Match result validation
-- Rating bounds protection
-- Category validation
-
-2. Processing Errors
-- Automatic retries
-- Fallback calculations
-- Error logging and monitoring
-
-3. System Recovery
-- Atomic file operations
-- Ranking recalculation
-- Data consistency checks
-
-### Scalability Considerations
-1. Performance
-- File-based caching
-- Incremental updates
-- Batch processing
-
-2. Data Storage
-- JSON file organization
-- Atomic writes
-- Directory structure
-
-3. API Optimization
-- Route caching
-- Response compression
-- Query optimization
+5. **Global Ranking Update:**
+    - The `/api/rankings/global` endpoint (POST method) triggers a recalculation of the global rankings. This ensures that the global rankings are up-to-date. The frontend calls this endpoint before retrieving the global rankings.
