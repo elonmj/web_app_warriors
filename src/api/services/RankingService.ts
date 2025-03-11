@@ -1,19 +1,19 @@
-import { EventRepository } from '../repository/eventRepository';
-import { PlayerRepository } from '../repository/playerRepository';
+import { FirebaseEventRepository } from '../repository/FirebaseEventRepository';
+import { FirebasePlayerRepository } from '../repository/FirebasePlayerRepository';
 import { EventRanking, PlayerRanking } from '@/types/Ranking';
 import { Match } from '@/types/Match';
 import { ValidationStatus } from '@/types/ValidationStatus';
 
 export class RankingService {
-  private eventRepository: EventRepository;
-  private playerRepository: PlayerRepository;
+  private eventRepository: FirebaseEventRepository;
+  private playerRepository: FirebasePlayerRepository;
 
   constructor(
-    eventRepo?: EventRepository,
-    playerRepo?: PlayerRepository
+    eventRepo?: FirebaseEventRepository,
+    playerRepo?: FirebasePlayerRepository
   ) {
-    this.eventRepository = eventRepo || new EventRepository();
-    this.playerRepository = playerRepo || new PlayerRepository();
+    this.eventRepository = eventRepo || new FirebaseEventRepository();
+    this.playerRepository = playerRepo || new FirebasePlayerRepository();
   }
 
   public async getGlobalRankings(): Promise<EventRanking> {
@@ -75,9 +75,7 @@ export class RankingService {
       // Filter for completed and forfeit matches that are validated
       const completedMatches = matches.filter(match => {
         return (match.status === 'completed' || match.status === 'forfeit') &&
-               match.result !== undefined &&
-               ['validated', 'valid', 'admin_validated', 'auto_validated']
-                 .includes(match.result.validation.status);
+               match.result !== undefined ;
       });
 
       const playerPerformance = await this.calculatePlayerPerformance(completedMatches);
@@ -195,11 +193,12 @@ export class RankingService {
     const players = await this.playerRepository.getAllPlayers();
 
     for (const [playerId, stats] of playerPerformance.entries()) {
+      // No need to convert string ID - it's already a string
       const player = players.find(p => p.id === playerId);
       if (!player) continue;
 
       rankings.push({
-        playerId,
+        playerId, // Use string ID directly
         rank: 0, // Will be calculated after sorting
         points: stats.points,
         matches: stats.matches,

@@ -5,7 +5,7 @@ import { MatchStatus } from '@/types/MatchStatus';
 import { Body, Heading } from "@/components/ui/Typography";
 import { useRouter } from 'next/navigation';
 import { TrophyIcon } from "@heroicons/react/24/outline";
-import { getCategoryColor } from "./utils/styles";
+import { getCategoryColor } from "@/app/components/utils/styles";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
 interface PlayerDetails {
@@ -48,7 +48,7 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
       }
 
       // Only fetch player 2 details if it's not a bye match and we don't have the details
-      if (match.player2.id.toString() === 'BYE' && !match.player2Details?.name) {
+      if (match.player2.id.toString() !== 'BYE' && !match.player2Details?.name) {
         const details = await fetchPlayerDetails(match.player2.id.toString());
         if (details) {
           setPlayer2Details(details);
@@ -68,7 +68,7 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
     player2Details?.name || 
     `Player ${match.player2.id}`;
 
-  // Check if this is a bye match - handling string ID correctly
+  // Check if this is a bye match - properly handling number IDs
   const isByeMatch = match.player2.id.toString() === 'BYE';
 
   const getStatusDisplay = (status: MatchStatus) => {

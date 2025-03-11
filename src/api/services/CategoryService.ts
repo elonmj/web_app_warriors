@@ -35,7 +35,7 @@ export class CategoryService {
   async getCategoryWithPlayers(categoryName: string, players: Player[]): Promise<{
     name: string,
     definition: { minRating: number, maxRating: number | null },
-    players: string[]
+    players: string[] // Changed from number[] to string[] to match Firebase player IDs
   } | null> {
     if (!CategoryManager.isValidCategory(categoryName)) {
       return null;

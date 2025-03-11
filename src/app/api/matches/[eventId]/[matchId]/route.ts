@@ -1,56 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EventRepository } from '@/api/repository/eventRepository';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { Match } from '@/types/Match';
 
-const eventRepository = new EventRepository();
+const eventRepository = new FirebaseEventRepository();
+const playerRepository = new FirebasePlayerRepository();
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { eventId: string; matchId: string } }
-): Promise<NextResponse> {
+) {
   try {
-    // Get event first to verify it exists and get current round
-    const event = await eventRepository.getEvent(params.eventId);
-    if (!event || !event.metadata) {
+    const { eventId, matchId } = params;
+    
+    // Get event to verify it exists
+    const event = await eventRepository.getEvent(eventId);
+    if (!event) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }
       );
     }
 
-    // Get matches from current round
-    const roundMatches = await eventRepository.getRoundMatches(
-      params.eventId,
-      event.metadata.currentRound
-    );
-
-    // Find the specific match
-    const match = roundMatches.find(m => m.id === params.matchId);
+    // Find the match in this event
+    let match: Match | null = null;
+    
+    // First check the current round
+    if (event.metadata?.currentRound) {
+      const currentRoundMatches = await eventRepository.getRoundMatches(eventId, event.metadata.currentRound);
+      match = currentRoundMatches.find((m: Match) => m.id === matchId) || null;
+    }
+    
+    // If not found, check all rounds
+    if (!match && event.metadata?.totalRounds) {
+      for (let round = 1; round <= event.metadata.totalRounds; round++) {
+        if (round === event.metadata?.currentRound) continue; // Already checked
+        
+        const roundMatches = await eventRepository.getRoundMatches(eventId, round);
+        match = roundMatches.find((m: Match) => m.id === matchId) || null;
+        
+        if (match) break;
+      }
+    }
 
     if (!match) {
-      // If not found in current round, try to find in all rounds
-      const totalRounds = event.metadata.totalRounds;
-      for (let round = 1; round <= totalRounds; round++) {
-        if (round === event.metadata.currentRound) continue; // Already checked
-
-        const matches = await eventRepository.getRoundMatches(params.eventId, round);
-        const foundMatch = matches.find(m => m.id === params.matchId);
-        if (foundMatch) {
-          return NextResponse.json(foundMatch);
-        }
-      }
-
       return NextResponse.json(
         { error: 'Match not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(match);
+    // Enrich match with player names
+    const [player1, player2] = await Promise.all([
+      playerRepository.getPlayer(match.player1.id),
+      match.player2.id !== 'BYE' ? playerRepository.getPlayer(match.player2.id) : null
+    ]);
+
+    const enrichedMatch = {
+      ...match,
+      player1: {
+        ...match.player1,
+        name: player1?.name
+      },
+      player2: {
+        ...match.player2,
+        name: match.player2.id === 'BYE' ? 'BYE' : player2?.name
+      }
+    };
+
+    return NextResponse.json(enrichedMatch);
   } catch (error) {
     console.error('Error getting match:', error);
     return NextResponse.json(
-      { error: 'Failed to get match' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

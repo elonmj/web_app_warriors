@@ -1,118 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PlayerRepository } from '@/api/repository/playerRepository';
-import { MatchRepository } from '@/api/repository/MatchRepository';
-import { PlayerMatch } from '@/types/Player';
-import { Match } from '@/types/Match';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
+import { StatisticsService } from '@/api/services/StatisticsService';
 
-function convertToPlayerMatch(match: Match, playerId: string): PlayerMatch {
-  // Determine if this player is player1 or player2
-  const isPlayer1 = match.player1.id === playerId;
-  const player = isPlayer1 ? match.player1 : match.player2;
-  const opponent = isPlayer1 ? match.player2 : match.player1;
-  
-  const playerMatch: PlayerMatch = {
-    date: match.date,
-    eventId: match.eventId,
-    matchId: match.id,
-    opponent: {
-      id: opponent.id,
-      ratingAtTime: opponent.ratingBefore,
-      categoryAtTime: opponent.categoryBefore
-    },
-    result: {
-      score: isPlayer1 ? match.result!.score : [match.result!.score[1], match.result!.score[0]],
-      pr: isPlayer1 ? match.result!.pr : match.result!.pr === 3 ? 0 : (match.result!.pr === 0 ? 3 : 1),
-      pdi: match.result!.pdi,
-      ds: match.result!.ds
-    },
-    ratingChange: {
-      before: player.ratingBefore,
-      after: player.ratingAfter,
-      change: player.ratingAfter - player.ratingBefore
-    },
-    categoryAtTime: player.categoryBefore
-  };
+const playerRepo = new FirebasePlayerRepository();
+const matchRepo = new FirebaseMatchRepository();
+const statsService = new StatisticsService();
 
-  console.log('Converted match for player:', {
-    playerId,
-    matchId: match.id,
-    status: match.status,
-    result: playerMatch.result.score,
-    ratingChange: playerMatch.ratingChange
-  });
-
-  return playerMatch;
-}
-
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+) {
   try {
-    console.log("Starting player statistics recalculation...");
-    const playerRepo = new PlayerRepository();
-    const matchRepo = new MatchRepository();
-    let players = await playerRepo.getAllPlayers();
-    console.log(`Found ${players.length} players to process`);
-
-    // Get all matches with results
-    console.log("Fetching matches...");
-    const allMatches = await matchRepo.getAllMatches();
-    console.log('Raw matches from repository:', allMatches.length);
+    // This is an admin-only endpoint, so we might want some authentication
+    // However, for simplicity, we'll skip that for now
     
-    const validMatches = allMatches.filter(m => {
-      const hasResult = m.result && (m.status === 'completed' || m.status === 'forfeit');
-      if (!hasResult) {
-        console.log('Skipping invalid match:', { id: m.id, status: m.status, hasResult: !!m.result });
-      }
-      return hasResult;
-    });
+    // 1. Get all players and matches
+    const players = await playerRepo.getAllPlayers();
+    const matches = await matchRepo.getAllMatches();
     
-    console.log(`Found ${validMatches.length} valid matches (completed + forfeit)`);
-
-    // First pass: Collect matches for each player
-    console.log("Processing matches for each player...");
-    const playerUpdates = players.map(player => {
-      // Find all matches for this player
-      const playerMatches = validMatches
-        .filter(m => {
-          const isParticipant = m.player1.id === player.id || m.player2.id === player.id;
-          console.log(`Match ${m.id} (${m.status}) for ${player.id}: ${isParticipant ? 'participant' : 'not participant'}`);
-          return isParticipant;
-        })
-        .map(match => convertToPlayerMatch(match, player.id));
-
-      console.log(`Found ${playerMatches.length} matches for player ${player.name}`);
-
-      return {
+    // Sort matches by date to process them chronologically
+    matches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // 2. Reset player statistics
+    const resetPlayers = await Promise.all(players.map(async player => {
+      // Reset statistics while keeping player info
+      const resetPlayer = {
         ...player,
-        matches: playerMatches
+        matches: [],
+        currentRating: 1000,
+        statistics: {
+          ...player.statistics,
+          totalMatches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          totalPR: 0,
+          bestRating: 1000,
+          worstRating: 1000,
+        }
       };
-    });
-
-    // Second pass: Update all players
-    console.log("Updating player records...");
-    for (const player of playerUpdates) {
-      console.log(`Updating player ${player.name} with ${player.matches.length} matches`);
-      await playerRepo.updatePlayer(player.id, player);
-      await playerRepo.recalculatePlayerStatistics(player.id, false);
+      
+      return await playerRepo.updatePlayer(player.id, resetPlayer);
+    }));
+    
+    // 3. Process each match and update player statistics
+    let processedMatches = 0;
+    for (const match of matches) {
+      if (!match.result || match.status !== 'completed') {
+        continue;
+      }
+      
+      processedMatches++;
+      
+      // Get players
+      const player1 = resetPlayers.find(p => p.id === match.player1.id);
+      const player2 = resetPlayers.find(p => p.id === match.player2.id);
+      
+      if (!player1 || !player2 || player2.id === 'BYE') {
+        console.warn(`Skipping match ${match.id} - player(s) not found`);
+        continue;
+      }
+      
+      // Update each player's statistics
+      const updatedPlayer1 = await statsService.updatePlayerStatistics(player1, match);
+      const updatedPlayer2 = await statsService.updatePlayerStatistics(player2, match);
+      
+      // Save updated stats back to players array
+      const p1Index = resetPlayers.findIndex(p => p.id === player1.id);
+      const p2Index = resetPlayers.findIndex(p => p.id === player2.id);
+      
+      if (p1Index >= 0) resetPlayers[p1Index] = updatedPlayer1;
+      if (p2Index >= 0) resetPlayers[p2Index] = updatedPlayer2;
     }
-
-    console.log("Recalculation completed successfully");
-    return NextResponse.json({ 
-      message: 'Player statistics recalculated successfully',
-      summary: playerUpdates.map(p => ({
-        id: p.id,
-        name: p.name,
-        matchCount: p.matches?.length || 0,
-        matches: p.matches.map(m => ({
-          id: m.matchId,
-          result: m.result.score,
-          ratingChange: m.ratingChange
-        }))
-      }))
+    
+    // 4. Calculate derived statistics
+    for (let player of resetPlayers) {
+      const matches = player.matches || [];
+      
+      // Calculate win rate, average PR, etc.
+      if (matches.length > 0) {
+        const totalGames = matches.length;
+        const wins = matches.filter(m => m.result.score[0] > m.result.score[1]).length;
+        const draws = matches.filter(m => m.result.score[0] === m.result.score[1]).length;
+        const losses = totalGames - wins - draws;
+        
+        const totalPR = matches.reduce((sum, match) => sum + match.result.pr, 0);
+        const totalDS = matches.reduce((sum, match) => sum + match.result.ds, 0);
+        
+        player.statistics = {
+          ...player.statistics,
+          totalMatches: totalGames,
+          wins,
+          draws,
+          losses,
+          totalPR,
+          averageDS: totalDS / totalGames,
+          bestRating: Math.max(...matches.map(m => m.ratingChange.after)),
+          worstRating: Math.min(...matches.map(m => m.ratingChange.after))
+        };
+      }
+      
+      await playerRepo.updatePlayer(player.id, player);
+    }
+    
+    return NextResponse.json({
+      success: true,
+      stats: {
+        playersProcessed: resetPlayers.length,
+        matchesProcessed: processedMatches
+      }
     });
   } catch (error) {
     console.error('Error recalculating player statistics:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to recalculate player statistics' },
+      { error: 'Failed to recalculate player statistics' },
       { status: 500 }
     );
   }

@@ -1,5 +1,5 @@
 import { Match, MatchResult } from '@/types/Match';
-import { Player } from '@/types/Player';
+import { Player, PlayerStatistics } from '@/types/Player';
 import { PlayerCategoryType } from '@/types/Enums';
 
 interface RatingConfig {
@@ -114,27 +114,31 @@ class RatingSystem {
       throw new Error('Match result not available');
     }
 
-    // Get players from match
-    const player1Rating = match.player1Rating;
-    const player2Rating = match.player2Rating;
+    // Get initial ratings from players
+    const player1Rating = match.player1.ratingBefore;
+    const player2Rating = match.player2.ratingBefore;
+    
+    // Use the existing logic but with correctly accessed properties
+    const player1Category = match.player1.categoryBefore; 
+    const player2Category = match.player2.categoryBefore;
 
     // Create temporary player objects for rating calculation
     const tempPlayer1: Player = {
       id: match.player1.id,
       name: '',
       currentRating: player1Rating,
-      category: match.player1Category,
+      category: player1Category,
       matches: [],
-      statistics: { totalMatches: 0, wins: 0, draws: 0, losses: 0, totalPR: 0, averageDS: 0, inactivityWeeks: 0 }
+      statistics: this.initializeStatistics()
     };
 
     const tempPlayer2: Player = {
       id: match.player2.id,
       name: '',
       currentRating: player2Rating,
-      category: match.player2Category,
+      category: player2Category,
       matches: [],
-      statistics: { totalMatches: 0, wins: 0, draws: 0, losses: 0, totalPR: 0, averageDS: 0, inactivityWeeks: 0 }
+      statistics: this.initializeStatistics()
     };
 
     // Calculate new ratings
@@ -157,6 +161,27 @@ class RatingSystem {
 
     return [newRating1, newRating2];
   }
+
+  /**
+   * Initialize PlayerStatistics with all required properties
+   */
+  initializeStatistics(): PlayerStatistics {
+    return {
+      totalMatches: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      totalPR: 0,
+      averageDS: 0,
+      inactivityWeeks: 0,
+      forfeits: { given: 0, received: 0 },
+      bestRating: 1000,
+      worstRating: 1000,
+      categoryHistory: [],
+      eventParticipation: []
+    };
+  }
+
 }
 
 export { RatingSystem };

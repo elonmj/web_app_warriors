@@ -1,12 +1,12 @@
 import { Player, CreatePlayerInput, UpdatePlayerInput, PLAYER_CONSTANTS } from '@/types/Player';
 import { PlayerCategoryType } from '@/types/Enums';
-import { PlayerRepository } from '@/api/repository/playerRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 
 export class PlayerService {
-  private playerRepository: PlayerRepository;
+  private playerRepository: FirebasePlayerRepository;
 
-  constructor(playerRepository: PlayerRepository) {
-    this.playerRepository = playerRepository;
+  constructor(playerRepository?: FirebasePlayerRepository) {
+    this.playerRepository = playerRepository || new FirebasePlayerRepository();
   }
 
   async createPlayer(input: CreatePlayerInput): Promise<Player> {
@@ -20,25 +20,13 @@ export class PlayerService {
     if (existingPlayers.some(p => p.name.toLowerCase() === input.name.toLowerCase())) {
       throw new Error('A player with this name already exists.');
     }
-
-    // Generate new numeric ID (max existing ID + 1)
-    const newId = existingPlayers.length > 0 
-      ? Math.max(...existingPlayers.map(p => 
-          typeof p.id === 'string' ? parseInt(p.id) : p.id
-        )) + 1 
-      : 1;
-    console.log('Generated new player ID:', newId);
-
+    
     // Create Player object with default values where necessary
-    const newPlayer: Player = {
-      id: newId,
+    const newPlayerData: Omit<Player, 'id'> = {
       name: input.name.trim(),
       iscUsername: input.iscUsername?.trim(),
       currentRating: input.initialRating ?? PLAYER_CONSTANTS.DEFAULT_RATING,
       category: input.initialCategory ?? PLAYER_CONSTANTS.DEFAULT_CATEGORY,
-      joinDate: new Date().toISOString(),
-      active: true,
-      matches: [], // Initialize with empty matches array
       statistics: {
         totalMatches: 0,
         wins: 0,
@@ -59,20 +47,19 @@ export class PlayerService {
           reason: 'admin_change'
         }],
         eventParticipation: []
-      }
+      },
+      matches: [] // Initialize with empty matches array
     };
 
-    // Save the player
-    await this.playerRepository.createPlayer(newPlayer);
-
-    return newPlayer;
+    // Save the player - repository will assign the ID
+    return await this.playerRepository.createPlayer(newPlayerData);
   }
 
-  async getPlayer(id: number | string): Promise<Player | null> {
-    return this.playerRepository.getPlayer(typeof id === 'string' ? parseInt(id) : id);
+  async getPlayer(id: string): Promise<Player | null> {
+    return this.playerRepository.getPlayer(id);
   }
 
-  async updatePlayer(id: number | string, data: UpdatePlayerInput): Promise<Player> {
+  async updatePlayer(id: string, data: UpdatePlayerInput): Promise<Player> {
     const existingPlayer = await this.playerRepository.getPlayer(id);
     if (!existingPlayer) {
       throw new Error('Player not found');

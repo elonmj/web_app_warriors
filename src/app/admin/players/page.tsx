@@ -102,11 +102,11 @@ export default function AdminPlayersPage() {
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm">
                             <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              player.active
+                              player.statistics?.totalMatches > 0 
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                             }`}>
-                              {player.active ? 'Active' : 'Inactive'}
+                              {player.statistics?.totalMatches > 0 ? 'Actif' : 'Inactif'}
                             </span>
                           </td>
                         </tr>

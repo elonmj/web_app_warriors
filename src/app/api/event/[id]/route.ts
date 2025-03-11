@@ -1,41 +1,56 @@
-import { NextResponse } from 'next/server';
-import * as fs from 'fs/promises';
-import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const eventRepository = new FirebaseEventRepository();
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const eventId = params.id;
-  const filePath = path.join(DATA_DIR, 'events.json');
-
   try {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const events = JSON.parse(fileContent);
+    const event = await eventRepository.getEvent(params.id);
     
-    // Find event in the events array
-    const event = events.find((e: any) => e.id === eventId);
-
     if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
     }
-
-    // Return complete event data including metadata
-    return NextResponse.json({
-      id: event.id,
-      name: event.name,
-      startDate: event.startDate,
-      endDate: event.endDate,
-      type: event.type,
-      status: event.status,
-      metadata: event.metadata
-    });
+    
+    return NextResponse.json(event);
   } catch (error) {
-    console.error('Error reading event data:', error);
+    console.error('Error retrieving event:', error);
     return NextResponse.json(
-      { error: 'Failed to load event data' },
+      { error: 'Failed to retrieve event' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const eventData = await request.json();
+    
+    // Validate if event exists
+    const existingEvent = await eventRepository.getEvent(params.id);
+    if (!existingEvent) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Update event
+    const updatedEvent = await eventRepository.updateEvent(params.id, eventData);
+    
+    return NextResponse.json(updatedEvent);
+  } catch (error) {
+    console.error('Error updating event:', error);
+    return NextResponse.json(
+      { error: 'Failed to update event' },
       { status: 500 }
     );
   }

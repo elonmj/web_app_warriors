@@ -1,5 +1,7 @@
 import { Match } from './Match';
 import { PlayerCategoryType } from './Enums';
+import { MatchResult } from './Match';
+import { MatchStatus } from './MatchStatus';
 
 export interface MatchHistoryResponse {
   matches: MatchDisplay[];
@@ -21,14 +23,44 @@ export interface PlayerDetails {
   category: PlayerCategoryType;
 }
 
-export interface MatchDisplay extends Match {
-  player1Details?: PlayerDetails;
-  player2Details?: PlayerDetails;
+export interface PlayerDisplayDetails {
+  name: string;
+  iscUsername?: string;
+  category?: PlayerCategoryType;
 }
 
+export interface MatchDisplay {
+  id: string;
+  eventId: string;
+  date: string;
+  player1: {
+    id: string; 
+    ratingBefore: number;
+    ratingAfter: number;
+    categoryBefore: PlayerCategoryType;
+    categoryAfter: PlayerCategoryType;
+  };
+  player2: {
+    id: string;
+    ratingBefore: number;
+    ratingAfter: number;
+    categoryBefore: PlayerCategoryType;
+    categoryAfter: PlayerCategoryType;
+  };
+  status: MatchStatus; // Make sure to use the same MatchStatus type
+  result?: MatchResult;
+  metadata: {
+    round: number;
+    isRandom: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+  player1Details?: PlayerDisplayDetails;
+  player2Details?: PlayerDisplayDetails;
+}
 
 export interface PlayerPairHistory {
-  playerIds: [number, number];  // Sorted for consistent lookup
+  playerIds: [string, string];  // Changed from number to string
   rounds: number[];            // Rounds where they played
   lastMatchDate: string;       // ISO-8601 date
 }
@@ -38,16 +70,16 @@ export interface MatchHistoryRecord {
   history: PlayerPairHistory[];
 }
 
-export function createPlayerPairKey(player1Id: number, player2Id: number): string {
+export function createPlayerPairKey(player1Id: string, player2Id: string): string {
   // Sort IDs to ensure consistent key regardless of player order
-  const [id1, id2] = [player1Id, player2Id].sort((a, b) => a - b);
+  const [id1, id2] = [player1Id, player2Id].sort();
   return `${id1}-${id2}`;
 }
 
 export function getRecentMatches(
   history: PlayerPairHistory[],
-  player1Id: number,
-  player2Id: number,
+  player1Id: string,
+  player2Id: string,
   lookbackRounds: number = 3
 ): number[] {
   const pair = history.find(h => 
@@ -65,8 +97,8 @@ export function getRecentMatches(
 
 export function shouldAvoidRematch(
   history: PlayerPairHistory[],
-  player1Id: number,
-  player2Id: number,
+  player1Id: string,
+  player2Id: string,
   currentRound: number,
   minRoundsBetweenMatches: number = 3
 ): boolean {

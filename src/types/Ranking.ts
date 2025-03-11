@@ -1,5 +1,7 @@
+import { PlayerCategoryType } from './Enums'; // Add this import
+
 export interface PlayerRanking {
-  playerId: number;
+  playerId: string; // Changed from number to string
   rank: number;
   points: number;
   matches: number;
@@ -8,11 +10,11 @@ export interface PlayerRanking {
   draws: number;
   rating: number;
   ratingChange: number;
-  category: string;
+  category: PlayerCategoryType;
   playerDetails?: {
     name: string;
     currentRating: number;
-    category: string;
+    category: PlayerCategoryType;
   };
 }
 
@@ -22,7 +24,7 @@ export interface RoundMetadata {
   totalRounds?: number;
   scheduledDate?: string;
   completed?: boolean;
-  byePlayerId?: number;
+  byePlayerId?: string; // Changed from number to string
 }
 
 export interface EventRanking {

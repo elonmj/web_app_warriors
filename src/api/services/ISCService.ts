@@ -1,6 +1,6 @@
 import { chromium, Page } from 'playwright';
 import { ISCCredentials, ISCPlayerIdentifier, ISCMatchResult, ISCGameData, Move, PlayerISCStats } from '@/types/ISC';
-import { PlayerRepository } from '@/api/repository/playerRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { Player } from '@/types/Player';
 
 interface SearchResult {
@@ -10,7 +10,7 @@ interface SearchResult {
 }
 
 export class ISCService {
-  private playerRepo = new PlayerRepository();
+  private playerRepo = new FirebasePlayerRepository();
   private baseUrl = 'https://www.isc.ro';
   private debug = process.env.NODE_ENV !== 'production';
 

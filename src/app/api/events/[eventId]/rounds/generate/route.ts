@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EventService } from '../../../../../../api/services/EventService';
-import { EventRepository } from '../../../../../../api/repository/eventRepository';
+import { FirebaseEventRepository } from '../../../../../../api/repository/FirebaseEventRepository';
 import { Match } from '@/types/Match';
 import { MatchStatus } from '@/types/MatchStatus';
 
 const eventService = new EventService();
-const eventRepository = new EventRepository();
+const eventRepository = new FirebaseEventRepository();
 
 export async function POST(
   request: NextRequest,

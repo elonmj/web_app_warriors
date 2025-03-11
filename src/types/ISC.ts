@@ -4,8 +4,8 @@ export interface ISCCredentials {
 }
 
 export interface ISCPlayerIdentifier {
-  iscId: string;
-  iscUsername?: string; // Optional for backward compatibility
+  iscUsername: string;
+  iscId?: string; // Rendre optionnel en ajoutant ?
 }
 
 export interface Move {

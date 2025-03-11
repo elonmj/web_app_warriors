@@ -1,13 +1,21 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { Event } from '@/types/Event';
+import { Player } from '@/types/Player';
+import { MatchDisplay } from '@/types/MatchHistory';
+import { MatchStatus } from '@/types/MatchStatus'; // Add this import
+import { EventRanking } from '@/types/Ranking';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import EventHeader from "@/app/components/EventHeader";
 import StatsOverview from "@/app/components/StatsOverview";
 import ClientEventTabs from "@/app/components/ClientEventTabs"; // Import the new component
-import { EventRepository } from "@/api/repository/eventRepository";
-import { EventStatisticsCalculator } from "@/lib/Statistics";
-import { EventRanking } from "@/types/Ranking";
-import { MatchDisplay } from "@/types/MatchHistory";
 
-const eventRepository = new EventRepository();
+import { EventStatisticsCalculator } from "@/lib/Statistics";
+
+const eventRepository = new FirebaseEventRepository();
 
 export default async function EventPage({ 
   params,
@@ -43,6 +51,7 @@ export default async function EventPage({
 
       return {
         ...match,
+        status: match.status as MatchStatus, // Ensure type compatibility
         player1Details: player1 ? {
           name: player1.name,
           category: player1.category

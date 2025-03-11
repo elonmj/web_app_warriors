@@ -10,18 +10,18 @@ import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from '../..
 import { RatingSystem } from '../../lib/RatingSystem';
 import { CategoryManager } from '../../lib/CategoryManager';
 import { StatisticsCalculator } from '../../lib/Statistics';
-import { PlayerRepository } from '../repository/playerRepository';
-import { EventRepository } from '../repository/eventRepository';
+import { FirebasePlayerRepository } from '../repository/FirebasePlayerRepository';
+import { FirebaseEventRepository } from '../repository/FirebaseEventRepository';
 
 export class MatchService {
   private ratingSystem: RatingSystem;
-  private playerRepository: PlayerRepository;
-  private eventRepository: EventRepository;
+  private playerRepository: FirebasePlayerRepository;
+  private eventRepository: FirebaseEventRepository;
 
   constructor(ratingSystemConfig = {}) {
     this.ratingSystem = new RatingSystem(ratingSystemConfig);
-    this.playerRepository = new PlayerRepository();
-    this.eventRepository = new EventRepository();
+    this.playerRepository = new FirebasePlayerRepository();
+    this.eventRepository = new FirebaseEventRepository();
 
     // Initialize repositories
     this.initializeRepositories().catch(error => {
@@ -67,14 +67,14 @@ export class MatchService {
         eventId,
         date: now.split('T')[0],
         player1: {
-          id: player1.id,
+          id: player1.id, // Already a string
           ratingBefore: player1.currentRating,
           ratingAfter: player1.currentRating,
           categoryBefore: player1.category as PlayerCategoryType,
           categoryAfter: player1.category as PlayerCategoryType
         },
         player2: {
-          id: player2.id,
+          id: player2.id, // Already a string
           ratingBefore: player2.currentRating,
           ratingAfter: player2.currentRating,
           categoryBefore: player2.category as PlayerCategoryType,
@@ -143,12 +143,7 @@ export class MatchService {
         pr: this.calculatePR(score.player1Score, score.player2Score),
         pdi: this.calculatePDI(score.player1Score, score.player2Score),
         ds: this.calculateDS(score.player1Score, score.player2Score),
-        validation: {
-          player1Approved: false,
-          player2Approved: false,
-          status: "pending" as ValidationStatusType,
-          timestamp: now
-        }
+     
       };
 
       // Calculate new ratings
@@ -172,7 +167,7 @@ export class MatchService {
         eventId: match.eventId,
         matchId: match.id,
         opponent: {
-          id: match.player2.id,
+          id: match.player2.id, // Already a string from the Match type
           ratingAtTime: match.player2.ratingBefore,
           categoryAtTime: match.player2.categoryBefore
         },
@@ -195,7 +190,7 @@ export class MatchService {
         eventId: match.eventId,
         matchId: match.id,
         opponent: {
-          id: match.player1.id,
+          id: match.player1.id, // Already a string from the Match type
           ratingAtTime: match.player1.ratingBefore,
           categoryAtTime: match.player1.categoryBefore
         },

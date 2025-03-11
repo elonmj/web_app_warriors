@@ -1,88 +1,59 @@
-import { NextResponse } from 'next/server';
-import { EventRepository } from '@/api/repository/eventRepository';
-import { Match } from '@/types/Match';
-import { Player } from '@/types/Player';
-import path from 'path';
-import * as fs from 'fs/promises';
+import { NextRequest, NextResponse } from 'next/server';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 
-const eventRepository = new EventRepository();
-const DATA_DIR = path.join(process.cwd(), 'data');
-
-interface EnrichedMatch extends Match {
-  player1Details?: {
-    name: string;
-    category: string;
-  };
-  player2Details?: {
-    name: string;
-    category: string;
-  };
-}
+const eventRepository = new FirebaseEventRepository();
+const playerRepository = new FirebasePlayerRepository();
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
-  const eventId = params.eventId;
-
   try {
-    // Get event to check existence and metadata
-    const event = await eventRepository.getEvent(eventId);
-    if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get all matches using repository
+    const { eventId } = params;
+    
+    // Get all matches for the event
     const matches = await eventRepository.getEventMatches(eventId);
-
-    // Read players data to enrich match information
-    const playersPath = path.join(DATA_DIR, 'players.json');
-    const playersContent = await fs.readFile(playersPath, 'utf-8');
-    const playersData = JSON.parse(playersContent);
-    const players: Player[] = playersData.players || [];
-
-    // Enrich matches with player details
-    const enrichedMatches: EnrichedMatch[] = matches.map(match => {
-      const player1 = players.find(p => p.id === match.player1.id);
-      const player2 = players.find(p => p.id === match.player2.id);
-
+    
+    // Transform matches to include player names and filter by status if needed
+    let result = await Promise.all(matches.map(async match => {
+      // Get player names (enrich match object)
+      const [player1, player2] = await Promise.all([
+        playerRepository.getPlayer(match.player1.id),
+        match.player2.id === 'BYE' ? null : playerRepository.getPlayer(match.player2.id)
+      ]);
+      
       return {
         ...match,
-        player1Details: player1 ? {
-          name: player1.name,
-          category: player1.category
-        } : undefined,
-        player2Details: player2 ? {
-          name: player2.name,
-          category: player2.category
-        } : undefined
+        player1: {
+          ...match.player1,
+          name: player1?.name
+        },
+        player2: {
+          ...match.player2,
+          name: match.player2.id === 'BYE' ? 'BYE' : player2?.name
+        }
       };
-    });
+    }));
 
-    // Calculate metadata
-    const metadata = {
-      totalMatches: enrichedMatches.length,
-      matchesByRound: enrichedMatches.reduce((acc, match) => {
-        const round = match.metadata.round;
-        if (!acc[round]) acc[round] = 0;
-        acc[round]++;
-        return acc;
-      }, {} as Record<number, number>),
-      currentRound: event.metadata?.currentRound || 0
-    };
+    // Apply filters if provided in query string
+    const url = new URL(request.url);
+    const statusFilter = url.searchParams.get('status');
+    if (statusFilter) {
+      result = result.filter(match => match.status === statusFilter);
+    }
 
-    return NextResponse.json({
-      matches: enrichedMatches,
-      metadata
-    });
-
+    const roundFilter = url.searchParams.get('round');
+    if (roundFilter && !isNaN(parseInt(roundFilter))) {
+      const round = parseInt(roundFilter);
+      result = result.filter(match => match.metadata?.round === round);
+    }
+    
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error reading matches data:', error);
+    console.error('Error getting event matches:', error);
     return NextResponse.json(
-      { error: 'Failed to load matches data' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

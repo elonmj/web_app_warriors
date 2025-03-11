@@ -1,23 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { FirebaseEventRepository } from '../../../../api/repository/FirebaseEventRepository';
 import { RankingService } from '@/api/services/RankingService';
-import { EventRepository } from '@/api/repository/eventRepository';
 
+const eventRepository = new FirebaseEventRepository();
 const rankingService = new RankingService();
-const eventRepository = new EventRepository();
 
-/**
- * GET /api/rankings/[eventId]
- * Get event rankings with optional round parameter
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
-    const eventId = params.eventId;
-    const searchParams = request.nextUrl.searchParams;
-    
-    // Check if event exists and get metadata
+    const { eventId } = params;
+
+    // Global rankings case
+    if (eventId === 'global') {
+      const globalRankings = await rankingService.getGlobalRankings();
+      return NextResponse.json(globalRankings);
+    }
+
+    // Get event to verify it exists
     const event = await eventRepository.getEvent(eventId);
     if (!event || !event.metadata) {
       return NextResponse.json(
@@ -26,65 +27,45 @@ export async function GET(
       );
     }
 
-    // Handle round parameter
-    const roundParam = searchParams.get('round');
-    const round = roundParam 
-      ? parseInt(roundParam, 10)
-      : event.metadata.currentRound;
-
-    // Validate round number
-    if (isNaN(round) || round < 1 || round > event.metadata.totalRounds) {
+    // Get current round from event
+    const currentRound = event.metadata.currentRound;
+    if (!currentRound) {
       return NextResponse.json(
-        { error: 'Invalid round number' },
+        { error: 'Event has no rounds' },
         { status: 400 }
       );
     }
 
-    try {
-      // Get rankings for the specified round
-      const rankings = await rankingService.getRoundRankings(eventId, round);
-      return NextResponse.json({
-        ...rankings,
-        metadata: {
-          round,
-          isCurrentRound: round === event.metadata.currentRound,
-          totalRounds: event.metadata.totalRounds
-        }
-      });
-    } catch (error) {
-      // If rankings don't exist, calculate them
-      const rankings = await rankingService.updateRoundRankings(eventId, round);
-      return NextResponse.json({
-        ...rankings,
-        metadata: {
-          round,
-          isCurrentRound: round === event.metadata.currentRound,
-          totalRounds: event.metadata.totalRounds
-        }
-      });
-    }
+    // Get rankings for current round
+    const rankings = await rankingService.getRoundRankings(eventId, currentRound);
+
+    return NextResponse.json(rankings);
   } catch (error) {
-    console.error('Error retrieving rankings:', error);
+    console.error('Error getting rankings:', error);
     return NextResponse.json(
-      { error: 'Failed to retrieve rankings' },
+      { error: 'Failed to get rankings' },
       { status: 500 }
     );
   }
 }
 
-/**
- * POST /api/rankings/[eventId]
- * Force update event rankings for a specific round
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
   try {
-    const eventId = params.eventId;
-    const searchParams = request.nextUrl.searchParams;
-    
-    // Get event and validate
+    const { eventId } = params;
+    const { round } = await request.json();
+
+    // Validate round
+    if (!round || typeof round !== 'number' || round < 1) {
+      return NextResponse.json(
+        { error: 'Valid round number is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get event to verify it exists
     const event = await eventRepository.getEvent(eventId);
     if (!event || !event.metadata) {
       return NextResponse.json(
@@ -93,30 +74,20 @@ export async function POST(
       );
     }
 
-    // Handle round parameter
-    const roundParam = searchParams.get('round');
-    const round = roundParam 
-      ? parseInt(roundParam, 10)
-      : event.metadata.currentRound;
-
-    // Validate round number
-    if (isNaN(round) || round < 1 || round > event.metadata.totalRounds) {
+    // Check if round exists
+    if (round > event.metadata.totalRounds) {
       return NextResponse.json(
-        { error: 'Invalid round number' },
+        { error: 'Round exceeds event total rounds' },
         { status: 400 }
       );
     }
 
-    // Update rankings for the specified round
-    const rankings = await rankingService.updateRoundRankings(eventId, round);
-    
+    // Force recalculate rankings for specified round
+    const updatedRankings = await rankingService.updateRoundRankings(eventId, round);
+
     return NextResponse.json({
-      ...rankings,
-      metadata: {
-        round,
-        isCurrentRound: round === event.metadata.currentRound,
-        totalRounds: event.metadata.totalRounds
-      }
+      success: true,
+      rankings: updatedRankings
     });
   } catch (error) {
     console.error('Error updating rankings:', error);

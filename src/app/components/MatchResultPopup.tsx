@@ -11,11 +11,11 @@ import MoveList from './MoveList';
 interface PlayerDetails {
   name: string;
   iscUsername?: string;
-  id?: number; // Updated to use number type
+  id?: string; // Changed from number to string
 }
 
-// Missing function - adding placeholder based on context
-const fetchPlayerDetails = async (playerId: number): Promise<PlayerDetails> => {
+// Adjust the fetchPlayerDetails function to work with string IDs
+const fetchPlayerDetails = async (playerId: string): Promise<PlayerDetails> => {
   const response = await fetch(`/api/players/${playerId}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch player details: ${response.statusText}`);
@@ -27,8 +27,8 @@ interface MatchResultPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (score: [number, number]) => Promise<void>;
-  player1Id: number;
-  player2Id: number;
+  player1Id: string; // Changed from number to string
+  player2Id: string; // Changed from number to string
   player1Name: string;
   player2Name: string;
   eventId: string;

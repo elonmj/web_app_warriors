@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EventRepository } from '@/api/repository/eventRepository';
+import { FirebaseEventRepository } from '../../../../../../api/repository/FirebaseEventRepository';
+import { Match } from '@/types/Match';
 
-const eventRepository = new EventRepository();
+const eventRepository = new FirebaseEventRepository();
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
   try {
     const { eventId } = params;
 
-    // Get event to check existence and metadata
+    // Get event to verify it exists and check metadata
     const event = await eventRepository.getEvent(eventId);
     if (!event || !event.metadata) {
       return NextResponse.json(
@@ -20,33 +21,32 @@ export async function GET(
     }
 
     const currentRound = event.metadata.currentRound;
+    if (!currentRound) {
+      return NextResponse.json(
+        { error: 'No current round found for this event' },
+        { status: 404 }
+      );
+    }
 
-    // Get matches for current round
+    // Get matches for the current round
     const matches = await eventRepository.getRoundMatches(eventId, currentRound);
     
-    // Calculate round statistics
-    const stats = {
-      totalMatches: matches.length,
-      completedMatches: matches.filter(m => m.status === 'completed').length,
-      pendingMatches: matches.filter(m => m.status === 'pending').length,
-    };
-
     // Get round metadata from event
     const roundStats = event.metadata.roundHistory[currentRound] || {
       date: event.metadata.roundDates?.[currentRound],
-      totalMatches: stats.totalMatches,
-      completedMatches: stats.completedMatches
+      totalMatches: matches.length,
+      completedMatches: matches.filter((m: Match) => m.status === 'completed').length
     };
 
     return NextResponse.json({
-      currentRound,
+      round: currentRound,
       matches,
       metadata: {
-        ...stats,
         scheduledDate: roundStats.date,
-        byePlayerId: roundStats.byePlayerId,
-        roundProgress: stats.completedMatches / stats.totalMatches,
-        status: stats.completedMatches === stats.totalMatches ? 'completed' : 'in-progress'
+        totalMatches: matches.length,
+        completedMatches: matches.filter((m: Match) => m.status === 'completed').length,
+        pendingMatches: matches.filter((m: Match) => m.status === 'pending').length,
+        byePlayerId: roundStats.byePlayerId
       }
     });
 

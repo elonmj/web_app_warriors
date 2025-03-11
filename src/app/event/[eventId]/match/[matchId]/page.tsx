@@ -17,13 +17,13 @@ interface MatchResponse {
   match: Match;
   updates: {
     player1: {
-      id: string;
+      id: string; // Ensure this is string
       newRating: number;
       newCategory: PlayerCategoryType;
       ratingChange: number;
     };
     player2: {
-      id: string;
+      id: string; // Ensure this is string
       newRating: number;
       newCategory: PlayerCategoryType;
       ratingChange: number;
@@ -115,12 +115,7 @@ export default function MatchResultPage({
           pr: 0, // These will be calculated server-side
           pdi: 0,
           ds: 0,
-          validation: {
-            player1Approved: false,
-            player2Approved: false,
-            timestamp: new Date().toISOString(),
-            status: 'pending'
-          }
+        
         }
       );
 
@@ -244,9 +239,11 @@ export default function MatchResultPage({
                         <Body.Text className="font-medium">
                             {match.player1.name || match.player1.id}
                         </Body.Text>
-                        <Body.Caption className={getCategoryColor(match.player1.categoryBefore)}>
-                            {match.player1.categoryBefore}
-                        </Body.Caption>
+                        {match.player1.categoryBefore && (
+                            <Body.Caption className={getCategoryColor(match.player1.categoryBefore)}>
+                                {match.player1.categoryBefore}
+                            </Body.Caption>
+                        )}
                     </div>
 
                     {/* Score */}
@@ -271,9 +268,11 @@ export default function MatchResultPage({
                         <Body.Text className="font-medium">
                             {match.player2.name || match.player2.id}
                         </Body.Text>
-                        <Body.Caption className={getCategoryColor(match.player2.categoryBefore)}>
-                            {match.player2.categoryBefore}
-                        </Body.Caption>
+                        {match.player2.categoryBefore && (
+                            <Body.Caption className={getCategoryColor(match.player2.categoryBefore)}>
+                                {match.player2.categoryBefore}
+                            </Body.Caption>
+                        )}
                     </div>
                 </div>
 

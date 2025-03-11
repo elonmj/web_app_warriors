@@ -106,12 +106,7 @@ export class MatchManager {
       pr,
       pdi,
       ds,
-      validation: {
-        player1Approved: false,
-        player2Approved: false,
-        status: 'pending',
-        timestamp: new Date().toISOString()
-      }
+     
     };
 
     const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({
@@ -177,12 +172,7 @@ export class MatchManager {
       pr: 0,
       pdi: 5,
       ds,
-      validation: {
-        player1Approved: true,
-        player2Approved: true,
-        status: 'valid',
-        timestamp: new Date().toISOString()
-      }
+      
     };
 
     const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({

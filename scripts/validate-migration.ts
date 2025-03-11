@@ -1,8 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { glob } from 'glob';
-import { validate as validateUUID } from 'uuid';
-import type { Player } from '@/types/Player';
+
 import type { Match } from '@/types/Match';
 import type { EventRanking } from '@/types/EventRanking';
 

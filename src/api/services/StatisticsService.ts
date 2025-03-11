@@ -2,17 +2,17 @@ import { StatisticsCalculator, EventStatisticsCalculator, EventStatistics } from
 import { Match } from '@/types/Match';
 import { Event } from '@/types/Event';
 import { Player, PlayerMatch } from '@/types/Player';
-import { PlayerRepository } from '@/api/repository/playerRepository';
-import { EventRepository } from '@/api/repository/eventRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 import { EventTypeType, EventStatusType } from '@/types/Enums';
 
 export class StatisticsService {
-  private playerRepo: PlayerRepository;
-  private eventRepo: EventRepository;
+  private playerRepo: FirebasePlayerRepository;
+  private eventRepo: FirebaseEventRepository;
 
   constructor() {
-    this.playerRepo = new PlayerRepository();
-    this.eventRepo = new EventRepository();
+    this.playerRepo = new FirebasePlayerRepository();
+    this.eventRepo = new FirebaseEventRepository();
   }
 
   /**
@@ -57,7 +57,7 @@ export class StatisticsService {
     // Update player's matches and statistics
     const updatedPlayer: Player = {
       ...player,
-      matches: [...player.matches, playerMatch],
+      matches: [...(player.matches || []), playerMatch], // Add null check with default empty array
       statistics: player.statistics
     };
 
@@ -96,7 +96,7 @@ export class StatisticsService {
     prPerMatch: number;
     consistency: number;
   }> {
-    const { statistics, matches } = player;
+    const { statistics, matches = [] } = player;
     
     // Calculate win rate
     const totalGames = statistics.wins + statistics.draws + statistics.losses;
@@ -110,8 +110,9 @@ export class StatisticsService {
     // Calculate consistency (standard deviation of DS)
     const dsValues = matches.map((m: PlayerMatch) => m.result.ds);
     const avgDS = statistics.averageDS;
-    const variance = dsValues.reduce((acc: number, ds: number) => 
-      acc + Math.pow(ds - avgDS, 2), 0) / dsValues.length;
+    const variance = dsValues.length > 0 ?
+      dsValues.reduce((acc: number, ds: number) => 
+        acc + Math.pow(ds - avgDS, 2), 0) / dsValues.length : 0;
     const consistency = 100 - Number((Math.sqrt(variance)).toFixed(1));
 
     return {
@@ -131,7 +132,7 @@ export class StatisticsService {
     matchesPerWeek: number;
     inactivityPeriods: number;
   }> {
-    const matches = player.matches;
+    const matches = player.matches || [];
     if (matches.length === 0) {
       return {
         totalMatches: 0,
@@ -211,17 +212,19 @@ export class StatisticsService {
     const activity = await this.generateActivityReport(player);
     
     // Calculate rating trends
-    const ratingChanges = player.matches.map((m: PlayerMatch) => m.ratingChange);
+    const matches = player.matches || [];
+    const ratingChanges = matches.map((m: PlayerMatch) => m.ratingChange);
     const ratings = ratingChanges.map((r: { after: number }) => r.after);
+    
     const ratingProgression = {
-      minRating: Math.min(...ratings),
-      maxRating: Math.max(...ratings),
-      averageRating: ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length,
-      volatility: this.calculateRatingVolatility(ratingChanges)
+      minRating: ratings.length > 0 ? Math.min(...ratings) : player.currentRating,
+      maxRating: ratings.length > 0 ? Math.max(...ratings) : player.currentRating,
+      averageRating: ratings.length > 0 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length : player.currentRating,
+      volatility: ratingChanges.length > 0 ? this.calculateRatingVolatility(ratingChanges) : 0
     };
 
     // Calculate performance by category
-    const performanceByCategory = player.matches.reduce((acc: Record<string, any>, match: PlayerMatch) => {
+    const performanceByCategory = (player.matches || []).reduce((acc: Record<string, any>, match: PlayerMatch) => {
       const category = match.categoryAtTime;
       if (!acc[category]) {
         acc[category] = {

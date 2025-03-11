@@ -12,7 +12,7 @@ export async function GET(
       { 
         avoidRematches: true, 
         balanceCategories: true,
-        preview: true  // Use preview mode to avoid saving to disk
+       
       }
     );
     

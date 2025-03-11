@@ -6,7 +6,7 @@ export interface PlayerMatch {
   eventId: string;
   matchId: string;
   opponent: {
-    id: number;
+    id: string; // Changed from number to string
     ratingAtTime: number;
     categoryAtTime: string;
   };
@@ -59,15 +59,14 @@ export interface PlayerStatistics {
 }
 
 export interface Player {
-  id: number;
+  id: string;  // Changed from number to string
   name: string;
-  iscUsername?: string;  // Optional to maintain compatibility with existing data
+  iscUsername?: string;
   currentRating: number;
   category: PlayerCategoryType;
-  joinDate?: string;
-  active?: boolean;
-  matches: PlayerMatch[];
   statistics: PlayerStatistics;
+  lastUpdated?: string;
+  matches?: PlayerMatch[];
 }
 
 export interface CreatePlayerInput {

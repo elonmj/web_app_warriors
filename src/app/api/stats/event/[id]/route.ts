@@ -1,31 +1,17 @@
-import { NextResponse } from 'next/server';
-import * as fs from 'fs/promises';
-import path from 'path';
-import { Event } from '@/types/Event';
-import { Match } from '@/types/Match';
-import { Player } from '@/types/Player';
-import { EventStatisticsCalculator } from '@/lib/Statistics';
+import { NextRequest, NextResponse } from 'next/server';
+import { StatisticsService } from '@/api/services/StatisticsService';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const statsService = new StatisticsService();
+const eventRepository = new FirebaseEventRepository();
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const eventId = params.id;
-
   try {
-    // Read necessary data files
-    const eventsContent = await fs.readFile(path.join(DATA_DIR, 'events.json'), 'utf-8');
-    const matchesContent = await fs.readFile(path.join(DATA_DIR, 'matches', `${eventId}.json`), 'utf-8');
-    const playersContent = await fs.readFile(path.join(DATA_DIR, 'players.json'), 'utf-8');
-
-    // Parse the data
-    const events = JSON.parse(eventsContent).events;
-    const event = events.find((e: Event) => e.id === eventId);
-    const matches = JSON.parse(matchesContent).matches as Match[];
-    const players = JSON.parse(playersContent).players as Player[];
-
+    // Validate event exists
+    const event = await eventRepository.getEvent(params.id);
     if (!event) {
       return NextResponse.json(
         { error: 'Event not found' },
@@ -33,20 +19,14 @@ export async function GET(
       );
     }
 
-    // Calculate statistics
-    const stats = EventStatisticsCalculator.calculate(event, matches, players);
+    // Calculate event statistics
+    const stats = await statsService.calculateEventStats(params.id);
 
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Error calculating event statistics:', error);
-    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
-      return NextResponse.json(
-        { error: 'Required data not found' },
-        { status: 404 }
-      );
-    }
     return NextResponse.json(
-      { error: 'Failed to calculate statistics' },
+      { error: 'Failed to calculate event statistics' },
       { status: 500 }
     );
   }

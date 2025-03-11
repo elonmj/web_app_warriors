@@ -3,13 +3,13 @@ import { MatchService } from '@/api/services/MatchService';
 import { RankingService } from '@/api/services/RankingService';
 import { UpdateMatchResultInput, Match } from '@/types/Match';
 import { PlayerCategoryType } from '@/types/Enums';
-import { MatchRepository } from '@/api/repository/MatchRepository';
-import { iscService } from '@/api/services/ISCService'; // Import ISCService
+import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
+import { iscService } from '@/api/services/ISCService';
 import { ISCPlayerIdentifier } from '@/types/ISC';
 
 const matchService = new MatchService();
 const rankingService = new RankingService();
-const matchRepository = new MatchRepository();
+const matchRepository = new FirebaseMatchRepository();
 
 interface MatchUpdate {
   id: string;
@@ -67,12 +67,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
     }
 
     // Construct player identifiers for ISC fetch
+    // Modifier la définition pour enlever l'exigence de iscId
     const player1: ISCPlayerIdentifier = {
-      iscUsername: match.player1.id, // Use id as fallback.  Ideally, populate iscUsername.
+      iscUsername: match.player1.name || match.player1.id,
+      iscId: undefined // Fournir une valeur par défaut
     };
 
     const player2: ISCPlayerIdentifier = {
-      iscUsername: match.player2.id, // Use id as fallback.  Ideally, populate iscUsername.
+      iscUsername: match.player2.name || match.player2.id,
+      iscId: undefined // Fournir une valeur par défaut
     };
 
     // Fetch match result from ISC *before* processing
@@ -113,9 +116,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
       // Process match result with all updates
       const { updatedMatch, player1Update, player2Update } = await matchService.processMatchResult(match, input);
 
-      // Update rankings
+      // Update rankings - utiliser une méthode existante ou mettre à jour RankingService
       try {
-        await rankingService.updateEventRankings(match.eventId);
+        await rankingService.updateRoundRankings(match.eventId, updatedMatch.metadata.round);
       } catch (rankingError) {
         console.error('Error updating rankings:', rankingError);
         // Rankings update failure shouldn't block match result response

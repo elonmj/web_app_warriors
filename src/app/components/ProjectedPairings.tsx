@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Match } from "@/types/Match";
+import { MatchDisplay } from "@/types/MatchHistory"; 
+import { MatchStatus } from "@/types/MatchStatus";
 import { ArrowPathIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 import EventRoundPairings from "./EventRoundPairings";
 
@@ -11,7 +13,7 @@ interface ProjectedPairingsProps {
 }
 
 export default function ProjectedPairings({ eventId, currentRound }: ProjectedPairingsProps) {
-  const [projectedPairings, setProjectedPairings] = useState<Match[]>([]);
+  const [projectedPairings, setProjectedPairings] = useState<MatchDisplay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +24,22 @@ export default function ProjectedPairings({ eventId, currentRound }: ProjectedPa
       const response = await fetch(`/api/events/${eventId}/pairings`);
       if (!response.ok) throw new Error('Failed to fetch pairings');
       const data = await response.json();
-      setProjectedPairings(data.matches);
+      
+      // Transform Match[] to MatchDisplay[] - this fixes the type error
+      const transformedMatches: MatchDisplay[] = data.matches.map((match: Match) => ({
+        ...match,
+        status: match.status as MatchStatus, // Ensure type compatibility
+        player1Details: {
+          name: match.player1.name || `Player ${match.player1.id}`,
+          category: match.player1.categoryBefore
+        },
+        player2Details: {
+          name: match.player2.name || (match.player2.id === 'BYE' ? 'BYE' : `Player ${match.player2.id}`),
+          category: match.player2.categoryBefore
+        }
+      }));
+      
+      setProjectedPairings(transformedMatches);
     } catch (err) {
       setError('Failed to load projected pairings');
       console.error('Error loading pairings:', err);

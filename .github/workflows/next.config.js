@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
+  output: 'export',
   images: {
     unoptimized: true,
   },
@@ -9,5 +9,4 @@ const nextConfig = {
   // basePath: '',
 }
 
-// Use ESM export syntax for compatibility with "type": "module" in package.json
-export default nextConfig;
+module.exports = nextConfig

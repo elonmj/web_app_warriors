@@ -1,130 +1,149 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PlayerRepository } from '@/api/repository/playerRepository';
-import { PlayerMatch } from '@/types/Player';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { Player, PlayerMatch } from '@/types/Player';
 
-const playerRepo = new PlayerRepository();
+const playerRepository = new FirebasePlayerRepository();
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const player = await playerRepo.getPlayer(params.id);
+    const { id } = params;
+    
+    // Get the player
+    const player = await playerRepository.getPlayer(id);
     if (!player) {
       return NextResponse.json(
         { error: 'Player not found' },
         { status: 404 }
       );
     }
-
-    // Get query parameters
-    const { searchParams } = new URL(request.url);
-    const opponentId = searchParams.get('opponent');
-
-    // Ensure matches is an array
-    const matches = Array.isArray(player.matches) ? player.matches : [];
-    if (matches.length === 0) {
-      return NextResponse.json([]);
+    
+    // Get all opponents this player has faced
+    const matches = player.matches || [];
+    
+    if (!matches.length) {
+      return NextResponse.json({
+        playerId: id,
+        opponents: [],
+        totalMatches: 0
+      });
     }
-
-    // Group matches by opponent and calculate head-to-head statistics
-    const headToHead = matches.reduce((acc, match) => {
-      const opponent = match.opponent?.id;
-      if (!opponent) return acc; // Skip matches with invalid opponent data
-
-      if (!acc[opponent]) {
-        acc[opponent] = {
-          opponentId: opponent,
+    
+    // Calculate head-to-head statistics by opponent
+    type OpponentRecord = {
+      opponentId: string;
+      matches: number;
+      wins: number; 
+      losses: number;
+      draws: number;
+      totalPointsFor: number;
+      totalPointsAgainst: number;
+      avgPointsFor: number;
+      avgPointsAgainst: number;
+      lastMatch: string;
+      matchList: Array<{
+        date: string;
+        playerScore: number;
+        opponentScore: number;
+        ratingChange: number;
+      }>;
+    };
+    
+    // Group matches by opponent
+    const opponentStatsMap = matches.reduce((acc: Record<string, OpponentRecord>, match) => {
+      const opponentId = match.opponent.id;
+      
+      if (!acc[opponentId]) {
+        acc[opponentId] = {
+          opponentId,
           matches: 0,
           wins: 0,
           losses: 0,
           draws: 0,
-          totalScore: [0, 0],
-          averageRatingChange: 0,
-          totalRatingChange: 0,
-          averagePR: 0,
-          totalPR: 0,
-          lastMatch: match.date,
-          firstMatch: match.date,
-          validMatchCount: 0, // Track matches with valid results
+          totalPointsFor: 0,
+          totalPointsAgainst: 0,
+          avgPointsFor: 0,
+          avgPointsAgainst: 0,
+          lastMatch: '',
+          matchList: []
         };
       }
-
-      const record = acc[opponent];
+      
+      const record = acc[opponentId];
       record.matches++;
-
-      if (match.result?.score) {
-        record.validMatchCount++;
-        // Update win/loss/draw record
-        const [playerScore, opponentScore] = match.result.score;
-        if (playerScore > opponentScore) record.wins++;
-        else if (playerScore < opponentScore) record.losses++;
-        else record.draws++;
-
-        // Update totals
-        record.totalScore[0] += playerScore;
-        record.totalScore[1] += opponentScore;
-        record.totalPR += match.result.pr || 0;
+      
+      const playerScore = match.result.score[0];
+      const opponentScore = match.result.score[1];
+      
+      if (playerScore > opponentScore) {
+        record.wins++;
+      } else if (playerScore < opponentScore) {
+        record.losses++;
+      } else {
+        record.draws++;
       }
-
-      if (match.ratingChange?.change) {
-        record.totalRatingChange += match.ratingChange.change;
-      }
-
-      // Update date ranges
-      const matchDate = new Date(match.date);
-      const lastMatchDate = new Date(record.lastMatch);
-      const firstMatchDate = new Date(record.firstMatch);
-
-      if (matchDate > lastMatchDate) {
+      
+      record.totalPointsFor += playerScore;
+      record.totalPointsAgainst += opponentScore;
+      
+      record.matchList.push({
+        date: match.date,
+        playerScore,
+        opponentScore,
+        ratingChange: match.ratingChange.change
+      });
+      
+      // Keep track of last match date
+      if (!record.lastMatch || match.date > record.lastMatch) {
         record.lastMatch = match.date;
       }
-      if (matchDate < firstMatchDate) {
-        record.firstMatch = match.date;
-      }
-
+      
       return acc;
-    }, {} as Record<string, any>);
-
-    // Calculate averages and format response
-    const records = Object.values(headToHead).map(record => {
-      const validMatches = Math.max(record.validMatchCount, 1); // Avoid division by zero
-      return {
-        opponentId: record.opponentId,
-        matches: record.matches,
-        wins: record.wins,
-        losses: record.losses,
-        draws: record.draws,
-        totalScore: record.totalScore,
-        averageScore: [
-          Math.round(record.totalScore[0] / validMatches),
-          Math.round(record.totalScore[1] / validMatches)
-        ],
-        averageRatingChange: Math.round(record.totalRatingChange / validMatches),
-        totalRatingChange: record.totalRatingChange,
-        averagePR: Math.round(record.totalPR / validMatches),
-        totalPR: record.totalPR,
-        lastMatch: record.lastMatch,
-        firstMatch: record.firstMatch,
-        winRate: record.validMatchCount > 0 
-          ? Math.round((record.wins / record.validMatchCount) * 100)
-          : 0
-      };
-    }).filter(record => record.matches > 0); // Only include records with actual matches
-
-    // Sort by number of matches (most played opponents first)
-    records.sort((a, b) => b.matches - a.matches);
-
-    // If opponent ID is provided, filter for that specific matchup
-    const response = opponentId
-      ? records.find(r => r.opponentId === opponentId) || null
-      : records;
-
-    return NextResponse.json(response);
+    }, {});
+    
+    // Calculate averages and sort match lists
+    for (const opponentId in opponentStatsMap) {
+      const record = opponentStatsMap[opponentId];
+      record.avgPointsFor = Math.round(record.totalPointsFor / record.matches);
+      record.avgPointsAgainst = Math.round(record.totalPointsAgainst / record.matches);
+      
+      // Sort match list by date (newest first)
+      record.matchList.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    }
+    
+    // Fetch opponent details and add to result
+    const opponentIds = Object.keys(opponentStatsMap);
+    const opponents = await Promise.all(
+      opponentIds.map(async (opponentId) => {
+        const opponent = await playerRepository.getPlayer(opponentId);
+        const record = opponentStatsMap[opponentId];
+        
+        return {
+          ...record,
+          opponentName: opponent?.name || 'Unknown',
+          opponentCategory: opponent?.category || 'Unknown',
+          winPercentage: (record.wins / record.matches * 100).toFixed(1)
+        };
+      })
+    );
+    
+    // Sort by most matches first
+    const sortedOpponents = opponents.sort((a, b) => b.matches - a.matches);
+    
+    return NextResponse.json({
+      playerId: id,
+      playerName: player.name,
+      opponents: sortedOpponents,
+      totalMatches: matches.length
+    });
   } catch (error) {
-    console.error('Error fetching head-to-head records:', error);
+    console.error('Error retrieving head-to-head statistics:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch head-to-head records' },
+      { error: 'Failed to retrieve head-to-head statistics' },
       { status: 500 }
     );
   }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { FirebaseEventRepository } from '../../../../../../api/repository/FirebaseEventRepository';
 import { Event } from '@/types/Event';
 import { Match } from '@/types/Match';
-import { EventRepository } from '@/api/repository/eventRepository';
 import { MatchStatus } from '@/types/Enums';
 
-const eventRepository = new EventRepository();
+const eventRepository = new FirebaseEventRepository();
 
 export async function GET(
   request: NextRequest,

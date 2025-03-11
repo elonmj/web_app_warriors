@@ -1,7 +1,7 @@
 import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from './Enums';
 
 interface PlayerMatchInfo {
-  id: number;
+  id: string; // Changed from number to string
   name?: string;
   category?: PlayerCategoryType;
   ratingBefore: number;
@@ -27,11 +27,11 @@ interface MatchResult {
   pr: number;    // Points de Rencontre
   pdi: number;   // Points de Départage Interne
   ds: number;    // Différence de Score
-  validation: MatchValidation;
+
 }
 
 export interface Match {
-  id: number;
+  id: string; // Match ID is still a string (Firebase requirement)
   eventId: string;
   date: string;        // ISO-8601
   player1: PlayerMatchInfo;
@@ -48,26 +48,26 @@ export interface Match {
 
 export interface CreateMatchInput {
   eventId: string;
-  player1Id: number;
-  player2Id: number;
+  player1Id: string; // Changed from number to string
+  player2Id: string; // Changed from number to string
   isRandom?: boolean;
   round?: number;
 }
 
 export interface UpdateMatchResultInput {
-  matchId: number;
+  matchId: string; // Changed from number to string
   eventId: string;
   score: MatchScore;
   forfeit?: {
-    winner: number;  // Winner's player ID
+    winner: string;  // Changed from number to string
     reason: string;
   };
 }
 
 export interface ApproveMatchResultInput {
-  matchId: number;
+  matchId: string; // Changed from number to string
   eventId: string;
-  playerId: number;
+  playerId: string; // Changed from number to string
 }
 
 // Constants

@@ -1,110 +1,66 @@
-import { NextResponse } from 'next/server';
-import * as fs from 'fs/promises';
-import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
 import { Event } from '@/types/Event';
-import { EventType, EventStatus, type EventTypeType } from '@/types/Enums';
-import { verifyPassword } from '@/lib/auth';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
+import { EventStatusType } from '@/types/Enums'; // Import the enum
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const eventRepository = new FirebaseEventRepository();
 
-interface CreateEventInput {
-  name: string;
-  startDate: string;
-  endDate: string;
-  type: string;
-  password: string;
-}
-
+/**
+ * GET /api/events
+ * Get all events
+ */
 export async function GET() {
   try {
-    const filePath = path.join(DATA_DIR, 'events.json');
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const data = JSON.parse(fileContent);
-
-    if (!data.events || !Array.isArray(data.events)) {
-      return NextResponse.json(
-        { error: 'Invalid data structure in events.json' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ events: data.events });
+    const events = await eventRepository.getAllEvents();
+    return NextResponse.json(events);
   } catch (error) {
-    console.error('Error reading events data:', error);
+    console.error('Error fetching events:', error);
     return NextResponse.json(
-      { error: 'Failed to load events' },
+      { error: 'Failed to fetch events' },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+/**
+ * POST /api/events
+ * Create a new event
+ */
+export async function POST(request: NextRequest) {
   try {
-    const input: CreateEventInput = await request.json();
-
-    // Validate input
-    if (!input.name || !input.startDate || !input.endDate || !input.type || !input.password) {
+    const data = await request.json();
+    
+    // Validate required fields
+    if (!data.name || !data.type || !data.startDate) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, type, startDate' },
         { status: 400 }
       );
     }
 
-    // Verify event type
-    if (!Object.values(EventType).includes(input.type as EventTypeType)) {
-      return NextResponse.json(
-        { error: 'Invalid event type' },
-        { status: 400 }
-      );
-    }
-
-    // Verify admin password
-    const isValidPassword = await verifyPassword(input.password);
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 401 }
-      );
-    }
-
-    const newEvent: Event = {
-      id: `event-${Date.now()}`,
-      name: input.name,
-      startDate: new Date(input.startDate),
-      endDate: new Date(input.endDate),
-      type: input.type as EventTypeType,
-      status: EventStatus.OPEN,
+    // Create event with correctly structured metadata
+    const now = new Date().toISOString();
+    const event: Omit<Event, 'id'> = {
+      name: data.name,
+      type: data.type,
+      status: "upcoming" as EventStatusType,
+      startDate: data.startDate,
+      endDate: data.endDate || null,
       metadata: {
         totalPlayers: 0,
         totalMatches: 0,
-        currentRound: 1,
-        totalRounds: 0,
-        lastUpdated: new Date().toISOString(),
+        totalRounds: data.totalRounds || 0,
+        currentRound: 0,
+        roundDates: {},
         roundHistory: {},
-        byeHistory: []
+        byeHistory: [],
+        lastUpdated: now // Use lastUpdated instead of createdAt/updatedAt
       }
     };
 
-    // Read existing events
-    const filePath = path.join(DATA_DIR, 'events.json');
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const data = JSON.parse(fileContent);
-
-    if (!data.events || !Array.isArray(data.events)) {
-      data.events = [];
-    }
-
-    // Add new event
-    data.events.push(newEvent);
-
-    // Save updated events
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
-
-    // Create initial files for matches and rankings
-    await fs.mkdir(path.join(DATA_DIR, 'matches', newEvent.id), { recursive: true });
-    await fs.mkdir(path.join(DATA_DIR, 'rankings', newEvent.id), { recursive: true });
-
-    return NextResponse.json(newEvent);
+    // Add event to repository
+    const newEvent = await eventRepository.createEvent(event);
+    return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
     console.error('Error creating event:', error);
     return NextResponse.json(

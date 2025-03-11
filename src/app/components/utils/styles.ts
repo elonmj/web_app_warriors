@@ -1,19 +1,24 @@
-import { PlayerCategory, PlayerCategoryType } from "@/types/Enums";
+import { PlayerCategory, PlayerCategoryType } from '@/types/Enums';
 
-
-
-export function getCategoryColor(category: PlayerCategoryType): string {
+/**
+ * Gets the appropriate CSS class for a player category
+ * @param category The player's category
+ * @returns CSS class name for styling the category
+ */
+export function getCategoryColor(category: PlayerCategoryType | undefined): string {
+  if (!category) return 'text-gray-500'; // Default color for undefined category
+  
   switch (category) {
     case PlayerCategory.ONYX:
-      return "text-onyx-900 dark:text-white";
-    case PlayerCategory.AMÉTHYSTE:
-      return "text-amethyst-900 dark:text-white";
-    case PlayerCategory.TOPAZE:
-      return "text-topaz-900 dark:text-white";
+      return 'text-onyx-600 dark:text-onyx-300';
     case PlayerCategory.DIAMANT:
-      return "text-diamond-900 dark:text-white";
+      return 'text-blue-600 dark:text-blue-400';
+    case PlayerCategory.TOPAZE:
+      return 'text-amber-600 dark:text-amber-400';
+    case PlayerCategory.AMÉTHYSTE:
+      return 'text-purple-600 dark:text-purple-400';
     default:
-      return "text-onyx-400"; // Fallback color
+      return 'text-gray-600 dark:text-gray-400';
   }
 }
 

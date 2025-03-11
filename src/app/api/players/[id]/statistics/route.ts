@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PlayerRepository } from '@/api/repository/playerRepository';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { StatisticsService } from '@/api/services/StatisticsService';
 
-const playerRepo = new PlayerRepository();
+const playerRepo = new FirebasePlayerRepository();
 const statisticsService = new StatisticsService();
 
 export async function GET(
@@ -20,18 +20,19 @@ export async function GET(
 
     // Get detailed player statistics
     const detailedStats = await statisticsService.getDetailedPlayerStatistics(player.id);
+    const matches = player.matches || [];
 
     return NextResponse.json({
       basic: player.statistics,
       detailed: {
         ...detailedStats,
-        ratingHistory: player.matches.map(match => ({
+        ratingHistory: matches.map(match => ({
           date: match.date,
           rating: match.ratingChange.after,
           category: match.categoryAtTime,
         })),
         categoryTransitions: player.statistics.categoryHistory,
-        recentPerformance: player.matches.slice(0, 10).map(match => ({
+        recentPerformance: matches.slice(0, 10).map(match => ({
           date: match.date,
           opponentId: match.opponent.id,
           result: match.result,
