@@ -14,7 +14,7 @@ import { Body } from "@/components/ui/Typography";
 import { RoundLoadingSkeleton } from "./RoundLoadingSkeleton";
 import Link from "next/link";
 
-interface PlayerRankingsProps {
+export interface PlayerRankingsProps {
   eventRanking: EventRanking;
   currentRound?: number;
   totalRounds?: number;
@@ -47,7 +47,7 @@ export function PlayerRankings({
   currentRound,
   totalRounds,
   onRoundChange 
-}: PlayerRankingsProps) {
+}: PlayerRankingsProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
 
   // Use provided props or metadata values
@@ -229,5 +229,4 @@ export function PlayerRankings({
   );
 }
 
-// Named + default export for flexibility
 export default PlayerRankings;
