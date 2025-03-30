@@ -1,6 +1,6 @@
 export async function verifyPassword(password: string): Promise<boolean> {
   // For development and testing, you can set a default password in .env.local
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin'; // Use 'admin' as default
   return password === adminPassword;
 }
 

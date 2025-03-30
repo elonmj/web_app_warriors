@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 import { Event } from '@/types/Event';
+import { EventService } from '@/api/services/EventService';
+import { verifyPassword, AUTH_ERROR_MESSAGES } from '@/lib/auth';
 
 const eventRepository = new FirebaseEventRepository();
 
@@ -72,9 +74,28 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { eventId: string } }
 ) {
+  // Instantiate EventService inside the handler
+  const eventService = new EventService();
   try {
-    // Check if event exists
-    const event = await eventRepository.getEvent(params.eventId);
+    // --- Password Verification ---
+    const password = request.headers.get('X-Admin-Password');
+    if (!password) {
+      return NextResponse.json(
+        { error: AUTH_ERROR_MESSAGES.PASSWORD_REQUIRED },
+        { status: 400 } // Bad Request
+      );
+    }
+    const isPasswordValid = await verifyPassword(password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: AUTH_ERROR_MESSAGES.INVALID_PASSWORD },
+        { status: 401 } // Unauthorized
+      );
+    }
+    // --- End Password Verification ---
+
+    // Check if event exists (using service layer is good practice, though repo call is fine here too)
+    const event = await eventService.getEvent(params.eventId); // Use service
     if (!event) {
       return NextResponse.json(
         { error: 'Event not found' },
@@ -82,9 +103,10 @@ export async function DELETE(
       );
     }
 
-    // Delete event
-    await eventRepository.deleteEvent(params.eventId);
+    // Delete event using the service layer
+    await eventService.deleteEvent(params.eventId);
     
+    // Return success with no content
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error deleting event:', error);

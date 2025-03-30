@@ -38,10 +38,35 @@ export function CreateEventForm({ isOpen, onClose, event, mode = 'create' }: Cre
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // --- Date Validation ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date
+
+    const startDate = new Date(formData.startDate);
+    startDate.setHours(0, 0, 0, 0); // Normalize start date
+
+    const endDate = new Date(formData.endDate);
+    endDate.setHours(0, 0, 0, 0); // Normalize end date
+
+    // 1. Check if start date is in the past (only for create mode)
+    if (mode === 'create' && startDate < today) {
+      alert("Error: Start date cannot be in the past.");
+      return; // Stop submission
+    }
+
+    // 2. Check if end date is before start date
+    if (endDate < startDate) {
+      alert("Error: End date cannot be before the start date.");
+      return; // Stop submission
+    }
+    // --- End Date Validation ---
+
     const submitData = {
       name: formData.name,
-      startDate: new Date(formData.startDate).toISOString(),
-      endDate: new Date(formData.endDate).toISOString(),
+      // Store dates as ISO strings
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
       type: formData.type,
     };
     setFormSubmitData(submitData);
@@ -81,10 +106,13 @@ export function CreateEventForm({ isOpen, onClose, event, mode = 'create' }: Cre
       if (!response.ok) {
         throw new Error(`Failed to ${mode} event`);
       }
-
+ 
+      // Display success message
+      alert(`Event ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+ 
       setShowPasswordDialog(false);
       onClose();
-      // Refresh the page to show the changes
+      // Refresh the page to show the changes - Consider removing if UI updates dynamically
       window.location.reload();
     } catch (error) {
       console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} event:`, error);

@@ -10,7 +10,7 @@ export default async function Home() {
   const events = await eventRepository.getAllEvents();
 
   // Filter active and upcoming events
-  const activeEvents = events.filter(event => event.status === "in_progress" || event.status === "open"); 
+  const activeEvents = events.filter(event => event.status === "in_progress" || event.status === "open");
   // Sort by start date (most recent first)
   activeEvents.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
@@ -25,7 +25,7 @@ export default async function Home() {
 
       <section className="mx-auto max-w-6xl">
         <Heading.H3 className="mb-6">Active Events</Heading.H3>
-        
+
         <Suspense fallback={<RoundLoadingSkeleton />}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {activeEvents.length > 0 ? (

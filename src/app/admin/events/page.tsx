@@ -64,6 +64,40 @@ export default function AdminEventsPage() {
     });
   };
 
+  const handleDeleteClick = async (eventId: string) => {
+    const password = prompt("Please enter the admin password to confirm deletion:");
+    if (password === null) { // User cancelled the prompt
+      return;
+    }
+    // Optional: Add a simple confirmation dialog as well
+    if (!window.confirm("Are you sure you want to delete this event and all its data? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-Admin-Password': password // Send password in header
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete event');
+      }
+
+      // Refresh list after successful deletion
+      setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+      alert('Event deleted successfully!');
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      alert(`Error deleting event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "in_progress":
@@ -80,7 +114,7 @@ export default function AdminEventsPage() {
   };
 
   const capitalize = (str: string) => {
-    return str.split('_').map(word => 
+    return str.split('_').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
   };
@@ -93,7 +127,7 @@ export default function AdminEventsPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Event Management
             </h1>
-            <button 
+            <button
               onClick={handleCreateClick}
               className="inline-flex items-center rounded-md bg-amethyste-500 px-4 py-2 text-sm font-medium text-white hover:bg-amethyste-600"
             >
@@ -168,6 +202,7 @@ export default function AdminEventsPage() {
                           <span className="ml-2">Edit</span>
                         </button>
                         <button
+                          onClick={() => handleDeleteClick(event.id)}
                           className="text-red-500 hover:text-red-600 inline-flex items-center"
                         >
                           <XMarkIcon className="h-4 w-4" />
@@ -179,7 +214,7 @@ export default function AdminEventsPage() {
                 </tbody>
               </table>
             </div>
-            {events.length === 0 && (
+            {(events as Event[]).length === 0 && ( // Explicit type assertion
               <div className="text-center py-12">
                 <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No events</h3>
@@ -199,3 +234,5 @@ export default function AdminEventsPage() {
     </div>
   );
 }
+
+// End of component

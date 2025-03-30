@@ -14,7 +14,8 @@ import { FirebaseBaseRepository } from './FirebaseBaseRepository';
 import { Event } from '@/types/Event';
 import { Match } from '@/types/Match';
 import { EventRanking } from '@/types/Ranking';
-import { MatchStatusType, PlayerCategoryType } from '@/types/Enums';
+import { MatchStatusType, PlayerCategoryType, EventStatus, EventStatusType } from '@/types/Enums';
+
 
 export class FirebaseEventRepository extends FirebaseBaseRepository {
   /**
@@ -45,10 +46,39 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
   /**
    * Create new event
    */
-  async createEvent(event: Omit<Event, 'id'>): Promise<Event> {
+  async createEvent(eventData: Omit<Event, 'id'>): Promise<Event> {
     try {
-      const newEventId = await this.pushData('events', event);
-      const createdEvent = { ...event, id: newEventId };
+      // Determine initial status based on start date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize today's date
+      const startDate = new Date(eventData.startDate);
+      startDate.setHours(0, 0, 0, 0); // Normalize start date
+
+      let initialStatus: EventStatusType = EventStatus.OPEN; // Default to OPEN if future or past
+      if (startDate < today) {
+        // Log warning for past dates but still set as OPEN
+        console.warn(`Event "${eventData.name}" created with a past start date.`);
+      }
+      // No need for specific check for today, OPEN covers it.
+      // If a specific 'scheduled' or 'incoming' status existed, we'd check:
+      // else if (startDate > today) { initialStatus = EventStatus.SCHEDULED; }
+
+      const eventToSave = {
+        ...eventData,
+        status: initialStatus, // Set the calculated status
+        metadata: { // Initialize metadata
+          currentRound: 0,
+          totalPlayers: 0,
+          totalMatches: 0,
+          totalRounds: 0, // Or determine based on event type later
+          lastUpdated: new Date().toISOString(),
+          roundHistory: {},
+          byeHistory: []
+        }
+      };
+
+      const newEventId = await this.pushData('events', eventToSave);
+      const createdEvent = { ...eventToSave, id: newEventId };
       return createdEvent;
     } catch (error) {
       console.error('Error creating event:', error);

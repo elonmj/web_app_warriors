@@ -442,4 +442,18 @@ export class EventService {
       throw new Error(`Failed to undo round completion: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  /**
+   * Delete an event and its related data
+   */
+  async deleteEvent(eventId: string): Promise<void> {
+    try {
+      // Repository handles deleting related matches/rankings
+      await this.eventRepository.deleteEvent(eventId);
+    } catch (error) {
+      console.error(`Error deleting event ${eventId} in service:`, error);
+      throw new Error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
 }
