@@ -3,8 +3,8 @@ import { Match } from '@/types/Match';
 import { MatchDisplay } from '@/types/MatchHistory';
 import { MatchStatus } from '@/types/MatchStatus';
 import { Body, Heading } from "@/components/ui/Typography";
-import { useRouter } from 'next/navigation';
-import { TrophyIcon } from "@heroicons/react/24/outline";
+import Link from 'next/link';
+import { TrophyIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { getCategoryColor } from "./utils/styles";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 
@@ -32,7 +32,6 @@ interface PairingCardProps {
 }
 
 const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) => {
-  const router = useRouter();
   const [player1Details, setPlayer1Details] = useState<PlayerDetails | null>(null);
   const [player2Details, setPlayer2Details] = useState<PlayerDetails | null>(null);
 
@@ -106,13 +105,13 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
   const { label, className } = getStatusDisplay(match.status);
 
   return (
-    <div 
-      onClick={() => router.push(`/event/${match.eventId}/match/${match.id}`)}
-      className={`border rounded-lg p-4 sm:p-6 mb-4 cursor-pointer 
-      hover:border-amethyste-200 hover:shadow-sm transition-all duration-200
-      ${isByeMatch ? 'bg-onyx-50 dark:bg-onyx-900/50' : 'bg-white dark:bg-onyx-900'} 
+    <Link
+      href={`/event/${match.eventId}/match/${match.id}`}
+      className={`relative block border rounded-lg p-4 sm:p-6 mb-4 cursor-pointer
+      hover:border-amethyste-300 hover:shadow-md transition-all duration-200
+      ${isByeMatch ? 'bg-onyx-50 dark:bg-onyx-900/50' : 'bg-white dark:bg-onyx-900'}
       ${isProjected ? 'border-purple-200 dark:border-purple-800/30' : 'border-onyx-200 dark:border-onyx-800'}`}>
-      
+
       <div className="flex justify-between items-center mb-4">
         {isByeMatch && (
           <span className="absolute -top-2 left-4 bg-gray-500 text-white text-xs px-2 py-1 rounded">
@@ -223,7 +222,16 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
           </div>
         </div>
       )}
-    </div>
+
+      {!isProjected && !isByeMatch && (
+        <div className="mt-4 flex justify-end border-t border-onyx-100 pt-3 dark:border-onyx-800">
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-amethyste-600 dark:text-amethyste-400">
+            {match.status === 'pending' ? 'Enter Results' : 'View Details / Modify'}
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      )}
+    </Link>
   );
 };
 

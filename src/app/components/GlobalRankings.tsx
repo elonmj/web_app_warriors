@@ -1,8 +1,7 @@
  "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ref, get } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { useSearchParams } from 'next/navigation';
 import { Player } from '@/types/Player';
 import { EventRanking } from '@/types/Ranking';
 import { PlayerRankings } from './PlayerRankings';
@@ -14,6 +13,8 @@ import { Body, Heading } from '@/components/ui/Typography';
 const GLOBAL_RANKINGS_ID = 'global';
 
 export function GlobalRankings() {
+  const searchParams = useSearchParams();
+  const categoryFilter = searchParams.get('category');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rankings, setRankings] = useState<EventRanking | null>(null);
@@ -22,31 +23,25 @@ export function GlobalRankings() {
     const fetchPlayers = async () => {
       try {
         setLoading(true);
-        const playersRef = ref(db, 'players');
-        const snapshot = await get(playersRef);
-        
-        if (!snapshot.exists()) {
-          setRankings({
-            eventId: GLOBAL_RANKINGS_ID,
-            rankings: [],
-            lastUpdated: new Date().toISOString(),
-          });
-          return;
+        const response = await fetch('/api/players');
+        if (!response.ok) {
+          throw new Error('Failed to fetch players');
         }
+        const players: Player[] = await response.json();
 
-        const players = Object.entries(snapshot.val()).map(([id, data]) => ({
-          id,
-          ...(data as Omit<Player, 'id'>)
-        }));
+        // Filter by category if requested via ?category=
+        const filteredPlayers = categoryFilter
+          ? players.filter(p => p.category === categoryFilter)
+          : players;
 
         // Sort players by rating in descending order
-        const sortedPlayers = players.sort((a, b) => b.currentRating - a.currentRating);
+        const sortedPlayers = filteredPlayers.sort((a, b) => b.currentRating - a.currentRating);
 
         // Transform players into rankings format
         const globalRankings: EventRanking = {
           eventId: GLOBAL_RANKINGS_ID,
           rankings: sortedPlayers.map((player, index) => ({
-            playerId: player.id,
+            playerId: String(player.id),
             playerDetails: {
               name: player.name,
               category: player.category,
@@ -60,7 +55,7 @@ export function GlobalRankings() {
             losses: player.statistics?.losses || 0,
             draws: player.statistics?.draws || 0,
             ratingChange: player.matches?.length 
-              ? player.matches[player.matches.length - 1].ratingChange.change 
+              ? player.matches[player.matches.length - 1].ratingChange?.change || 0
               : 0,
             category: player.category,
           })),
@@ -77,9 +72,7 @@ export function GlobalRankings() {
     };
 
     fetchPlayers();
-
-    // Cleanup - no need to unsubscribe since we're using get() not onValue()
-  }, []);
+  }, [categoryFilter]);
 
   if (loading) {
     return <RoundLoadingSkeleton />;

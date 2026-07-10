@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from 'react';
 import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { Event } from '@/types/Event';

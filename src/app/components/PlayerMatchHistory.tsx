@@ -24,11 +24,12 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
 
   const fetchMatches = useCallback(async (offset: number) => {
     try {
-      if (!playerId || typeof playerId !== 'string') {
+      const idStr = String(playerId);
+      if (!idStr || idStr.trim() === '') {
         throw new Error('Invalid player ID');
       }
 
-      if (!playerId.match(/^\d+$/)) {
+      if (!idStr.match(/^\d+$/)) {
         throw new Error('Invalid player ID format - must be a number');
       }
 
@@ -37,13 +38,13 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
 
       // Debug logging
       console.log('Fetching matches with params:', {
-        playerId,
+        playerId: idStr,
         limit,
         offset,
-        originalUrl: `/api/players/${playerId}/matches`
+        originalUrl: `/api/players/${idStr}/matches`
       });
 
-      const encodedPlayerId = encodeURIComponent(playerId);
+      const encodedPlayerId = encodeURIComponent(idStr);
       const url = `/api/players/${encodedPlayerId}/matches?limit=${limit}&offset=${offset}`;
       console.log('Fetching matches from:', url);
       

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
 import { StatisticsService } from '@/api/services/StatisticsService';
+import { Player } from '@/types/Player';
 
 const playerRepo = new FirebasePlayerRepository();
 const matchRepo = new FirebaseMatchRepository();
@@ -24,7 +25,7 @@ export async function POST(
     // 2. Reset player statistics
     const resetPlayers = await Promise.all(players.map(async player => {
       // Reset statistics while keeping player info
-      const resetPlayer = {
+      const resetPlayer: Player = {
         ...player,
         matches: [],
         currentRating: 1000,
@@ -40,7 +41,8 @@ export async function POST(
         }
       };
       
-      return await playerRepo.updatePlayer(player.id, resetPlayer);
+      await playerRepo.updatePlayer(player.id, resetPlayer);
+      return resetPlayer;
     }));
     
     // 3. Process each match and update player statistics

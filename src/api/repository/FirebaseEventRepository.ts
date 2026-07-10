@@ -1,12 +1,12 @@
-import { 
-  ref, 
-  get, 
-  push, 
+import {
+  ref,
+  get,
+  push,
   query as dbQuery,
-  orderByChild, 
-  equalTo, 
-  set, 
-  update, 
+  orderByChild,
+  equalTo,
+  set,
+  update,
   remove,
   child
 } from 'firebase/database';
@@ -36,7 +36,21 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
    */
   async getEvent(id: string): Promise<Event | null> {
     try {
-      return await this.getData<Event>(`events/${id}`);
+      // Fetch raw data, assuming dates are stored as ISO strings
+      const rawData = await this.getData<any>(`events/${id}`);
+      if (!rawData) {
+        return null;
+      }
+
+      // Convert date strings to Date objects
+      const eventData: Event = {
+        ...rawData,
+        id: id, // Ensure the ID is included if not part of rawData
+        startDate: rawData.startDate ? new Date(rawData.startDate) : new Date(), // Provide default or handle error
+        endDate: rawData.endDate ? new Date(rawData.endDate) : new Date(), // Provide default or handle error
+      };
+
+      return eventData;
     } catch (error) {
       console.error(`Error getting event ${id}:`, error);
       throw error;
@@ -66,6 +80,7 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
       const eventToSave = {
         ...eventData,
         status: initialStatus, // Set the calculated status
+        playerIds: [], // Initialize empty participants list
         metadata: { // Initialize metadata
           currentRound: 0,
           totalPlayers: 0,
@@ -114,7 +129,7 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
       // Also delete matches and rankings
       await this.deleteData(`matches/${eventId}`);
       await this.deleteData(`rankings/${eventId}`);
-      
+
       console.log(`Event ${eventId} successfully deleted`);
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -127,22 +142,15 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
    */
   async getRoundMatches(eventId: string, round: number): Promise<Match[]> {
     try {
-      // In Realtime Database, use query with orderByChild and equalTo
-      const matchesRef = dbQuery(
-        ref(this.db, `matches/${eventId}`),
-        orderByChild('metadata/round'),
-        equalTo(round)
-      );
-      
-      const snapshot = await get(matchesRef);
-      if (!snapshot.exists()) {
-        return [];
-      }
+      const data = await this.getData<Record<string, any>>(`matches/${eventId}`);
+      if (!data) return [];
 
-      const matchesData = snapshot.val();
-      
+      const filtered = Object.entries(data).filter(([_, matchData]) => {
+        return matchData.metadata?.round === round;
+      });
+
       // Transform data to proper Match objects with all required fields
-      const matches: Match[] = Object.entries(matchesData).map(([id, data]: [string, any]) => {
+      const matches: Match[] = filtered.map(([id, data]: [string, any]) => {
         return {
           id,
           eventId,
@@ -188,7 +196,7 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
     try {
       const data = await this.getData<Record<string, any>>(`matches/${eventId}`);
       if (!data) return [];
-      
+
       // Transform data to proper Match objects
       const matches: Match[] = Object.entries(data).map(([id, matchData]) => {
         return {
@@ -221,7 +229,7 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
           }
         };
       });
-      
+
       return matches;
     } catch (error) {
       console.error(`Error getting matches for event ${eventId}:`, error);
@@ -267,13 +275,13 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
   async updateEventMatch(eventId: string, matchId: string, updates: Partial<Match>): Promise<Match> {
     try {
       await this.updateData(`matches/${eventId}/${matchId}`, updates);
-      
+
       // Get updated match
       const updatedMatch = await this.getData<Match>(`matches/${eventId}/${matchId}`);
       if (!updatedMatch) {
         throw new Error(`Match ${matchId} not found after update`);
       }
-      
+
       return updatedMatch;
     } catch (error) {
       console.error(`Error updating match ${matchId} in event ${eventId}:`, error);
@@ -301,6 +309,99 @@ export class FirebaseEventRepository extends FirebaseBaseRepository {
       await this.setData(`rankings/${eventId}/round${round}`, rankings);
     } catch (error) {
       console.error(`Error saving round ${round} rankings for event ${eventId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add a participant to an event
+   */
+  async addParticipant(eventId: string, playerId: string): Promise<Event> {
+    try {
+      // Get current event
+      const event = await this.getEvent(eventId);
+      if (!event) {
+        throw new Error(`Event ${eventId} not found`);
+      }
+
+      // Update playerIds array
+      const currentPlayerIds = event.playerIds || [];
+      if (currentPlayerIds.includes(playerId)) {
+        return event; // Player already added
+      }
+
+      // Ensure metadata exists and has required fields before updating
+      const currentMetadata = event.metadata || {
+        totalPlayers: 0,
+        totalMatches: 0,
+        currentRound: 0,
+        totalRounds: 0,
+        lastUpdated: new Date().toISOString(),
+        roundHistory: {},
+        byeHistory: [],
+      };
+
+      const updates = {
+        playerIds: [...currentPlayerIds, playerId],
+        metadata: {
+          ...currentMetadata, // Spread potentially defaulted metadata
+          totalPlayers: currentMetadata.totalPlayers + 1, // Increment based on currentMetadata
+          lastUpdated: new Date().toISOString() // Always update lastUpdated timestamp
+        }
+      };
+
+      // Use existing updateEvent method
+      return await this.updateEvent(eventId, updates as Partial<Event>); // Assert type if needed, though defaults should satisfy
+    } catch (error) {
+      console.error(`Error adding participant ${playerId} to event ${eventId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a participant from an event
+   */
+  async removeParticipant(eventId: string, playerId: string): Promise<Event> {
+    try {
+      // Get current event
+      const event = await this.getEvent(eventId);
+      if (!event) {
+        throw new Error(`Event ${eventId} not found`);
+      }
+
+      // Update playerIds array
+      const currentPlayerIds = event.playerIds || [];
+      if (!currentPlayerIds.includes(playerId)) {
+        return event; // Player not in event
+      }
+
+      // Prepare updates for specific paths
+      const updates: { [key: string]: any } = {};
+      updates[`playerIds`] = currentPlayerIds.filter(id => id !== playerId);
+      updates[`metadata/totalPlayers`] = Math.max(0, (event.metadata?.totalPlayers || 1) - 1);
+      updates[`metadata/lastUpdated`] = new Date().toISOString();
+
+      // Use the base updateData method for multi-path updates
+      await this.updateData(`events/${eventId}`, updates);
+      const updatedEvent = await this.getEvent(eventId);
+       if (!updatedEvent) {
+         throw new Error(`Event ${eventId} not found after removing participant`);
+       }
+      return updatedEvent;
+    } catch (error) {
+      console.error(`Error removing participant ${playerId} from event ${eventId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a match from an event
+   */
+  async deleteMatch(eventId: string, matchId: string): Promise<void> {
+    try {
+      await this.deleteData(`matches/${eventId}/${matchId}`);
+    } catch (error) {
+      console.error(`Error deleting match ${matchId} from event ${eventId}:`, error);
       throw error;
     }
   }

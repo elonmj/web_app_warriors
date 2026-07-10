@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Heading, Body } from "@/components/ui/Typography";
 import { GlobalRankings } from "@/app/components/GlobalRankings";
 
@@ -19,7 +20,9 @@ export default function RankingsPage() {
 
         {/* Rankings Table */}
         <div className="bg-white shadow-sm rounded-lg dark:bg-onyx-900">
-          <GlobalRankings />
+          <Suspense fallback={null}>
+            <GlobalRankings />
+          </Suspense>
         </div>
       </div>
     </div>

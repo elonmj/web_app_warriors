@@ -2,9 +2,16 @@
 
 import { Event } from "@/types/Event";
 import { EventStatus } from "@/types/Enums";
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from "react";
 import { CalendarIcon, PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { CreateEventForm } from "@/app/components/CreateEventForm";
+// Static import removed
+
+// Dynamically import CreateEventForm with SSR disabled
+const DynamicCreateEventForm = dynamic(
+  () => import('@/app/components/CreateEventForm').then(mod => mod.CreateEventForm),
+  { ssr: false }
+);
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -225,7 +232,7 @@ export default function AdminEventsPage() {
         )}
       </main>
 
-      <CreateEventForm
+      <DynamicCreateEventForm
         isOpen={showForm}
         onClose={handleCloseForm}
         event={selectedEvent}

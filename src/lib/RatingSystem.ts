@@ -182,6 +182,15 @@ class RatingSystem {
     };
   }
 
+  /**
+   * Get category based on rating
+   */
+  getCategory(rating: number): PlayerCategoryType {
+    if (rating >= 1900) return "DIAMANT";
+    if (rating >= 1700) return "TOPAZE";
+    if (rating >= 1400) return "AMÉTHYSTE";
+    return "ONYX";
+  }
 }
 
 export { RatingSystem };

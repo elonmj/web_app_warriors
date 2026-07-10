@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyPassword } from "@/lib/auth";
+import { createSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/adminSession";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +22,16 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    const { token, maxAgeSeconds } = await createSessionToken();
+    const response = NextResponse.json({ success: true });
+    response.cookies.set(ADMIN_SESSION_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: maxAgeSeconds,
+    });
+    return response;
   } catch (error) {
     console.error("Error verifying password:", error);
     return NextResponse.json(

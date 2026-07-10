@@ -49,6 +49,7 @@ export interface Event {
   type: EventTypeType;
   status: EventStatusType;
   metadata?: EventMetadata;
+  playerIds?: string[]; // Add optional array for participant IDs
 }
 
 export interface CreateEventInput {

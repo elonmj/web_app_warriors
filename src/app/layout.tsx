@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'sonner';
 import Link from "next/link";
 
 const dmSans = DM_Sans({
@@ -35,26 +36,26 @@ export default function RootLayout({
                 </Link>
                 {/* Category Indicators */}
                 <div className="ml-8 hidden space-x-4 sm:flex">
-                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium 
+                  <Link href="/rankings?category=ONYX" className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
                     bg-onyx-100 text-onyx-800 ring-1 ring-onyx-900/10 hover:ring-2 transition-all duration-150
                     dark:bg-onyx-800 dark:text-onyx-100 dark:ring-white/10">
                     ONYX
-                  </span>
-                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium 
+                  </Link>
+                  <Link href="/rankings?category=AMÉTHYSTE" className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
                     bg-amethyste-100 text-amethyste-800 ring-1 ring-amethyste-900/10 hover:ring-2 transition-all duration-150
                     dark:bg-amethyste-800 dark:text-amethyste-100 dark:ring-white/10">
                     AMÉTHYSTE
-                  </span>
-                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium 
+                  </Link>
+                  <Link href="/rankings?category=TOPAZE" className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
                     bg-topaze-100 text-topaze-800 ring-1 ring-topaze-900/10 hover:ring-2 transition-all duration-150
                     dark:bg-topaze-800 dark:text-topaze-100 dark:ring-white/10">
                     TOPAZE
-                  </span>
-                  <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium 
+                  </Link>
+                  <Link href="/rankings?category=DIAMANT" className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
                     bg-diamant-100 text-diamant-800 ring-1 ring-diamant-900/10 hover:ring-2 transition-all duration-150
                     dark:bg-diamant-800 dark:text-diamant-100 dark:ring-white/10">
                     DIAMANT
-                  </span>
+                  </Link>
                 </div>
               </div>
 
@@ -119,6 +120,7 @@ export default function RootLayout({
               WWL - FAIZERS Scrabble Club Management System
             </div>
           </div>
+          <Toaster position="top-right" richColors />
         </footer>
       </body>
     </html>

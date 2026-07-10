@@ -259,6 +259,122 @@ export class MatchService {
     }
   }
 
+  async processDoubleForfeit(match: Match): Promise<{
+    updatedMatch: Match;
+    player1Update: Partial<Player>;
+    player2Update: Partial<Player>;
+  }> {
+    try {
+      const now = new Date().toISOString();
+      const result: MatchResult = {
+        score: [0, 0],
+        pr: 0,
+        pdi: 0,
+        ds: 0
+      };
+
+      // No rating modifications in double forfeit
+      const newRating1 = match.player1.ratingBefore;
+      const newRating2 = match.player2.ratingBefore;
+      const newCategory1 = match.player1.categoryBefore;
+      const newCategory2 = match.player2.categoryBefore;
+
+      const playerMatch1: PlayerMatch = {
+        date: now,
+        eventId: match.eventId,
+        matchId: match.id,
+        opponent: {
+          id: match.player2.id,
+          ratingAtTime: match.player2.ratingBefore,
+          categoryAtTime: match.player2.categoryBefore
+        },
+        result: {
+          score: [0, 0],
+          pr: 0,
+          pdi: 0,
+          ds: 0
+        },
+        ratingChange: {
+          before: match.player1.ratingBefore,
+          after: newRating1,
+          change: 0
+        },
+        categoryAtTime: match.player1.categoryBefore
+      };
+
+      const playerMatch2: PlayerMatch = {
+        date: now,
+        eventId: match.eventId,
+        matchId: match.id,
+        opponent: {
+          id: match.player1.id,
+          ratingAtTime: match.player1.ratingBefore,
+          categoryAtTime: match.player1.categoryBefore
+        },
+        result: {
+          score: [0, 0],
+          pr: 0,
+          pdi: 0,
+          ds: 0
+        },
+        ratingChange: {
+          before: match.player2.ratingBefore,
+          after: newRating2,
+          change: 0
+        },
+        categoryAtTime: match.player2.categoryBefore
+      };
+
+      const updatedMatch: Match = {
+        ...match,
+        result,
+        status: "forfeit" as MatchStatusType,
+        player1: {
+          ...match.player1,
+          ratingAfter: newRating1,
+          categoryAfter: newCategory1
+        },
+        player2: {
+          ...match.player2,
+          ratingAfter: newRating2,
+          categoryAfter: newCategory2
+        },
+        metadata: { ...match.metadata, updatedAt: now }
+      };
+
+      // Save all updates
+      await this.eventRepository.updateEventMatch(match.eventId, match.id, updatedMatch);
+
+      const player1Update = {
+        id: match.player1.id,
+        currentRating: newRating1,
+        category: newCategory1
+      };
+      const player2Update = {
+        id: match.player2.id,
+        currentRating: newRating2,
+        category: newCategory2
+      };
+
+      // Update players
+      await Promise.all([
+        this.playerRepository.updatePlayer(player1Update.id, player1Update),
+        this.playerRepository.updatePlayer(player2Update.id, player2Update),
+        this.playerRepository.addMatchToPlayer(match.player1.id, playerMatch1),
+        this.playerRepository.addMatchToPlayer(match.player2.id, playerMatch2)
+      ]);
+
+      return {
+        updatedMatch,
+        player1Update,
+        player2Update
+      };
+    } catch (error) {
+      console.error('Error processing double forfeit:', error);
+      throw new Error('Failed to process double forfeit');
+    }
+  }
+
   async getMatchById(eventId: string, matchId: string): Promise<Match | null> {
     try {
       const event = await this.eventRepository.getEvent(eventId);

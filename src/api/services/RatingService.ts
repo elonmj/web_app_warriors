@@ -1,6 +1,6 @@
-import { RatingSystem } from '../../lib/RatingSystem';
-import { Match } from '../../types/Match';
-import { Player } from '../../types/Player';
+import { RatingSystem } from '@/lib/RatingSystem';
+import { PlayerCategoryType } from '@/types/Enums';
+import { Match } from '@/types/Match';
 
 export class RatingService {
   private ratingSystem: RatingSystem;
@@ -10,49 +10,31 @@ export class RatingService {
   }
 
   /**
-   * Calculate new ratings for both players after a match
+   * Get category based on rating
    */
-  async calculateNewRatings(match: Match): Promise<[number, number]> {
+  getCategory(rating: number): PlayerCategoryType {
+    // Use RatingSystem's category determination
+    return this.ratingSystem.getCategory(rating);
+  }
+
+  /**
+   * Process match ratings
+   */
+  processMatchRatings(match: Match): [number, number] {
     return this.ratingSystem.processMatchRatings(match);
   }
 
   /**
-   * Calculate rating change preview without saving
+   * Calculate new rating
    */
-  async previewRatingChange(
-    player: Player,
-    opponentRating: number,
-    matchResult: Match['result']
-  ): Promise<{
-    currentRating: number;
-    newRating: number;
-    change: number;
-  }> {
-    if (!matchResult) {
-      throw new Error('Match result required for rating preview');
-    }
-
-    const newRating = this.ratingSystem.calculateNewRating(
-      player,
-      opponentRating,
-      matchResult
-    );
-
-    return {
-      currentRating: player.currentRating,
-      newRating,
-      change: newRating - player.currentRating
-    };
-  }
-
-  /**
-   * Get estimated win probability between two players
-   */
-  async calculateWinProbability(
-    playerRating: number,
-    opponentRating: number
-  ): Promise<number> {
-    const exponent = (opponentRating - playerRating) / 400; // Using standard ELO divider
-    return Number((1 / (1 + Math.pow(10, exponent))).toFixed(2));
+  calculateNewRating(currentRating: number, opponentRating: number, matchResult: any): number {
+    return this.ratingSystem.calculateNewRating({
+      currentRating,
+      id: '',
+      name: '',
+      category: this.getCategory(currentRating),
+      matches: [],
+      statistics: this.ratingSystem.initializeStatistics()
+    }, opponentRating, matchResult);
   }
 }

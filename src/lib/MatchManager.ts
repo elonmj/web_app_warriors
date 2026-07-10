@@ -6,6 +6,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { PlayerStatistics } from '../types/Player';
 import { ValidationStatusType } from '../types/Enums';
 
+export interface PairingResult {
+  player1: Player;
+  player2?: Player; // Optional for BYE
+}
+
 interface MatchUpdateResult {
   updatedMatch: Match;
   player1Update: Partial<Player>;
@@ -14,10 +19,38 @@ interface MatchUpdateResult {
 
 export class MatchManager {
   private ratingSystem: RatingSystem;
+  private players: Player[];
+  private previousMatches: Match[];
 
-  constructor() {
+  constructor(players: Player[], previousMatches: Match[] = []) {
     this.ratingSystem = new RatingSystem();
+    this.players = players;
+    this.previousMatches = previousMatches;
   }
+
+   /**
+   * Generate pairings for a specific round
+   * TODO: Implement actual pairing logic based on previousMatches
+   */
+  generatePairings(round: number): PairingResult[] {
+    // Placeholder: Simple sequential pairings
+    const pairings: PairingResult[] = [];
+    const availablePlayers = [...this.players]; // Use the players passed in constructor
+
+    while (availablePlayers.length > 1) {
+      const player1 = availablePlayers.shift()!;
+      const player2 = availablePlayers.shift()!;
+      pairings.push({ player1, player2 });
+    }
+
+    // Handle odd number of players (BYE)
+    if (availablePlayers.length === 1) {
+      pairings.push({ player1: availablePlayers[0] });
+    }
+
+    return pairings;
+  }
+
 
   createMatch(player1: Player, player2: Player): Match {
     const player1Info: PlayerMatchInfo = {
@@ -60,10 +93,10 @@ export class MatchManager {
     const { player1Score, player2Score } = scores;
     const scoreDifference = Math.abs(player1Score - player2Score);
     const ds = this.calculateDS(scoreDifference);
-    
+
     // Calculate PR (Performance Rating) based on score difference
     const pr = this.calculatePR(scoreDifference);
-    
+
     // Calculate PDI (Player Dominance Index)
     const pdi = this.calculatePDI(player1Score, player2Score);
 
@@ -74,8 +107,8 @@ export class MatchManager {
       currentRating: match.player1.ratingBefore,
       category: match.player1.categoryBefore,
       matches: [],
-      statistics: { 
-        totalMatches: 0, wins: 0, draws: 0, losses: 0, 
+      statistics: {
+        totalMatches: 0, wins: 0, draws: 0, losses: 0,
         forfeits: { given: 0, received: 0 },
         totalPR: 0, averageDS: 0, inactivityWeeks: 0,
         bestRating: 0, worstRating: 0,
@@ -106,7 +139,7 @@ export class MatchManager {
       pr,
       pdi,
       ds,
-     
+
     };
 
     const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({
@@ -172,7 +205,7 @@ export class MatchManager {
       pr: 0,
       pdi: 5,
       ds,
-      
+
     };
 
     const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({

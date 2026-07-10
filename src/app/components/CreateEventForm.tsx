@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { EventType, type EventTypeType } from "@/types/Enums";
@@ -16,6 +17,7 @@ interface CreateEventFormProps {
 }
 
 export function CreateEventForm({ isOpen, onClose, event, mode = 'create' }: CreateEventFormProps) {
+  const router = useRouter(); // Moved inside the function body
   const [formData, setFormData] = useState({
     name: "",
     startDate: "",
@@ -106,16 +108,29 @@ export function CreateEventForm({ isOpen, onClose, event, mode = 'create' }: Cre
       if (!response.ok) {
         throw new Error(`Failed to ${mode} event`);
       }
- 
-      // Display success message
-      alert(`Event ${mode === 'create' ? 'created' : 'updated'} successfully!`);
- 
-      setShowPasswordDialog(false);
-      onClose();
-      // Refresh the page to show the changes - Consider removing if UI updates dynamically
-      window.location.reload();
-    } catch (error) {
-      console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} event:`, error);
+ // Display success message
+ alert(`Event ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+
+ setShowPasswordDialog(false);
+ onClose();
+
+ if (mode === 'create') {
+   // Parse response to get new event ID and redirect
+   const newEvent = await response.json(); // Assuming API returns { id: string, ... }
+   if (newEvent && newEvent.id) {
+     router.push(`/admin/events/${newEvent.id}`);
+   } else {
+     console.error("Created event ID not found in response, reloading page instead.");
+     window.location.reload(); // Fallback to reload if ID is missing
+   }
+ } else {
+   // Refresh the page to show the changes in edit mode
+   window.location.reload();
+ }
+} catch (error) {
+ console.error(`Error ${mode === 'create' ? 'creating' : 'updating'} event:`, error);
+ // Re-throw the error to be caught by the AdminPasswordDialog if needed
+ throw error;
       throw error;
     }
   };

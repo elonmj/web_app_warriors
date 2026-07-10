@@ -30,61 +30,22 @@ export async function POST(
       isFirstRound: event.metadata.currentRound === 1 && !event.metadata.totalMatches
     };
 
-    // Generate pairings using EventService
-    const result = await eventService.generatePairings(
-      eventId,
-      pairingOptions
-    );
+    const roundNumber = event.metadata.totalMatches ? event.metadata.currentRound + 1 : 1;
 
-    // Save matches for the new round
-    const saveMatchPromises = result.matches.map((match: Match) =>
-      eventRepository.addEventMatch(eventId, match)
-    );
-    await Promise.all(saveMatchPromises);
-
-    // Update event metadata
-    const roundNumber = result.round;
-    const roundMatches = result.matches;
-    
-    const roundStats = {
-      date: scheduledDate || new Date().toISOString(),
-      totalMatches: roundMatches.length,
-      completedMatches: roundMatches.filter((m: Match) => m.status === 'completed').length,
-      byePlayerId: roundMatches.find((m: Match) => m.player2.id === 'BYE')?.player1.id
-    };
-
-    const updatedMetadata = {
-      ...event.metadata,
-      currentRound: roundNumber,
-      totalMatches: (event.metadata.totalMatches || 0) + roundMatches.length,
-      roundDates: {
-        ...event.metadata.roundDates,
-        [roundNumber]: scheduledDate || new Date().toISOString()
-      },
-      roundHistory: {
-        ...event.metadata.roundHistory,
-        [roundNumber]: roundStats
-      },
-      lastUpdated: new Date().toISOString()
-    };
-
-    // Update event with new metadata
-    await eventRepository.updateEvent(eventId, {
-      id: eventId,
-      metadata: updatedMetadata
-    });
+    // Generate pairings and save matches using EventService
+    const matches = await eventService.generatePairingsForRound(eventId, roundNumber);
 
     return NextResponse.json({
       round: roundNumber,
-      matches: result.matches,
+      matches,
       metadata: {
-        scheduledDate: roundStats.date,
-        totalMatches: roundStats.totalMatches,
-        completedMatches: roundStats.completedMatches,
-        pendingMatches: roundStats.totalMatches - roundStats.completedMatches,
-        byePlayerId: roundStats.byePlayerId
+        scheduledDate: scheduledDate || new Date().toISOString(),
+        totalMatches: matches.length,
+        completedMatches: 0,
+        pendingMatches: matches.length,
+        byePlayerId: matches.find((m: Match) => m.player2.id === 'BYE')?.player1.id
       },
-      warnings: result.warnings
+      warnings: []
     });
 
   } catch (error: any) {

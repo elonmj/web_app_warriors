@@ -57,19 +57,14 @@ export class FirebaseMatchRepository extends FirebaseBaseRepository {
    */
   async getRoundMatches(eventId: string, round: number): Promise<Match[]> {
     try {
-      // Use query with orderByChild and equalTo for filtering by round
-      const matchesQuery = dbQuery(
-        ref(this.db, `matches/${eventId}`),
-        orderByChild('metadata/round'),
-        equalTo(round)
-      );
+      const data = await this.getData<Record<string, any>>(`matches/${eventId}`);
+      if (!data) return [];
       
-      const snapshot = await get(matchesQuery);
-      if (!snapshot.exists()) {
-        return [];
-      }
+      const filtered = Object.entries(data).filter(([_, matchData]) => {
+        return matchData.metadata?.round === round;
+      });
       
-      const matchesData = snapshot.val();
+      const matchesData = Object.fromEntries(filtered);
       return this.objectToArray<any, Match>(
         matchesData, 
         (data, id) => this.createMatchObject(data, id, eventId)

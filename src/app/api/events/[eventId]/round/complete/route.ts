@@ -19,22 +19,12 @@ export async function POST(
 
     const eventService = new EventService();
     
-    // Generate pairings for next round
-    const pairings = await eventService.generatePairings(
-      params.eventId,
-      { 
-        avoidRematches: true, 
-        balanceCategories: true
-      }
-    );
-
-    // Complete current round and create next
-    await eventService.completeRound(params.eventId, round, pairings.matches);
+    // Complete current round and generate next
+    await eventService.completeRound(params.eventId, round);
 
     return NextResponse.json({
       success: true,
-      message: 'Round completed successfully',
-      pairings
+      message: 'Round completed successfully'
     });
   } catch (error) {
     console.error('Error completing round:', error);
