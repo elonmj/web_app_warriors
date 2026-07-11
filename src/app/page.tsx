@@ -3,7 +3,6 @@ import { FirebaseEventRepository } from "@/api/repository/FirebaseEventRepositor
 import { Heading } from "@/components/ui/Typography";
 import  EventCard  from "./components/EventCard";
 import {RoundLoadingSkeleton} from "./components/RoundLoadingSkeleton";
-import PlayerPicker from "./components/PlayerPicker";
 
 const eventRepository = new FirebaseEventRepository();
 
@@ -41,8 +40,6 @@ export default async function Home() {
           </div>
         </Suspense>
       </section>
-
-      <PlayerPicker />
     </main>
   );
 }

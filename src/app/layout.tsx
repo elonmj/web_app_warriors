@@ -85,6 +85,17 @@ export default function RootLayout({
                     Rankings
                   </Link>
                   <Link
+                    href="/dashboard"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-white
+                      relative after:absolute after:bottom-0 after:left-0 after:right-0
+                      after:h-0.5 after:bg-white after:scale-x-0 after:opacity-0
+                      hover:after:scale-x-100 hover:after:opacity-100
+                      after:transition-all after:duration-200
+                      hover:bg-amethyste-600/50 dark:hover:bg-amethyste-800/50"
+                  >
+                    My Dashboard
+                  </Link>
+                  <Link
                     href="/reglement"
                     className="rounded-md px-3 py-2 text-sm font-medium text-white
                       relative after:absolute after:bottom-0 after:left-0 after:right-0

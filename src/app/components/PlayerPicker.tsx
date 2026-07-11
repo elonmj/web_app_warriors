@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heading, Body } from '@/components/ui/Typography';
+import { Body } from '@/components/ui/Typography';
 
 interface PlayerOption {
   id: string;
@@ -37,12 +37,7 @@ export default function PlayerPicker() {
   }, [players, query]);
 
   return (
-    <section className="mx-auto max-w-6xl mt-10">
-      <Heading.H3 className="mb-2">Find your profile</Heading.H3>
-      <Body.Caption className="text-onyx-500 dark:text-onyx-400 mb-4 block">
-        Pick your name to see your rating, matches and training insights — bookmark the page, no login needed.
-      </Body.Caption>
-
+    <section className="mx-auto max-w-6xl">
       <input
         type="text"
         value={query}
