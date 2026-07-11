@@ -106,7 +106,7 @@ export function GlobalRankings() {
     );
   }
 
-  return <PlayerRankings eventRanking={rankings} />;
+  return <PlayerRankings eventRanking={rankings} scope="global" />;
 }
 
 export default GlobalRankings;

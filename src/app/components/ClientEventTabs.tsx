@@ -98,7 +98,7 @@ export default function ClientEventTabs({
               </div>
 
               {/* Detailed Stats */}
-              <EventStats stats={stats} />
+              <EventStats stats={stats} eventId={event.id} />
             </div>
           ),
         },

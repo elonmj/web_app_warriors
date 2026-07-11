@@ -8,6 +8,7 @@ import { EventRanking } from '@/types/Ranking';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import EventHeader from "@/app/components/EventHeader";
 import StatsOverview from "@/app/components/StatsOverview";
+import { Body } from "@/components/ui/Typography";
 import ClientEventTabs from "@/app/components/ClientEventTabs"; // Import the new component
 
 import { EventStatisticsCalculator } from "@/lib/Statistics";
@@ -80,8 +81,11 @@ export default async function EventPage({
         <EventHeader event={event} />
 
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-          {/* Stats Overview Section */}
+          {/* Stats Overview Section — scoped to the round being viewed */}
           <div className="mb-8">
+            <Body.Caption className="text-onyx-500 dark:text-onyx-400 mb-2 block">
+              Round {currentRound} summary — see the Statistics tab for all-rounds totals.
+            </Body.Caption>
             <StatsOverview stats={stats} />
           </div>
 

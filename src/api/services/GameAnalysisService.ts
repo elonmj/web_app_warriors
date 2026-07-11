@@ -275,4 +275,58 @@ export class GameAnalysisService {
   }
 }
 
+export interface ClubLeak {
+  tag: PlayerLeak['tag'];
+  label: string;
+  playersAffected: number;
+  totalPlayers: number;
+  avgPointsLostAcrossPlayers: number;
+  players: { playerId: string; wooglesUsername: string; avgPointsLostPerGame: number }[];
+}
+
+/**
+ * Aggregates each player's stored topLeaks (already computed by
+ * aggregateInsights) across the whole club — surfaces the leaks shared by
+ * the most players, for the coach to plan a targeted training session.
+ * Pure function: no I/O, works on already-fetched PlayerInsights.
+ */
+export function aggregateClubLeaks(
+  playerInsights: { playerId: string; insights: PlayerInsights }[]
+): ClubLeak[] {
+  const byTag = new Map<PlayerLeak['tag'], ClubLeak>();
+
+  for (const { playerId, insights } of playerInsights) {
+    for (const leak of insights.topLeaks) {
+      let entry = byTag.get(leak.tag);
+      if (!entry) {
+        entry = {
+          tag: leak.tag,
+          label: leak.label,
+          playersAffected: 0,
+          totalPlayers: playerInsights.length,
+          avgPointsLostAcrossPlayers: 0,
+          players: [],
+        };
+        byTag.set(leak.tag, entry);
+      }
+      entry.playersAffected++;
+      entry.players.push({
+        playerId,
+        wooglesUsername: insights.wooglesUsername,
+        avgPointsLostPerGame: leak.avgPointsLostPerGame,
+      });
+    }
+  }
+
+  for (const entry of byTag.values()) {
+    entry.avgPointsLostAcrossPlayers =
+      Math.round(
+        (entry.players.reduce((s, p) => s + p.avgPointsLostPerGame, 0) / entry.players.length) * 10
+      ) / 10;
+    entry.players.sort((a, b) => b.avgPointsLostPerGame - a.avgPointsLostPerGame);
+  }
+
+  return Array.from(byTag.values()).sort((a, b) => b.playersAffected - a.playersAffected);
+}
+
 export const gameAnalysisService = new GameAnalysisService();

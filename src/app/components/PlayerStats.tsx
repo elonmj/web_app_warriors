@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Player } from '@/types/Player';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
@@ -11,7 +11,32 @@ interface PlayerStatsProps {
   player: Player;
 }
 
+interface PerformanceStats {
+  consistency: number;
+  prPerMatch: number;
+}
+
 export const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
+  const [performance, setPerformance] = useState<PerformanceStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/players/${player.id}/statistics`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.detailed?.performance) {
+          setPerformance({
+            consistency: data.detailed.performance.consistency,
+            prPerMatch: data.detailed.performance.prPerMatch,
+          });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [player.id]);
+
   // Add null check for matches
   const matches = player.matches || [];
   
@@ -104,8 +129,36 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
             )}
           </div>
         </div>
+
+        {performance && (
+          <>
+            <div className="bg-white dark:bg-onyx-900 p-4 rounded-lg border border-onyx-100 dark:border-onyx-800 shadow-sm">
+              <Body.Caption className="text-onyx-500 dark:text-onyx-400">Consistency</Body.Caption>
+              <div className="mt-1">
+                <Heading.H3 className="text-onyx-900 dark:text-white">
+                  {performance.consistency.toFixed(0)}%
+                </Heading.H3>
+                <Body.Caption className="text-onyx-500 dark:text-onyx-400">
+                  How steady your scores are
+                </Body.Caption>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-onyx-900 p-4 rounded-lg border border-onyx-100 dark:border-onyx-800 shadow-sm">
+              <Body.Caption className="text-onyx-500 dark:text-onyx-400">PR / Match</Body.Caption>
+              <div className="mt-1">
+                <Heading.H3 className="text-onyx-900 dark:text-white">
+                  {performance.prPerMatch.toFixed(1)}
+                </Heading.H3>
+                <Body.Caption className="text-onyx-500 dark:text-onyx-400">
+                  League points earned on average
+                </Body.Caption>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      
+
       {/* Rating History Chart */}
       {ratingData.length > 0 && (
         <div className="bg-white dark:bg-onyx-900 p-4 rounded-lg border border-onyx-100 dark:border-onyx-800 shadow-sm">

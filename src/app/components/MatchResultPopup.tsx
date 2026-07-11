@@ -7,6 +7,7 @@ import { WooglesGameData } from '@/types/Woogles';
 import PlayerNameDisplay from '@/components/shared/PlayerNameDisplay';
 import ScoreProgressionChart from './ScoreProgressionChart';
 import MoveList from './MoveList';
+import MatchStatBadges from './MatchStatBadges';
 
 interface PlayerDetails {
   name: string;
@@ -348,35 +349,21 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
 
           {/* Match Statistics */}
           {matchResult ? (
-            <div className="grid grid-cols-3 gap-6">
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PR</div>
-                <div className="text-xl font-bold text-blue-600">{matchResult.pr}</div>
-              </div>
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PDI</div>
-                <div className="text-xl font-bold text-blue-600">{matchResult.pdi.toFixed(2)}</div>
-              </div>
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">DS</div>
-                <div className="text-xl font-bold text-blue-600">{matchResult.ds}</div>
-              </div>
-            </div>
+            <MatchStatBadges
+              variant="card"
+              pdiFormat="decimal"
+              pr={matchResult.pr}
+              pdi={matchResult.pdi}
+              ds={matchResult.ds}
+            />
           ) : (
-            <div className="grid grid-cols-3 gap-6">
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PR</div>
-                <div className="text-xl font-bold text-blue-600">{calculatePR(scores[0], scores[1])}</div>
-              </div>
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PDI</div>
-                <div className="text-xl font-bold text-blue-600">{calculatePDI(scores[0], scores[1]).toFixed(2)}</div>
-              </div>
-              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">DS</div>
-                <div className="text-xl font-bold text-blue-600">{calculateDS(scores[0], scores[1])}</div>
-              </div>
-            </div>
+            <MatchStatBadges
+              variant="card"
+              pdiFormat="decimal"
+              pr={calculatePR(scores[0], scores[1])}
+              pdi={calculatePDI(scores[0], scores[1])}
+              ds={calculateDS(scores[0], scores[1])}
+            />
           )}
 
           {/* Detailed Match View */}

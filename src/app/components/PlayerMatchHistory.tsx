@@ -10,6 +10,7 @@ import MatchHistoryError from "./MatchHistoryError";
 import { getCategoryColor } from "./utils/styles";
 import { MatchDisplay, MatchHistoryResponse } from "@/types/MatchHistory";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
+import MatchStatBadges from "./MatchStatBadges";
 
 interface PlayerMatchHistoryProps {
   playerId: string | number;
@@ -195,26 +196,7 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
           {/* Match Stats */}
           {match.result && (
             <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <Body.Caption>PR</Body.Caption>
-                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
-                    {match.result.pr}
-                  </Body.Text>
-                </div>
-                <div className="text-center">
-                  <Body.Caption>PDI</Body.Caption>
-                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
-                    {(match.result.pdi * 100).toFixed(0)}%
-                  </Body.Text>
-                </div>
-                <div className="text-center">
-                  <Body.Caption>DS</Body.Caption>
-                  <Body.Text className="font-medium text-onyx-900 dark:text-white">
-                    {match.result.ds}
-                  </Body.Text>
-                </div>
-              </div>
+              <MatchStatBadges pr={match.result.pr} pdi={match.result.pdi} ds={match.result.ds} />
             </div>
           )}
         </Link>

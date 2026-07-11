@@ -19,6 +19,9 @@ export interface PlayerRankingsProps {
   currentRound?: number;
   totalRounds?: number;
   onRoundChange?: (round: number) => void;
+  /** 'round' (default) = this event round's ranking, Change = delta for the round.
+   *  'global' = all-time club ranking, Change = delta of the player's last match played. */
+  scope?: 'round' | 'global';
 }
 
 const getRankingChangeColor = (change: number) => {
@@ -42,13 +45,15 @@ const getCategoryColor = (category: string) => {
   }
 };
 
-export function PlayerRankings({ 
-  eventRanking, 
+export function PlayerRankings({
+  eventRanking,
   currentRound,
   totalRounds,
-  onRoundChange 
+  onRoundChange,
+  scope = 'round'
 }: PlayerRankingsProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
+  const changeLabel = scope === 'global' ? 'Last Match' : 'Change';
 
   // Use provided props or metadata values
   const round = currentRound || eventRanking.metadata?.round || 1;
@@ -138,7 +143,7 @@ export function PlayerRankings({
                       Points
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                      Change
+                      {changeLabel}
                     </th>
                   </tr>
                 </thead>
@@ -213,7 +218,11 @@ export function PlayerRankings({
           <Body.Text variant="sm" className="text-onyx-600 dark:text-onyx-400">
             Last updated: {new Date(eventRanking.lastUpdated).toLocaleDateString()}
           </Body.Text>
-          {eventRanking.metadata?.isCurrentRound && (
+          {scope === 'global' ? (
+            <span className="px-2 py-0.5 bg-onyx-100 text-onyx-700 rounded-full text-xs font-medium dark:bg-onyx-800 dark:text-onyx-300">
+              All-time
+            </span>
+          ) : eventRanking.metadata?.isCurrentRound && (
             <span className="px-2 py-0.5 bg-amethyste-100 text-amethyste-700 rounded-full text-xs font-medium dark:bg-amethyste-900/30 dark:text-amethyste-400">
               Current Round
             </span>

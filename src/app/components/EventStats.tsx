@@ -1,83 +1,110 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { EventStatistics } from "@/types/EventStatistics";
 import { ChartBarIcon, UsersIcon, TrophyIcon } from "@heroicons/react/24/outline";
 import { Heading, Body } from "@/components/ui/Typography";
 
 interface EventStatsProps {
+  /** Round-scoped stats — already shown in the header StatsOverview above the tabs. */
   stats: EventStatistics;
+  eventId: string;
 }
 
-const EventStats = ({ stats }: EventStatsProps) => {
+const perfCard =
+  "bg-white p-4 rounded-lg border border-onyx-200 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-onyx-900 dark:border-onyx-800";
+
+const EventStats = ({ stats, eventId }: EventStatsProps) => {
+  const [allRounds, setAllRounds] = useState<EventStatistics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/stats/event/${eventId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled) setAllRounds(data);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+
   return (
     <div className="space-y-8">
-      {/* Performance Stats */}
+      {/* All-rounds performance — distinct from the round-scoped header above the tabs */}
       <section>
-        <Heading.H3 className="mb-4">
-          Performance Statistics
-        </Heading.H3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-onyx-200 
-            shadow-sm hover:shadow-md transition-all duration-200
-            dark:bg-onyx-900 dark:border-onyx-800">
-            <div className="flex items-center gap-2 mb-2">
-              <TrophyIcon className="w-5 h-5 text-amethyste-500" />
-              <Body.Label>Average PR</Body.Label>
-            </div>
-            <Heading.H4>{stats.averagePR.toFixed(1)}</Heading.H4>
-            <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-              Points per match
-            </Body.Caption>
+        <Heading.H3 className="mb-1">Event Totals</Heading.H3>
+        <Body.Caption className="text-onyx-500 dark:text-onyx-400 mb-4 block">
+          All rounds combined — the summary above only covers the round you're viewing.
+        </Body.Caption>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className={`${perfCard} h-24 animate-pulse`} />
+            ))}
           </div>
-
-          <div className="bg-white p-4 rounded-lg border border-onyx-200 
-            shadow-sm hover:shadow-md transition-all duration-200
-            dark:bg-onyx-900 dark:border-onyx-800">
-            <div className="flex items-center gap-2 mb-2">
-              <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
-              <Body.Label>Average DS</Body.Label>
+        ) : allRounds ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={perfCard}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrophyIcon className="w-5 h-5 text-amethyste-500" />
+                <Body.Label>Average PR</Body.Label>
+              </div>
+              <Heading.H4>{allRounds.averagePR.toFixed(1)}</Heading.H4>
+              <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
+                Points per match
+              </Body.Caption>
             </div>
-            <Heading.H4>{stats.averageDS.toFixed(1)}</Heading.H4>
-            <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-              Dominance score
-            </Body.Caption>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg border border-onyx-200 
-            shadow-sm hover:shadow-md transition-all duration-200
-            dark:bg-onyx-900 dark:border-onyx-800">
-            <div className="flex items-center gap-2 mb-2">
-              <UsersIcon className="w-5 h-5 text-amethyste-500" />
-              <Body.Label>Active Players</Body.Label>
+            <div className={perfCard}>
+              <div className="flex items-center gap-2 mb-2">
+                <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
+                <Body.Label>Average DS</Body.Label>
+              </div>
+              <Heading.H4>{allRounds.averageDS.toFixed(1)}</Heading.H4>
+              <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
+                Dominance score
+              </Body.Caption>
             </div>
-            <Heading.H4>{stats.activePlayers}</Heading.H4>
-            <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-              Participating players
-            </Body.Caption>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg border border-onyx-200 
-            shadow-sm hover:shadow-md transition-all duration-200
-            dark:bg-onyx-900 dark:border-onyx-800">
-            <div className="flex items-center gap-2 mb-2">
-              <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
-              <Body.Label>Average Rating</Body.Label>
+            <div className={perfCard}>
+              <div className="flex items-center gap-2 mb-2">
+                <UsersIcon className="w-5 h-5 text-amethyste-500" />
+                <Body.Label>Active Players</Body.Label>
+              </div>
+              <Heading.H4>{allRounds.activePlayers}</Heading.H4>
+              <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
+                Across the whole event
+              </Body.Caption>
             </div>
-            <Heading.H4>{stats.averageRating.toFixed(0)}</Heading.H4>
-            <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-              Player skill level
-            </Body.Caption>
+            <div className={perfCard}>
+              <div className="flex items-center gap-2 mb-2">
+                <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
+                <Body.Label>Average Rating</Body.Label>
+              </div>
+              <Heading.H4>{allRounds.averageRating.toFixed(0)}</Heading.H4>
+              <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
+                Player skill level
+              </Body.Caption>
+            </div>
           </div>
-        </div>
+        ) : (
+          <Body.Text className="text-onyx-500 dark:text-onyx-400">
+            Event totals unavailable.
+          </Body.Text>
+        )}
       </section>
 
-      {/* Player Stats */}
+      {/* Player Stats — this round's participants */}
       {stats.playerStats.length > 0 && (
         <section>
           <Heading.H3 className="mb-4">
-            Player Statistics
+            Player Statistics (this round)
           </Heading.H3>
-          <div className="overflow-hidden rounded-lg border border-onyx-200 bg-white 
+          <div className="overflow-hidden rounded-lg border border-onyx-200 bg-white
             dark:border-onyx-800 dark:bg-onyx-900">
             <div className="flow-root">
               <div className="overflow-x-auto">
@@ -101,7 +128,7 @@ const EventStats = ({ stats }: EventStatsProps) => {
                     </thead>
                     <tbody className="divide-y divide-onyx-200 dark:divide-onyx-800">
                       {stats.playerStats.map((player) => (
-                        <tr 
+                        <tr
                           key={player.playerId}
                           className="hover:bg-onyx-50 dark:hover:bg-onyx-800/50 transition-colors"
                         >
