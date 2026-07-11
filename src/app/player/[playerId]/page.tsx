@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import PlayerStats from "@/app/components/PlayerStats";
 import PlayerMatchHistory from "@/app/components/PlayerMatchHistory";
 import HeadToHeadStats from "@/app/components/HeadToHeadStats";
+import TrainingInsights from "@/app/components/TrainingInsights";
+import PlayerGamesList from "@/app/components/PlayerGamesList";
 import PlayerStatsSkeleton from "@/app/components/PlayerStatsSkeleton";
 import PlayerProfileError from "@/app/components/PlayerProfileError";
 import { Player } from "@/types/Player";
@@ -92,6 +94,16 @@ export default async function PlayerProfilePage({
               </Suspense>
             </section>
 
+            {/* Training Insights Section */}
+            <section>
+              <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
+                Training Insights
+              </Heading.H2>
+              <Suspense fallback={<PlayerStatsSkeleton />}>
+                <TrainingInsights playerId={String(player.id)} />
+              </Suspense>
+            </section>
+
             {/* Head-to-Head Records Section */}
             <section>
               <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
@@ -109,6 +121,19 @@ export default async function PlayerProfilePage({
               </Heading.H2>
               <Suspense fallback={<PlayerStatsSkeleton />}>
                 <PlayerMatchHistory playerId={player.id} />
+              </Suspense>
+            </section>
+
+            {/* Woogles Games Section */}
+            <section>
+              <Heading.H2 className="mb-4 text-gray-900 dark:text-white">
+                Games
+              </Heading.H2>
+              <Suspense fallback={<PlayerStatsSkeleton />}>
+                <PlayerGamesList
+                  playerId={String(player.id)}
+                  wooglesUsername={player.wooglesUsername ?? player.iscUsername}
+                />
               </Suspense>
             </section>
           </div>

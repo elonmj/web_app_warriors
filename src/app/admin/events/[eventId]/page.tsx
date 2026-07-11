@@ -589,7 +589,7 @@ export default function AdminEventDetailPage() {
                                    }}
                                    className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
                                  >
-                                   {player.name} ({player.iscUsername || 'N/A'})
+                                   {player.name} ({player.wooglesUsername || player.iscUsername || 'N/A'})
                                  </li>
                                ))}
                              </ul>

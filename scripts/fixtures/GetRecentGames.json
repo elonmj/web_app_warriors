@@ -1,0 +1,1224 @@
+{
+  "game_info": [
+    {
+      "players": [
+        {
+          "user_id": "4RnMVsxyzpHsrHXTxCKpgm",
+          "nickname": "Makim",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2120",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2371",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        399,
+        371
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:10:09.494538Z",
+      "game_id": "MWisHkDnQu",
+      "last_update": "2026-07-10T22:25:32.868Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "FIVE_POINT",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "aPyPLnpbdLLUWb67ijrHFF",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "o9phnAFX6GK2iwK2MtSg44",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "JVCNn6oNLNZ9AqhSjraFBE",
+          "nickname": "KrathorkFizz",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2123",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2371",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        373,
+        431
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:14:33.855925Z",
+      "game_id": "QGKKxLWbyB",
+      "last_update": "2026-07-10T22:24:07.077Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1320,
+        "increment_seconds": 0,
+        "challenge_rule": "FIVE_POINT",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "ZPxWs4CfDpxTAu7rP6q2HS",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "RCS64TF5XuBvywqpTi9Vx6",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "Bk7raAAoKZQ5Goj8MDZKmL",
+          "nickname": "KaroKingz",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1500?",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2371",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        333,
+        390
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:14:03.116536Z",
+      "game_id": "iUwFmLTM4Q",
+      "last_update": "2026-07-10T22:22:58.172Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "kZTaiJNUxUK2cJts7rh9Di",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ADwi2SnZtB99XAXQ8LeHSa",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "sFfje6J4FrS76kzUsfnKwV",
+          "nickname": "conrad",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2187",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2371",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        557,
+        376
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:20:06.669956Z",
+      "game_id": "JFu4pSPRxu",
+      "last_update": "2026-07-10T22:22:19.659Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "DLzBQ9CqTEWpJFruBkqp9v",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "DLzBQ9CqTEWpJFruBkqp9v",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2088",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        0,
+        44
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:21:58.446370Z",
+      "game_id": "zMA9iK698c",
+      "last_update": "2026-07-10T22:22:17.663Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "A2vvD5Mym52LvhTZvbT9fE",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "ByRA85eVats5Vhgh5QHbHo",
+          "nickname": "LikeMike",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1727",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2371",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        263,
+        461
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:12:05.339104Z",
+      "game_id": "fUViZddmyU",
+      "last_update": "2026-07-10T22:22:03.275Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 900,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "H4AWd4gQZtJY3hAjMzAKgz",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "KzsdY5TrXh3quBcJwAhkv5",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2088",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        164,
+        102
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:19:48.514539Z",
+      "game_id": "7TQL4Qk9rz",
+      "last_update": "2026-07-10T22:21:57.460Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "2vf7tzNBjFrrmJg3ic6uMX",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "mPdWeW8UUfqTG8kZLYrcKW",
+          "nickname": "Vixie13",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2163",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2359",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "TIME",
+      "scores": [
+        159,
+        387
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T21:58:14.724329Z",
+      "game_id": "PKWoNqexwS",
+      "last_update": "2026-07-10T22:20:22.763Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 720,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "7HgDqVQdyquuU5jRochLQH",
+        "max_overtime_minutes": 10,
+        "player_vs_bot": true,
+        "original_request_id": "3J3v6tVJ9BJMqx7T3VNTkK",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2088",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        20,
+        90
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:19:30.326321Z",
+      "game_id": "DB5qncnZNv",
+      "last_update": "2026-07-10T22:19:47.858Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "9Ewmo2My4syeMvgauwq2nV",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2088",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        32,
+        0
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:19:13.245426Z",
+      "game_id": "oUoxFTptsm",
+      "last_update": "2026-07-10T22:19:29.421Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "jDMDMoe3AxU2b3ZqjWRrZ6",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2081",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        58,
+        138
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:17:49.503820Z",
+      "game_id": "Zqhr8KNrp9",
+      "last_update": "2026-07-10T22:19:12.532Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "Y6tfnTxxQjCgUG5RiJm6Fh",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2065",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "AJDZ4r8XS8janWBXoG8wXK",
+          "nickname": "royster",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1978",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        449,
+        350
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:09:47.577929Z",
+      "game_id": "mycHCsXWz7",
+      "last_update": "2026-07-10T22:18:54.349Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "DOUBLE",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "ZNHaGoSjuo6ckj8Usw567Q",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "QBMiKFrAtz2GSYQ7LyCFRM",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2081",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "qiAg4p3Udqh8QXp7t6dAgX",
+          "nickname": "Grimreaperjon",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1426?",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "RESIGNED",
+      "scores": [
+        80,
+        22
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:16:11.751935Z",
+      "game_id": "Z8tsu2bBKx",
+      "last_update": "2026-07-10T22:17:48.448Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 3600,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "mwjQKWcmiR84iVdt668ibQ",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ZsGdXrHAomgZxrawwPEdpA",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2313",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "GLXu9xA6Md2rvdMsewfimG",
+          "nickname": "budak",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2068",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "rapid",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        455,
+        411
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:09:09.809778Z",
+      "game_id": "DX9spJTEUZ",
+      "last_update": "2026-07-10T22:15:36.049Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 720,
+        "increment_seconds": 0,
+        "challenge_rule": "FIVE_POINT",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "KABs89Pua7SJDfNq7YDjoy",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "KABs89Pua7SJDfNq7YDjoy",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2367",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "JVCNn6oNLNZ9AqhSjraFBE",
+          "nickname": "KrathorkFizz",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2123",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        534,
+        287
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:07:52.444461Z",
+      "game_id": "S59hvC33E6",
+      "last_update": "2026-07-10T22:14:31.361Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1320,
+        "increment_seconds": 0,
+        "challenge_rule": "FIVE_POINT",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "KARdxX6sffGux3MvSAXJZQ",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "RCS64TF5XuBvywqpTi9Vx6",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2057",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "JsZRLAWPs4wKkAd3g4iz9Z",
+          "nickname": "SPN12345",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1967",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        450,
+        306
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T22:06:04.810927Z",
+      "game_id": "vMqGcBsLct",
+      "last_update": "2026-07-10T22:14:15.745Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "huGMz7snbGH7EnndYaisT8",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "2rWE2rrWipnyDKzbNoEGgC",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2359",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "Bk7raAAoKZQ5Goj8MDZKmL",
+          "nickname": "KaroKingz",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1500?",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        491,
+        461
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T21:58:56.533665Z",
+      "game_id": "fT5bSDKBid",
+      "last_update": "2026-07-10T22:13:57.481Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "CASUAL",
+        "request_id": "jWm6nVvkwVkz9846jo6pnz",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "ADwi2SnZtB99XAXQ8LeHSa",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2057",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "YepQi7GtR9qXiDe4ESKC5X",
+          "nickname": "RobinPD",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2060",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        396,
+        371
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T21:59:29.934867Z",
+      "game_id": "r8wFZPYXhz",
+      "last_update": "2026-07-10T22:10:37.559Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1500,
+        "increment_seconds": 0,
+        "challenge_rule": "VOID",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "hPfLzkUHW3taKCSiGdhBjm",
+        "max_overtime_minutes": 10,
+        "player_vs_bot": true,
+        "original_request_id": "T748KHVY7gyAKsAyqUxc56",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2350",
+          "title": "",
+          "is_bot": true,
+          "first": true
+        },
+        {
+          "user_id": "4RnMVsxyzpHsrHXTxCKpgm",
+          "nickname": "Makim",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2124",
+          "title": "",
+          "is_bot": false,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        484,
+        287
+      ],
+      "winner": 0,
+      "created_at": "2026-07-10T21:51:29.829520Z",
+      "game_id": "NdtP3Kyqog",
+      "last_update": "2026-07-10T22:09:54.459Z",
+      "game_request": {
+        "lexicon": "CSW24",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "FIVE_POINT",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "o9phnAFX6GK2iwK2MtSg44",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "o9phnAFX6GK2iwK2MtSg44",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    },
+    {
+      "players": [
+        {
+          "user_id": "AJDZ4r8XS8janWBXoG8wXK",
+          "nickname": "royster",
+          "full_name": "",
+          "country_code": "",
+          "rating": "1985",
+          "title": "",
+          "is_bot": false,
+          "first": true
+        },
+        {
+          "user_id": "dJHCp6DkBPZKjBNxYAPkiJ",
+          "nickname": "HastyBot",
+          "full_name": "",
+          "country_code": "",
+          "rating": "2057",
+          "title": "",
+          "is_bot": true,
+          "first": false
+        }
+      ],
+      "time_control_name": "regular",
+      "tournament_id": "",
+      "game_end_reason": "STANDARD",
+      "scores": [
+        343,
+        394
+      ],
+      "winner": 1,
+      "created_at": "2026-07-10T22:00:25.643493Z",
+      "game_id": "5JLAhZX3g2",
+      "last_update": "2026-07-10T22:09:44.146Z",
+      "game_request": {
+        "lexicon": "NWL23",
+        "rules": {
+          "board_layout_name": "CrosswordGame",
+          "letter_distribution_name": "english",
+          "variant_name": "classic"
+        },
+        "initial_time_seconds": 1200,
+        "increment_seconds": 0,
+        "challenge_rule": "DOUBLE",
+        "game_mode": "REAL_TIME",
+        "rating_mode": "RATED",
+        "request_id": "QBMiKFrAtz2GSYQ7LyCFRM",
+        "max_overtime_minutes": 1,
+        "player_vs_bot": true,
+        "original_request_id": "QBMiKFrAtz2GSYQ7LyCFRM",
+        "bot_type": "HASTY_BOT",
+        "time_bank_minutes": 0
+      },
+      "tournament_division": "",
+      "tournament_round": 0,
+      "tournament_game_index": 0,
+      "type": "NATIVE",
+      "league_id": "",
+      "league_slug": "",
+      "time_bank": []
+    }
+  ]
+}

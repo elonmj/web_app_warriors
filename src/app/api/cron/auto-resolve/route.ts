@@ -3,7 +3,8 @@ import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepositor
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { MatchService } from '@/api/services/MatchService';
 import { RankingService } from '@/api/services/RankingService';
-import { iscService } from '@/api/services/ISCService';
+import { wooglesService } from '@/api/services/WooglesService';
+import { gamePersistenceService } from '@/api/services/GamePersistenceService';
 
 const eventRepository = new FirebaseEventRepository();
 const playerRepository = new FirebasePlayerRepository();
@@ -37,11 +38,6 @@ export async function GET(request: NextRequest) {
     }
 
     const results = [];
-    const credentials = {
-      username: process.env.ISC_USERNAME!,
-      password: process.env.ISC_PASSWORD!
-    };
-    const hasCredentials = !!(credentials.username && credentials.password);
 
     // Default deadline of 7 days
     const url = new URL(request.url);
@@ -99,39 +95,45 @@ export async function GET(request: NextRequest) {
             continue;
           }
 
-          let iscSucceeded = false;
+          let wooglesSucceeded = false;
+          const u1 = player1.wooglesUsername ?? player1.iscUsername;
+          const u2 = player2.wooglesUsername ?? player2.iscUsername;
 
-          // Try to fetch from ISC if usernames are registered
-          if (hasCredentials && player1.iscUsername && player2.iscUsername) {
+          // Try to fetch the game from Woogles if usernames are registered
+          if (u1 && u2) {
             try {
-              console.log(`[CRON] Scraping ISC for match ${match.id} between ${player1.iscUsername} and ${player2.iscUsername}`);
-              const iscResult = await iscService.fetchMatchResult(
-                { iscUsername: player1.iscUsername },
-                { iscUsername: player2.iscUsername },
-                credentials
+              console.log(`[CRON] Fetching Woogles game for match ${match.id} between ${u1} and ${u2}`);
+              const game = await wooglesService.findMatchBetween(
+                u1,
+                u2,
+                roundStartDate.toISOString()
               );
 
-              if (iscResult && typeof iscResult.player1Score === 'number' && typeof iscResult.player2Score === 'number') {
-                console.log(`[CRON] Found result for match ${match.id}: ${iscResult.player1Score} - ${iscResult.player2Score}`);
+              if (game) {
+                const s1 = wooglesService.scoreFor(game, u1);
+                const s2 = wooglesService.scoreFor(game, u2);
+                console.log(`[CRON] Found result for match ${match.id}: ${s1} - ${s2}`);
                 await matchService.processMatchResult(match, {
                   matchId: match.id,
                   eventId: match.eventId,
-                  score: {
-                    player1Score: iscResult.player1Score,
-                    player2Score: iscResult.player2Score
-                  }
+                  score: { player1Score: s1, player2Score: s2 }
                 });
                 syncedCount++;
-                iscSucceeded = true;
+                wooglesSucceeded = true;
+                // Persist the game + statistical analysis (fire-and-forget)
+                void gamePersistenceService.persistAndAnalyze(game, {
+                  matchId: match.id,
+                  eventId: match.eventId
+                });
               }
-            } catch (iscError) {
-              console.error(`[CRON] ISC fetch failed for match ${match.id}:`, iscError instanceof Error ? iscError.message : iscError);
-              errors.push(`Match ${player1.name} vs ${player2.name}: ISC fetch failed.`);
+            } catch (wooglesError) {
+              console.error(`[CRON] Woogles fetch failed for match ${match.id}:`, wooglesError instanceof Error ? wooglesError.message : wooglesError);
+              errors.push(`Match ${player1.name} vs ${player2.name}: Woogles fetch failed.`);
             }
           }
 
-          // Double forfeit if past deadline and ISC sync did not succeed
-          if (!iscSucceeded && isPastDeadline) {
+          // Double forfeit if past deadline and Woogles sync did not succeed
+          if (!wooglesSucceeded && isPastDeadline) {
             console.log(`[CRON] Declaring double forfeit for match ${match.id} (past deadline)`);
             await matchService.processDoubleForfeit(match);
             forfeitCount++;

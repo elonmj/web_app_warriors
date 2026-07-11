@@ -16,7 +16,7 @@ interface AddPlayerFormProps {
 export function AddPlayerForm({ isOpen, onClose }: AddPlayerFormProps) {
   const [formData, setFormData] = useState<CreatePlayerInput>({
     name: "",
-    iscUsername: "",
+    wooglesUsername: "",
     initialRating: PLAYER_CONSTANTS.DEFAULT_RATING,
     initialCategory: PLAYER_CONSTANTS.DEFAULT_CATEGORY
   });
@@ -72,7 +72,7 @@ export function AddPlayerForm({ isOpen, onClose }: AddPlayerFormProps) {
       // Reset form
       setFormData({
         name: "",
-        iscUsername: "",
+        wooglesUsername: "",
         initialRating: PLAYER_CONSTANTS.DEFAULT_RATING,
         initialCategory: PLAYER_CONSTANTS.DEFAULT_CATEGORY
       });
@@ -161,16 +161,16 @@ export function AddPlayerForm({ isOpen, onClose }: AddPlayerFormProps) {
                             />
                           </div>
                           <div>
-                            <label htmlFor="iscUsername" className="block text-sm font-medium text-onyx-700 dark:text-onyx-300">
-                              ISC Username
+                            <label htmlFor="wooglesUsername" className="block text-sm font-medium text-onyx-700 dark:text-onyx-300">
+                              Woogles Username
                             </label>
                             <input
                               type="text"
-                              name="iscUsername"
-                              id="iscUsername"
-                              value={formData.iscUsername}
+                              name="wooglesUsername"
+                              id="wooglesUsername"
+                              value={formData.wooglesUsername}
                               onChange={(e) =>
-                                setFormData({ ...formData, iscUsername: e.target.value })
+                                setFormData({ ...formData, wooglesUsername: e.target.value })
                               }
                               className="mt-1 block w-full rounded-md border-onyx-300 shadow-sm focus:border-amethyste-500 focus:ring-amethyste-500 sm:text-sm
                                 dark:bg-onyx-800 dark:border-onyx-700 dark:text-white"

@@ -3,7 +3,8 @@ import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepositor
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { MatchService } from '@/api/services/MatchService';
 import { RankingService } from '@/api/services/RankingService';
-import { iscService } from '@/api/services/ISCService';
+import { wooglesService } from '@/api/services/WooglesService';
+import { gamePersistenceService } from '@/api/services/GamePersistenceService';
 import { verifyPassword } from '@/lib/auth';
 import { Match } from '@/types/Match';
 import { Player } from '@/types/Player';
@@ -91,14 +92,6 @@ export async function POST(
     let forfeitCount = 0;
     const errors: string[] = [];
 
-    // Credentials for ISC
-    const credentials = {
-      username: process.env.ISC_USERNAME!,
-      password: process.env.ISC_PASSWORD!
-    };
-
-    const hasCredentials = !!(credentials.username && credentials.password);
-
     // 5. Process each pending match
     for (const match of pendingMatches) {
       try {
@@ -110,43 +103,47 @@ export async function POST(
           continue;
         }
 
-        let iscSucceeded = false;
+        let wooglesSucceeded = false;
+        const u1 = player1.wooglesUsername ?? player1.iscUsername;
+        const u2 = player2.wooglesUsername ?? player2.iscUsername;
 
-        // Try to fetch from ISC if usernames are available
-        if (hasCredentials && player1.iscUsername && player2.iscUsername) {
+        // Try to fetch the game from Woogles if usernames are available
+        if (u1 && u2) {
           try {
-            console.log(`[API] Scraping ISC for match ${match.id} (${player1.iscUsername} vs ${player2.iscUsername})`);
-            const iscResult = await iscService.fetchMatchResult(
-              { iscUsername: player1.iscUsername },
-              { iscUsername: player2.iscUsername },
-              credentials
+            console.log(`[API] Fetching Woogles game for match ${match.id} (${u1} vs ${u2})`);
+            const game = await wooglesService.findMatchBetween(
+              u1,
+              u2,
+              roundStartDate.toISOString()
             );
 
-            if (iscResult && typeof iscResult.player1Score === 'number' && typeof iscResult.player2Score === 'number') {
-              console.log(`[API] Found ISC result for match ${match.id}: ${iscResult.player1Score} - ${iscResult.player2Score}`);
+            if (game) {
+              const s1 = wooglesService.scoreFor(game, u1);
+              const s2 = wooglesService.scoreFor(game, u2);
+              console.log(`[API] Found Woogles result for match ${match.id}: ${s1} - ${s2}`);
               await matchService.processMatchResult(match, {
                 matchId: match.id,
                 eventId: match.eventId,
-                score: {
-                  player1Score: iscResult.player1Score,
-                  player2Score: iscResult.player2Score
-                }
+                score: { player1Score: s1, player2Score: s2 }
               });
               syncedCount++;
-              iscSucceeded = true;
+              wooglesSucceeded = true;
+              // Persist the game + statistical analysis (fire-and-forget)
+              void gamePersistenceService.persistAndAnalyze(game, {
+                matchId: match.id,
+                eventId: match.eventId
+              });
             }
-          } catch (iscError) {
-            console.error(`[API] ISC fetch failed for match ${match.id}:`, iscError instanceof Error ? iscError.message : iscError);
-            errors.push(`Match ${player1.name} vs ${player2.name}: ISC fetch failed.`);
+          } catch (wooglesError) {
+            console.error(`[API] Woogles fetch failed for match ${match.id}:`, wooglesError instanceof Error ? wooglesError.message : wooglesError);
+            errors.push(`Match ${player1.name} vs ${player2.name}: Woogles fetch failed.`);
           }
-        } else if (!hasCredentials) {
-          console.warn(`[API] ISC credentials not configured. Skipping ISC scraping for match ${match.id}`);
         } else {
-          console.log(`[API] Missing ISC usernames for match ${match.id} (p1: ${player1.iscUsername || 'none'}, p2: ${player2.iscUsername || 'none'})`);
+          console.log(`[API] Missing Woogles usernames for match ${match.id} (p1: ${u1 || 'none'}, p2: ${u2 || 'none'})`);
         }
 
-        // If ISC search failed/was skipped, and we are past the round deadline, auto double forfeit
-        if (!iscSucceeded && isPastDeadline) {
+        // If the Woogles search failed/was skipped, and we are past the round deadline, auto double forfeit
+        if (!wooglesSucceeded && isPastDeadline) {
           console.log(`[API] Declaring double forfeit for match ${match.id} past deadline`);
           await matchService.processDoubleForfeit(match);
           forfeitCount++;
@@ -185,7 +182,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: `Sync complete. Synced ${syncedCount} matches from ISC. Double-forfeited ${forfeitCount} matches.`,
+      message: `Sync complete. Synced ${syncedCount} matches from Woogles. Double-forfeited ${forfeitCount} matches.`,
       syncedCount,
       forfeitCount,
       errors

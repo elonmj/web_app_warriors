@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlayerCategoryType } from '@/types/Enums';
 import { Label } from '@/components/ui/Typography';
-import { ISCCredentials, ISCGameData } from '@/types/ISC';
+import { WooglesGameData } from '@/types/Woogles';
 
 import PlayerNameDisplay from '@/components/shared/PlayerNameDisplay';
 import ScoreProgressionChart from './ScoreProgressionChart';
@@ -11,6 +11,7 @@ import MoveList from './MoveList';
 interface PlayerDetails {
   name: string;
   iscUsername?: string;
+  wooglesUsername?: string;
   id?: string; // Changed from number to string
 }
 
@@ -79,11 +80,12 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
 }) => {
   const [scores, setScores] = useState<[number, number]>([0, 0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingISC, setIsFetchingISC] = useState(false);
-  const [iscError, setIscError] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchNotice, setFetchNotice] = useState<string | null>(null);
   const [player1Details, setPlayer1Details] = useState<PlayerDetails | null>(null);
   const [player2Details, setPlayer2Details] = useState<PlayerDetails | null>(null);
-  const [gameData, setGameData] = useState<ISCGameData | null>(null);
+  const [gameData, setGameData] = useState<WooglesGameData | null>(null);
   const router = useRouter();
 
   // Load player details on mount
@@ -107,29 +109,29 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
         });
       } catch (error) {
         console.error('Failed to load player details:', error);
-        setIscError('Failed to load player details');
+        setFetchError('Failed to load player details');
       }
     };
 
     if (isOpen) {
       loadPlayerDetails();
     }
-  }, [isOpen, player1Name, player2Name]);
+  }, [isOpen, player1Id, player2Id, player1Name, player2Name]);
 
-  if (!isOpen) return null;
-
-  const handleReturn = () => {
-    router.back();
-  };
-
-  // Handle escape key press
-  React.useEffect(() => {
+  // Handle escape key press (hooks must run unconditionally, before any early return)
+  useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
+
+  if (!isOpen) return null;
+
+  const handleReturn = () => {
+    router.back();
+  };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -152,106 +154,109 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
       className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg p-8 max-w-lg w-full mx-4 shadow-2xl">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+      <div className="bg-white dark:bg-onyx-900 rounded-lg p-8 max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
           Match Result
         </h2>
 
         <div className="space-y-6">
-          {/* ISC Fetch Button and Credentials */}
+          {/* Woogles fetch: pre-fills the scores, submission stays manual */}
           {!matchResult && (
             <div className="space-y-3">
               <button
                 onClick={async () => {
                   try {
-                    setIscError(null);
-                    setIsFetchingISC(true);
+                    setFetchError(null);
+                    setFetchNotice(null);
+                    setIsFetching(true);
 
-                    // Validate ISC usernames
-                    if (!player1Details?.iscUsername || !player2Details?.iscUsername) {
+                    const u1 = player1Details?.wooglesUsername || player1Details?.iscUsername;
+                    const u2 = player2Details?.wooglesUsername || player2Details?.iscUsername;
+                    if (!u1 || !u2) {
                       throw new Error(
-                        `Missing ISC username for ${!player1Details?.iscUsername ? player1Name : player2Name
-                        }. Please ensure both players have ISC usernames configured.`
+                        `Missing Woogles username for ${!u1 ? player1Name : player2Name}. Please ensure both players have Woogles usernames configured.`
                       );
                     }
 
-                    const response = await fetch('/api/matches/isc/fetch', {
+                    const response = await fetch('/api/matches/woogles/fetch', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                        player1: {
-                          name: player1Name,
-                          iscUsername: player1Details.iscUsername,
-                          id: player1Details.id // Include ID if available
-                        },
-                        player2: {
-                          name: player2Name,
-                          iscUsername: player2Details.iscUsername,
-                          id: player2Details.id // Include ID if available
-                        }
+                        player1: { wooglesUsername: u1 },
+                        player2: { wooglesUsername: u2 }
                       })
                     });
 
                     const data = await response.json();
                     if (!data.success) {
-                      throw new Error(data.error || 'Failed to fetch match result from ISC');
+                      throw new Error(data.error || 'Failed to fetch game from Woogles');
                     }
 
-                    // Set game data and scores
-                    setGameData(data.data.gameData);
-                    setScores([
-                      data.data.gameData.scores[player1Details!.iscUsername!],
-                      data.data.gameData.scores[player2Details!.iscUsername!]
-                    ]);
-                    
-                    // Update match result
-                    await onSubmit([
-                      data.data.gameData.scores[player1Details!.iscUsername!],
-                      data.data.gameData.scores[player2Details!.iscUsername!]
-                    ]);
+                    if (!data.gameData) {
+                      setFetchNotice(data.message || 'No finished game found on Woogles yet.');
+                      return;
+                    }
+
+                    const game: WooglesGameData = data.gameData;
+                    const scoreOf = (username: string) => {
+                      const key = Object.keys(game.scores).find(
+                        (k) => k.toLowerCase() === username.toLowerCase()
+                      );
+                      return key !== undefined ? game.scores[key] : 0;
+                    };
+
+                    // Pre-fill only — the user reviews and presses Submit
+                    setGameData(game);
+                    setScores([scoreOf(u1), scoreOf(u2)]);
+                    setFetchNotice('Scores filled from Woogles. Review the game below, then press Submit.');
                   } catch (error) {
-                    setIscError(error instanceof Error ? error.message : 'Failed to fetch from ISC');
-                    console.error('ISC fetch error:', error);
+                    setFetchError(error instanceof Error ? error.message : 'Failed to fetch from Woogles');
+                    console.error('Woogles fetch error:', error);
                   } finally {
-                    setIsFetchingISC(false);
+                    setIsFetching(false);
                   }
                 }}
-                disabled={isFetchingISC}
-                className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={isFetching}
+                className="w-full px-4 py-2 bg-amethyste-600 text-white rounded-lg hover:bg-amethyste-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isFetchingISC ? (
+                {isFetching ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Fetching from ISC...</span>
+                    <span>Fetching from Woogles...</span>
                   </span>
                 ) : (
-                  'Fetch from ISC'
+                  'Fetch from Woogles'
                 )}
               </button>
-              {iscError && (
-                <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded-lg">
-                  Error: {iscError}
+              {fetchNotice && (
+                <div className="text-amethyste-800 dark:text-amethyste-200 text-sm mt-2 p-2 bg-amethyste-50 dark:bg-amethyste-900/40 rounded-lg">
+                  {fetchNotice}
+                </div>
+              )}
+              {fetchError && (
+                <div className="text-red-500 dark:text-red-400 text-sm mt-2 p-2 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                  Error: {fetchError}
                 </div>
               )}
             </div>
           )}
 
           {/* Score Display */}
-          <div className="bg-gray-50 p-6 rounded-lg">
+          <div className="bg-gray-50 dark:bg-onyx-800 p-6 rounded-lg">
             <div className="space-y-4">
               {/* Player 1 Score */}
               <div className="flex flex-col space-y-1">
                 <div className="flex justify-between items-start">
                   <PlayerNameDisplay
                     name={matchResult ? matchResult.player1.name : (player1Details?.name || player1Name)}
-                    iscUsername={player1Details?.iscUsername}
+                    platformUsername={player1Details?.wooglesUsername || player1Details?.iscUsername}
                     isWinner={matchResult && winner === matchResult.player1.name}
                   />
                   {matchResult ? (
-                    <span className="text-2xl font-bold">{matchResult.player1.score}</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{matchResult.player1.score}</span>
                   ) : (
                     <input
                       type="text"
@@ -290,18 +295,18 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-200" />
+              <div className="border-t border-gray-200 dark:border-onyx-700" />
 
               {/* Player 2 Score */}
               <div className="flex flex-col space-y-1">
                 <div className="flex justify-between items-start">
                   <PlayerNameDisplay
                     name={matchResult ? matchResult.player2.name : (player2Details?.name || player2Name)}
-                    iscUsername={player2Details?.iscUsername}
+                    platformUsername={player2Details?.wooglesUsername || player2Details?.iscUsername}
                     isWinner={matchResult && winner === matchResult.player2.name}
                   />
                   {matchResult ? (
-                    <span className="text-2xl font-bold">{matchResult.player2.score}</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{matchResult.player2.score}</span>
                   ) : (
                     <input
                       type="text"
@@ -344,31 +349,31 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
           {/* Match Statistics */}
           {matchResult ? (
             <div className="grid grid-cols-3 gap-6">
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">PR</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PR</div>
                 <div className="text-xl font-bold text-blue-600">{matchResult.pr}</div>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">PDI</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PDI</div>
                 <div className="text-xl font-bold text-blue-600">{matchResult.pdi.toFixed(2)}</div>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">DS</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">DS</div>
                 <div className="text-xl font-bold text-blue-600">{matchResult.ds}</div>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-6">
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">PR</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PR</div>
                 <div className="text-xl font-bold text-blue-600">{calculatePR(scores[0], scores[1])}</div>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">PDI</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">PDI</div>
                 <div className="text-xl font-bold text-blue-600">{calculatePDI(scores[0], scores[1]).toFixed(2)}</div>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <div className="text-sm text-gray-600 mb-1">DS</div>
+              <div className="bg-gray-50 dark:bg-onyx-800 p-4 rounded-lg text-center">
+                <div className="text-sm text-gray-600 dark:text-onyx-400 mb-1">DS</div>
                 <div className="text-xl font-bold text-blue-600">{calculateDS(scores[0], scores[1])}</div>
               </div>
             </div>
@@ -376,7 +381,7 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
 
           {/* Detailed Match View */}
           {gameData && (
-            <div className="space-y-6 mt-6 pt-6 border-t border-gray-200">
+            <div className="space-y-6 mt-6 pt-6 border-t border-gray-200 dark:border-onyx-700">
               <ScoreProgressionChart gameData={gameData} />
               <MoveList moves={gameData.move_history} players={gameData.players} />
             </div>

@@ -25,6 +25,7 @@ export class PlayerService {
     const newPlayerData: Omit<Player, 'id'> = {
       name: input.name.trim(),
       iscUsername: input.iscUsername?.trim(),
+      wooglesUsername: input.wooglesUsername?.trim(),
       currentRating: input.initialRating ?? PLAYER_CONSTANTS.DEFAULT_RATING,
       category: input.initialCategory ?? PLAYER_CONSTANTS.DEFAULT_CATEGORY,
       statistics: {
@@ -79,8 +80,9 @@ export class PlayerService {
       ...data,
       // Ensure name is trimmed if provided
       name: data.name ? data.name.trim() : existingPlayer.name,
-      // Ensure iscUsername is trimmed if provided
-      iscUsername: data.iscUsername ? data.iscUsername.trim() : existingPlayer.iscUsername
+      // Ensure usernames are trimmed if provided
+      iscUsername: data.iscUsername ? data.iscUsername.trim() : existingPlayer.iscUsername,
+      wooglesUsername: data.wooglesUsername ? data.wooglesUsername.trim() : existingPlayer.wooglesUsername
     };
 
     // If category is being updated, add to category history

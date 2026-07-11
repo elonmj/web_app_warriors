@@ -88,6 +88,15 @@ export default function MatchResultPage({
     player1: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
     player2: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
   } | undefined>(undefined);
+  const [analysisGameId, setAnalysisGameId] = useState<string | null>(null);
+
+  // If the Woogles game behind this match is persisted, offer the analysis view
+  useEffect(() => {
+    fetch(`/api/games/by-match/${params.matchId}`)
+      .then((r) => (r.ok ? r.json() : { gameId: null }))
+      .then((data) => setAnalysisGameId(data.gameId ?? null))
+      .catch(() => undefined);
+  }, [params.matchId]);
 
     useEffect(() => {
     async function loadMatch() {
@@ -299,6 +308,26 @@ export default function MatchResultPage({
                                 </Body.Text>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Game Analysis */}
+                {isCompleted && analysisGameId && (
+                    <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800 flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                            <Body.Text className="font-medium text-onyx-900 dark:text-white">
+                                Game Analysis
+                            </Body.Text>
+                            <Body.Caption className="text-onyx-500 dark:text-onyx-400">
+                                Replay this game move by move with engine analysis
+                            </Body.Caption>
+                        </div>
+                        <Link
+                            href={`/player/${match.player1.id}/analysis/${analysisGameId}`}
+                            className="px-4 py-2 bg-amethyste-600 text-white rounded-md hover:bg-amethyste-500 transition-colors font-medium text-sm"
+                        >
+                            View Analysis
+                        </Link>
                     </div>
                 )}
 

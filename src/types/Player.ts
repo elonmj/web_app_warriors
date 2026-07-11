@@ -1,5 +1,6 @@
 import { PlayerCategoryType } from './Enums';
 import { PlayerISCStats } from './ISC';
+import { PlayerWooglesStats } from './Woogles';
 
 export interface PlayerMatch {
   date: string;
@@ -55,13 +56,17 @@ export interface PlayerStatistics {
       pointsEarned: number;
     };
   }[];
+  /** @deprecated legacy ISC stats, kept read-only for history */
   iscData?: PlayerISCStats;
+  wooglesData?: PlayerWooglesStats;
 }
 
 export interface Player {
   id: string;  // Changed from number to string
   name: string;
+  /** @deprecated players now play on Woogles.io — see wooglesUsername */
   iscUsername?: string;
+  wooglesUsername?: string;
   currentRating: number;
   category: PlayerCategoryType;
   statistics: PlayerStatistics;
@@ -72,6 +77,7 @@ export interface Player {
 export interface CreatePlayerInput {
   name: string;
   iscUsername?: string;
+  wooglesUsername?: string;
   initialRating?: number;
   initialCategory?: PlayerCategoryType;
 }
@@ -79,6 +85,7 @@ export interface CreatePlayerInput {
 export interface UpdatePlayerInput {
   name?: string;
   iscUsername?: string;
+  wooglesUsername?: string;
   currentRating?: number;
   category?: PlayerCategoryType;
   active?: boolean;

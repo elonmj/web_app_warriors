@@ -4,12 +4,14 @@ import { RankingService } from '@/api/services/RankingService';
 import { UpdateMatchResultInput, Match } from '@/types/Match';
 import { PlayerCategoryType } from '@/types/Enums';
 import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
-import { iscService } from '@/api/services/ISCService';
-import { ISCPlayerIdentifier } from '@/types/ISC';
+import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { wooglesService } from '@/api/services/WooglesService';
+import { gamePersistenceService } from '@/api/services/GamePersistenceService';
 
 const matchService = new MatchService();
 const rankingService = new RankingService();
 const matchRepository = new FirebaseMatchRepository();
+const playerRepository = new FirebasePlayerRepository();
 
 interface MatchUpdate {
   id: string;
@@ -24,6 +26,8 @@ interface MatchResponse {
     player1: MatchUpdate;
     player2: MatchUpdate;
   };
+  /** Non-blocking validation warnings (e.g. Woogles unreachable) */
+  warnings?: string[];
 }
 
 /**
@@ -66,49 +70,59 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
       );
     }
 
-    // Construct player identifiers for ISC fetch
-    // Modifier la définition pour enlever l'exigence de iscId
-    const player1: ISCPlayerIdentifier = {
-      iscUsername: match.player1.name || match.player1.id,
-      iscId: undefined // Fournir une valeur par défaut
-    };
-
-    const player2: ISCPlayerIdentifier = {
-      iscUsername: match.player2.name || match.player2.id,
-      iscId: undefined // Fournir une valeur par défaut
-    };
-
-    // Fetch match result from ISC *before* processing
+    // Validate submitted scores against Woogles using the players' REAL
+    // usernames (the legacy code wrongly used player.name as the username).
+    const warnings: string[] = [];
     try {
-      const iscResult = await iscService.fetchMatchResult(player1, player2, {
-        username: process.env.ISC_USERNAME!,
-        password: process.env.ISC_PASSWORD!,
-      });
+      const [p1, p2] = await Promise.all([
+        playerRepository.getPlayer(match.player1.id),
+        playerRepository.getPlayer(match.player2.id),
+      ]);
 
-      // Validate the fetched scores against the submitted scores
-      if (
-        iscResult.player1Score !== input.score.player1Score ||
-        iscResult.player2Score !== input.score.player2Score
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              'Submitted scores do not match ISC results. Please check the scores and try again.',
-          },
-          { status: 400 }
+      const u1 = p1?.wooglesUsername ?? p1?.iscUsername;
+      const u2 = p2?.wooglesUsername ?? p2?.iscUsername;
+
+      if (u1 && u2) {
+        const validation = await wooglesService.validateSubmittedScore(
+          u1,
+          u2,
+          input.score.player1Score,
+          input.score.player2Score
+        );
+
+        if (validation.valid && validation.game) {
+          // Persist the game + run the statistical analysis (fire-and-forget)
+          void gamePersistenceService.persistAndAnalyze(validation.game, {
+            matchId: match.id,
+            eventId: match.eventId,
+          });
+        }
+
+        if (!validation.valid && validation.game) {
+          // A game exists on Woogles but scores differ: hard reject.
+          return NextResponse.json(
+            {
+              error: `Submitted scores do not match Woogles results (${validation.reason}). Please check the scores and try again.`,
+            },
+            { status: 400 }
+          );
+        }
+
+        if (!validation.valid) {
+          warnings.push(
+            `No game found on Woogles between ${u1} and ${u2} — result accepted without platform validation.`
+          );
+        }
+      } else {
+        warnings.push(
+          'Woogles username missing for one or both players — result accepted without platform validation.'
         );
       }
-    } catch (iscError) {
-      console.error('Error fetching from ISC:', iscError);
-      // Handle ISC fetch errors specifically, returning a 503 Service Unavailable
-      return NextResponse.json(
-        {
-          error:
-            'Failed to fetch match result from ISC. Please try again later.',
-          // Include more details for debugging if in development
-          details: process.env.NODE_ENV === 'development' ? (iscError instanceof Error ? iscError.message : 'Unknown ISC error') : undefined
-        },
-        { status: 503 } // Service Unavailable
+    } catch (wooglesError) {
+      // Woogles being unreachable must not dead-end result submission.
+      console.error('Error validating against Woogles:', wooglesError);
+      warnings.push(
+        'Woogles could not be reached — result accepted without platform validation.'
       );
     }
 
@@ -140,7 +154,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
             newCategory: (player2Update.category || match.player2.categoryBefore || 'ONYX') as PlayerCategoryType,
             ratingChange: (player2Update.currentRating || match.player2.ratingBefore) - match.player2.ratingBefore
           }
-        }
+        },
+        ...(warnings.length > 0 ? { warnings } : {})
       };
 
       return NextResponse.json(response, { status: 200 });
