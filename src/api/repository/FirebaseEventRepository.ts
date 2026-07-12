@@ -1,15 +1,3 @@
-import {
-  ref,
-  get,
-  push,
-  query as dbQuery,
-  orderByChild,
-  equalTo,
-  set,
-  update,
-  remove,
-  child
-} from 'firebase/database';
 import { FirebaseBaseRepository } from './FirebaseBaseRepository';
 import { Event } from '@/types/Event';
 import { Match } from '@/types/Match';

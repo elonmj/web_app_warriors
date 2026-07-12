@@ -30,10 +30,6 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
         throw new Error('Invalid player ID');
       }
 
-      if (!idStr.match(/^\d+$/)) {
-        throw new Error('Invalid player ID format - must be a number');
-      }
-
       setIsLoading(true);
       setError(null);
 

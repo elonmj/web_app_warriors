@@ -1,10 +1,3 @@
-import { 
-  ref, 
-  get, 
-  query as dbQuery,
-  orderByChild, 
-  equalTo 
-} from 'firebase/database';
 import { FirebaseBaseRepository } from './FirebaseBaseRepository';
 import { Match } from '@/types/Match';
 

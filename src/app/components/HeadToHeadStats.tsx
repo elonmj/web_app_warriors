@@ -36,10 +36,10 @@ export default function HeadToHeadStats({ playerId }: HeadToHeadStatsProps) {
       setIsLoading(true);
       setError(null);
       
-      if (!String(playerId).match(/^\d+$/)) {
-        throw new Error('Invalid player ID format - must be a number');
+      if (!String(playerId).trim()) {
+        throw new Error('Invalid player ID');
       }
-      
+
       console.log('Fetching head-to-head data for player:', playerId);
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
       const response = await fetch(`${baseUrl}/api/players/${playerId}/head-to-head`);
