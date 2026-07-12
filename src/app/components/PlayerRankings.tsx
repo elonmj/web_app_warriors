@@ -54,6 +54,9 @@ export function PlayerRankings({
 }: PlayerRankingsProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const changeLabel = scope === 'global' ? 'Last Match' : 'Change';
+  // Départages V2 : colonnes visibles quand le classement les fournit
+  const hasTiebreakers =
+    scope === 'round' && eventRanking.rankings.some((r) => r.buchholz !== undefined);
 
   // Use provided props or metadata values
   const round = currentRound || eventRanking.metadata?.round || 1;
@@ -142,6 +145,16 @@ export function PlayerRankings({
                     <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
                       Points
                     </th>
+                    {hasTiebreakers && (
+                      <>
+                        <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
+                          Buchholz
+                        </th>
+                        <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
+                          Spread
+                        </th>
+                      </>
+                    )}
                     <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
                       {changeLabel}
                     </th>
@@ -163,12 +176,22 @@ export function PlayerRankings({
                           className="group block"
                           aria-label={`View ${ranking.playerDetails?.name || 'Unknown Player'}'s statistics`}
                         >
-                          <Body.Text
-                            variant="sm"
-                            className="font-medium transition-colors group-hover:text-amethyste-600 dark:group-hover:text-amethyste-400 focus-visible:text-amethyste-600 dark:focus-visible:text-amethyste-400"
-                          >
-                            {ranking.playerDetails?.name || 'Unknown Player'}
-                          </Body.Text>
+                          <span className="flex items-center gap-2">
+                            <Body.Text
+                              variant="sm"
+                              className="font-medium transition-colors group-hover:text-amethyste-600 dark:group-hover:text-amethyste-400 focus-visible:text-amethyste-600 dark:focus-visible:text-amethyste-400"
+                            >
+                              {ranking.playerDetails?.name || 'Unknown Player'}
+                            </Body.Text>
+                            {ranking.isInactive && (
+                              <span
+                                className="px-1.5 py-0.5 bg-onyx-100 text-onyx-500 rounded text-[10px] font-medium uppercase tracking-wide dark:bg-onyx-800 dark:text-onyx-400"
+                                title="Aucun match depuis 6 semaines — la cote ne se dégrade pas par inactivité"
+                              >
+                                Inactive
+                              </span>
+                            )}
+                          </span>
                         </Link>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
@@ -186,6 +209,20 @@ export function PlayerRankings({
                           {ranking.points}
                         </Body.Text>
                       </td>
+                      {hasTiebreakers && (
+                        <>
+                          <td className="whitespace-nowrap px-3 py-4 text-center">
+                            <Body.Text variant="sm">{ranking.buchholz ?? '—'}</Body.Text>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-center">
+                            <Body.Text variant="sm">
+                              {ranking.spread !== undefined
+                                ? `${ranking.spread > 0 ? '+' : ''}${ranking.spread}`
+                                : '—'}
+                            </Body.Text>
+                          </td>
+                        </>
+                      )}
                       <td className="whitespace-nowrap px-3 py-4">
                         <div className="flex items-center justify-center gap-1">
                           {ranking.ratingChange !== 0 && (

@@ -12,6 +12,7 @@ import { Body, Heading } from "@/components/ui/Typography";
 import { format } from "date-fns";
 import { getCategoryColor } from "@/app/components/utils/styles";
 import MatchStatBadges from "@/app/components/MatchStatBadges";
+import { calculateSpread } from "@/lib/scoring";
 import Link from "next/link";
 
 interface MatchResponse {
@@ -123,9 +124,7 @@ export default function MatchResultPage({
         {
           score,
           pr: 0, // These will be calculated server-side
-          pdi: 0,
-          ds: 0,
-        
+          ds: 0
         }
       );
 
@@ -289,7 +288,10 @@ export default function MatchResultPage({
                 {/* Match Stats */}
                 {match.result && (
                     <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
-                        <MatchStatBadges pr={match.result.pr} pdi={match.result.pdi} ds={match.result.ds} />
+                        <MatchStatBadges
+                            pr={match.result.pr}
+                            spread={calculateSpread(match.result.score[0], match.result.score[1])}
+                        />
                     </div>
                 )}
 
@@ -361,8 +363,6 @@ export default function MatchResultPage({
                         player1: { name: match.player1.name || match.player1.id.toString(), score: match.result.score[0] },
                         player2: { name: match.player2.name || match.player2.id.toString(), score: match.result.score[1] },
                         pr: match.result.pr,
-                        pdi: match.result.pdi,
-                        ds: match.result.ds,
                         ratingChanges: ratingChanges && {
                             player1: ratingChanges.player1,
                             player2: ratingChanges.player2

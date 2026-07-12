@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { TrophyIcon } from "@heroicons/react/24/outline";
 import { getCategoryColor } from "@/app/components/utils/styles";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
+import { calculateSpread } from "@/lib/scoring";
 
 interface PlayerDetails {
   name: string;
@@ -201,7 +202,7 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
       {/* Match Stats */}
       {match.result && !isProjected && (
         <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <Body.Caption>PR</Body.Caption>
               <Body.Text className="font-medium text-onyx-900 dark:text-white">
@@ -209,15 +210,12 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
               </Body.Text>
             </div>
             <div className="text-center">
-              <Body.Caption>PDI</Body.Caption>
+              <Body.Caption>Spread</Body.Caption>
               <Body.Text className="font-medium text-onyx-900 dark:text-white">
-                {(match.result.pdi * 100).toFixed(0)}%
-              </Body.Text>
-            </div>
-            <div className="text-center">
-              <Body.Caption>DS</Body.Caption>
-              <Body.Text className="font-medium text-onyx-900 dark:text-white">
-                {match.result.ds}
+                {(() => {
+                  const spread = calculateSpread(match.result.score[0], match.result.score[1]);
+                  return spread > 0 ? `+${spread}` : `${spread}`;
+                })()}
               </Body.Text>
             </div>
           </div>

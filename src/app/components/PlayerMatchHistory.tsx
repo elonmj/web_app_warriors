@@ -11,6 +11,7 @@ import { getCategoryColor } from "./utils/styles";
 import { MatchDisplay, MatchHistoryResponse } from "@/types/MatchHistory";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 import MatchStatBadges from "./MatchStatBadges";
+import { calculateSpread } from "@/lib/scoring";
 
 interface PlayerMatchHistoryProps {
   playerId: string | number;
@@ -192,7 +193,10 @@ const PlayerMatchHistory = ({ playerId }: PlayerMatchHistoryProps) => {
           {/* Match Stats */}
           {match.result && (
             <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
-              <MatchStatBadges pr={match.result.pr} pdi={match.result.pdi} ds={match.result.ds} />
+              <MatchStatBadges
+                pr={match.result.pr}
+                spread={calculateSpread(match.result.score[0], match.result.score[1])}
+              />
             </div>
           )}
         </Link>

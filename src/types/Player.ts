@@ -14,7 +14,9 @@ export interface PlayerMatch {
   result: {
     score: [number, number];
     pr: number;
-    pdi: number;
+    /** @deprecated PDI supprimé par le Règlement V2 ; présent sur les anciens matchs */
+    pdi?: number;
+    /** Spread signé du point de vue du joueur, plafonné à ±100 (Règlement V2 §III.B) */
     ds: number;
   };
   ratingChange: {

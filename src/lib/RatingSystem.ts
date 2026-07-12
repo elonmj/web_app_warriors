@@ -1,26 +1,48 @@
-import { Match, MatchResult } from '@/types/Match';
+import { Match } from '@/types/Match';
 import { Player, PlayerStatistics } from '@/types/Player';
 import { PlayerCategoryType } from '@/types/Enums';
 
 interface RatingConfig {
   kFactors: {
-    beginner: number;    // K=30 for beginners
-    intermediate: number; // K=20 for intermediate players
-    expert: number;      // K=10 for expert players
+    provisional: number; // K=40 — moins de provisionalMatches joués
+    returning: number;   // K=30 — retour après inactivité (Règlement V2 §V.D)
+    standard: number;    // K=20 — régime normal
+    elite: number;       // K=10 — cote >= eliteThreshold
   };
-  dsImpact: number;      // Impact factor of DS on rating (α)
-  ratingDivider: number; // Typically 400, can be adjusted
+  provisionalMatches: number; // durée de la période provisoire (en matchs)
+  returningMatches: number;   // nombre de matchs au K de retour après une inactivité
+  inactivityWeeks: number;    // écart entre deux matchs qui compte comme inactivité
+  eliteThreshold: number;
+  ratingFloor: number;        // sous le point d'entrée (1000) pour que les nouveaux ne soient pas « incassables »
+  ratingDivider: number;      // 400, ajustable par le comité
 }
 
 const DEFAULT_CONFIG: RatingConfig = {
   kFactors: {
-    beginner: 30,
-    intermediate: 20,
-    expert: 10
+    provisional: 40,
+    returning: 30,
+    standard: 20,
+    elite: 10
   },
-  dsImpact: 0.1, // 10% impact of DS on rating change
+  provisionalMatches: 15,
+  returningMatches: 5,
+  inactivityWeeks: 6,
+  eliteThreshold: 1900,
+  ratingFloor: 800,
   ratingDivider: 400
 };
+
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Contexte joueur nécessaire au choix du K. Construit via buildContext()
+ * à partir du vrai joueur — les anciens joueurs temporaires à
+ * totalMatches: 0 donnaient K=30 à tout le monde.
+ */
+interface PlayerRatingContext {
+  matchesPlayed: number;
+  isReturning: boolean;
+}
 
 class RatingSystem {
   private config: RatingConfig;
@@ -30,134 +52,115 @@ class RatingSystem {
   }
 
   /**
-   * Determine K-factor based on player's rating and experience
+   * Construit le contexte de cote d'un joueur pour un match joué à atDate.
+   * isReturning : une coupure d'au moins inactivityWeeks existe dans
+   * l'historique et moins de returningMatches ont été joués depuis.
    */
-  private determineKFactor(player: Player): number {
-    const { currentRating, statistics } = player;
-    const { totalMatches } = statistics;
+  buildContext(player: Player, atDate: string = new Date().toISOString()): PlayerRatingContext {
+    const dates = (player.matches ?? [])
+      .map((m) => new Date(m.date).getTime())
+      .filter((t) => !Number.isNaN(t))
+      .sort((a, b) => b - a); // plus récent d'abord
 
-    // Experienced players (more than 30 matches)
-    if (totalMatches > 30) {
-      if (currentRating >= 1700) {
-        return this.config.kFactors.expert;
+    const matchesPlayed = player.statistics?.totalMatches ?? dates.length;
+
+    const at = new Date(atDate).getTime();
+    const inactivityMs = this.config.inactivityWeeks * MS_PER_WEEK;
+
+    let isReturning = false;
+    if (dates.length > 0) {
+      // Cherche la coupure la plus récente : entre ce match et le dernier
+      // joué, puis entre matchs consécutifs de l'historique.
+      let matchesSinceGap = 0;
+      let previous = at;
+      for (const date of dates) {
+        if (previous - date >= inactivityMs) {
+          isReturning = matchesSinceGap < this.config.returningMatches;
+          break;
+        }
+        matchesSinceGap++;
+        previous = date;
       }
-      return this.config.kFactors.intermediate;
     }
 
-    // New players
-    return this.config.kFactors.beginner;
+    return { matchesPlayed, isReturning };
   }
 
   /**
-   * Calculate expected score (probability of winning)
+   * K par expérience (Règlement V2 §V.B) : provisoire, retour, élite, normal.
    */
-  private calculateExpectedScore(playerRating: number, opponentRating: number): number {
+  determineKFactor(context: PlayerRatingContext, rating: number): number {
+    const { kFactors, provisionalMatches, eliteThreshold } = this.config;
+    if (context.matchesPlayed < provisionalMatches) return kFactors.provisional;
+    if (context.isReturning) return kFactors.returning;
+    if (rating >= eliteThreshold) return kFactors.elite;
+    return kFactors.standard;
+  }
+
+  /**
+   * Probabilité de victoire estimée (We)
+   */
+  calculateExpectedScore(playerRating: number, opponentRating: number): number {
     const exponent = (opponentRating - playerRating) / this.config.ratingDivider;
     return 1 / (1 + Math.pow(10, exponent));
   }
 
   /**
-   * Calculate rating change based on ELO formula
-   */
-  private calculateBaseRatingChange(
-    player: Player,
-    opponentRating: number,
-    actualScore: number
-  ): number {
-    const K = this.determineKFactor(player);
-    const expectedScore = this.calculateExpectedScore(player.currentRating, opponentRating);
-    return Math.round(K * (actualScore - expectedScore));
-  }
-
-  /**
-   * Calculate additional rating change based on DS
-   */
-  private calculateDSImpact(ds: number): number {
-    return Math.round(this.config.dsImpact * ds);
-  }
-
-  /**
-   * Calculate new rating after a match
+   * Nouvelle cote après un match — Elo pur, à somme quasi nulle.
+   * Le bonus DS de la V1 (vainqueur seul, inflationniste) est supprimé :
+   * l'ampleur des victoires est valorisée par le spread au départage,
+   * pas dans la cote (Règlement V2 §V.C).
    */
   calculateNewRating(
-    player: Player,
+    rating: number,
     opponentRating: number,
-    matchResult: MatchResult
+    outcome: 1 | 0.5 | 0,
+    context: PlayerRatingContext
   ): number {
-    // Determine actual score (1 for win, 0.5 for draw, 0 for loss)
-    const [playerScore, opponentScore] = matchResult.score;
-    const actualScore = playerScore > opponentScore ? 1 : 
-                       playerScore === opponentScore ? 0.5 : 0;
-
-    // Calculate base rating change
-    const baseChange = this.calculateBaseRatingChange(
-      player,
-      opponentRating,
-      actualScore
-    );
-
-    // Add DS impact if player won
-    const dsChange = actualScore === 1 ? this.calculateDSImpact(matchResult.ds) : 0;
-
-    // Calculate new rating
-    const newRating = player.currentRating + baseChange + dsChange;
-
-    // Ensure rating doesn't go below minimum (1000)
-    return Math.max(1000, newRating);
+    const K = this.determineKFactor(context, rating);
+    const expectedScore = this.calculateExpectedScore(rating, opponentRating);
+    const newRating = rating + Math.round(K * (outcome - expectedScore));
+    return Math.max(this.config.ratingFloor, newRating);
   }
 
   /**
-   * Process match results and update ratings for both players
+   * Calcule les nouvelles cotes des deux joueurs d'un match.
+   * Les contextes viennent de buildContext() sur les vrais joueurs ;
+   * à défaut, régime normal (ni provisoire, ni retour).
    */
-  processMatchRatings(match: Match): [number, number] {
+  processMatchRatings(
+    match: Match,
+    player1Context?: PlayerRatingContext,
+    player2Context?: PlayerRatingContext
+  ): [number, number] {
     if (!match.result) {
       throw new Error('Match result not available');
     }
 
-    // Get initial ratings from players
-    const player1Rating = match.player1.ratingBefore;
-    const player2Rating = match.player2.ratingBefore;
-    
-    // Use the existing logic but with correctly accessed properties
-    const player1Category = match.player1.categoryBefore; 
-    const player2Category = match.player2.categoryBefore;
-
-    // Create temporary player objects for rating calculation
-    const tempPlayer1: Player = {
-      id: match.player1.id,
-      name: '',
-      currentRating: player1Rating,
-      category: player1Category,
-      matches: [],
-      statistics: this.initializeStatistics()
+    const defaultContext: PlayerRatingContext = {
+      matchesPlayed: this.config.provisionalMatches,
+      isReturning: false
     };
 
-    const tempPlayer2: Player = {
-      id: match.player2.id,
-      name: '',
-      currentRating: player2Rating,
-      category: player2Category,
-      matches: [],
-      statistics: this.initializeStatistics()
-    };
+    const rating1 = match.player1.ratingBefore;
+    const rating2 = match.player2.ratingBefore;
 
-    // Calculate new ratings
     const [score1, score2] = match.result.score;
-    const result1: MatchResult = {
-      score: [score1, score2] as [number, number],
-      pr: match.result.pr,
-      pdi: match.result.pdi,
-      ds: match.result.ds
-    };
-    const result2: MatchResult = {
-      score: [score2, score1] as [number, number],
-      pr: match.result.pr,
-      pdi: match.result.pdi,
-      ds: match.result.ds
-    };
+    const outcome1: 1 | 0.5 | 0 = score1 > score2 ? 1 : score1 === score2 ? 0.5 : 0;
+    const outcome2: 1 | 0.5 | 0 = outcome1 === 1 ? 0 : outcome1 === 0 ? 1 : 0.5;
 
-    const newRating1 = this.calculateNewRating(tempPlayer1, player2Rating, result1);
-    const newRating2 = this.calculateNewRating(tempPlayer2, player1Rating, result2);
+    const newRating1 = this.calculateNewRating(
+      rating1,
+      rating2,
+      outcome1,
+      player1Context ?? defaultContext
+    );
+    const newRating2 = this.calculateNewRating(
+      rating2,
+      rating1,
+      outcome2,
+      player2Context ?? defaultContext
+    );
 
     return [newRating1, newRating2];
   }
@@ -194,4 +197,4 @@ class RatingSystem {
 }
 
 export { RatingSystem };
-export type { RatingConfig };
+export type { RatingConfig, PlayerRatingContext };

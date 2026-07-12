@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Match } from '@/types/Match';
 import PlayerNameDisplay from '@/components/shared/PlayerNameDisplay';
+import { calculatePR, calculateSpread } from '@/lib/scoring';
 
 interface ModifyMatchResultPopupProps {
   isOpen: boolean;
@@ -38,23 +39,7 @@ export const ModifyMatchResultPopup: React.FC<ModifyMatchResultPopupProps> = ({
   }, [onClose]);
 
 
-  const calculatePR = (score1: number, score2: number) => {
-    if (score1 > score2) return 3;
-    if (score1 === score2) return 1;
-    return 0;
-  };
-
-  const calculatePDI = (score1: number, score2: number) => {
-    const totalPoints = score1 + score2;
-    if (totalPoints === 0) return 0;
-    return Math.abs(score1 - score2) / totalPoints;
-  };
-
-  const calculateDS = (score1: number, score2: number) => {
-    const pdi = calculatePDI(score1, score2);
-    const threshold = 0.8;
-    return pdi >= threshold ? 100 : Math.floor(pdi * 100);
-  };
+  const spread = calculateSpread(scores[0], scores[1]);
 
   return (
     <div
@@ -136,18 +121,14 @@ export const ModifyMatchResultPopup: React.FC<ModifyMatchResultPopupProps> = ({
           </div>
 
           {/* Match Statistics (Calculated) */}
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg text-center">
               <div className="text-sm text-gray-600 mb-1">PR</div>
               <div className="text-xl font-bold text-blue-600">{calculatePR(scores[0], scores[1])}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-sm text-gray-600 mb-1">PDI</div>
-              <div className="text-xl font-bold text-blue-600">{calculatePDI(scores[0], scores[1]).toFixed(2)}</div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <div className="text-sm text-gray-600 mb-1">DS</div>
-              <div className="text-xl font-bold text-blue-600">{calculateDS(scores[0], scores[1])}</div>
+              <div className="text-sm text-gray-600 mb-1">Spread</div>
+              <div className="text-xl font-bold text-blue-600">{spread > 0 ? `+${spread}` : spread}</div>
             </div>
           </div>
         </div>

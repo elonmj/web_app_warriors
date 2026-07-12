@@ -1,11 +1,12 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { promises as fs } from "fs";
 import path from "path";
 
 // This function runs on the server at request time
 async function getRulesContent() {
   try {
-    const filePath = path.join(process.cwd(), "docs", "classment.md");
+    const filePath = path.join(process.cwd(), "docs", "Règlement-V2.md");
     const content = await fs.readFile(filePath, "utf8");
     return content;
   } catch (error) {
@@ -31,7 +32,7 @@ export default async function RulesPage() {
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <article className="prose prose-slate max-w-none dark:prose-invert lg:prose-lg">
-          <ReactMarkdown>{content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         </article>
       </div>
     </div>

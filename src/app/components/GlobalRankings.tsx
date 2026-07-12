@@ -12,6 +12,19 @@ import { Body, Heading } from '@/components/ui/Typography';
 // Use a constant for the global rankings identifier
 const GLOBAL_RANKINGS_ID = 'global';
 
+// Statut inactif : aucun match depuis 6 semaines (Règlement V2 §V.D)
+const INACTIVITY_WEEKS = 6;
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+function isPlayerInactive(player: Player): boolean {
+  const lastMatch = (player.matches ?? [])
+    .map((m) => new Date(m.date).getTime())
+    .filter((t) => !Number.isNaN(t))
+    .sort((a, b) => b - a)[0];
+  if (!lastMatch) return false; // nouveau joueur sans historique : pas « inactif »
+  return Date.now() - lastMatch > INACTIVITY_WEEKS * MS_PER_WEEK;
+}
+
 export function GlobalRankings() {
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get('category');
@@ -54,10 +67,11 @@ export function GlobalRankings() {
             wins: player.statistics?.wins || 0,
             losses: player.statistics?.losses || 0,
             draws: player.statistics?.draws || 0,
-            ratingChange: player.matches?.length 
+            ratingChange: player.matches?.length
               ? player.matches[player.matches.length - 1].ratingChange?.change || 0
               : 0,
             category: player.category,
+            isInactive: isPlayerInactive(player),
           })),
           lastUpdated: new Date().toISOString(),
         };

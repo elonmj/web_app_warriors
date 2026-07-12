@@ -24,10 +24,13 @@ interface MatchScore {
 
 interface MatchResult {
   score: [number, number];  // [player1Score, player2Score]
-  pr: number;    // Points de Rencontre
-  pdi: number;   // Points de Départage Interne
-  ds: number;    // Différence de Score
-
+  pr: number;    // Points de Rencontre (victoire 3 / nul 1 / défaite 0)
+  /** @deprecated PDI supprimé par le Règlement V2 (remplacé par le Buchholz) ; présent sur les anciens matchs */
+  pdi?: number;
+  /** Spread signé du point de vue de player1, plafonné à ±100 (Règlement V2 §III.B).
+   *  Les matchs antérieurs à la V2 stockent l'ancienne DS en pourcentage :
+   *  pour les agrégations, recalculer depuis score. */
+  ds: number;
 }
 
 export interface Match {

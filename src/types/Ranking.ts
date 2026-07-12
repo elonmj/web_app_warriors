@@ -11,6 +11,13 @@ export interface PlayerRanking {
   rating: number;
   ratingChange: number;
   category: PlayerCategoryType;
+  /** Buchholz : somme des PR finaux des adversaires rencontrés (Règlement V2 §III.C) */
+  buchholz?: number;
+  /** Spread cumulé, plafonné ±100 par match (Règlement V2 §III.B) */
+  spread?: number;
+  /** Statut d'activité (Règlement V2 §V.D) : aucun match depuis 6 semaines.
+   *  Informatif — la cote ne se dégrade jamais par inactivité. */
+  isInactive?: boolean;
   playerDetails?: {
     name: string;
     currentRating: number;

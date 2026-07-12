@@ -18,7 +18,7 @@ import { AUTH_ERROR_MESSAGES } from '@/lib/auth'; // Import auth error messages
 // Instantiate repositories
 
 
-type TabValue = "overview" | "participants"; // Define possible tab values
+type TabValue = "overview" | "participants" | "availability"; // Define possible tab values
 type PasswordAction = 'add' | 'remove' | 'start' | 'sync'; // Define possible password actions
 
 export default function AdminEventDetailPage() {
@@ -37,6 +37,12 @@ export default function AdminEventDetailPage() {
   const [isSearching, setIsSearching] = useState<boolean>(false); // Added: Loading state for search
   const [selectedPlayerToAdd, setSelectedPlayerToAdd] = useState<Player | null>(null); // Added: Player object to add
   const [activeTab, setActiveTab] = useState<TabValue>("overview");
+
+  // Disponibilité par ronde (Règlement V2 §IV.A)
+  const [availabilityIds, setAvailabilityIds] = useState<string[]>([]);
+  const [availabilityRound, setAvailabilityRound] = useState<number>(1);
+  const [availabilityIsDefault, setAvailabilityIsDefault] = useState<boolean>(true);
+  const [isSavingAvailability, setIsSavingAvailability] = useState<boolean>(false);
 
   // State for password dialog
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -109,6 +115,54 @@ export default function AdminEventDetailPage() {
 
     fetchData();
   }, [eventId]);
+
+  // Charge la disponibilité de la prochaine ronde à apparier
+  useEffect(() => {
+    if (!event) return;
+    const nextRound =
+      event.status === 'in_progress' ? (event.metadata?.currentRound ?? 0) + 1 : 1;
+    setAvailabilityRound(nextRound);
+
+    async function loadAvailability() {
+      try {
+        const res = await fetch(`/api/events/${eventId}/rounds/${nextRound}/availability`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setAvailabilityIds(data.availablePlayerIds ?? []);
+        setAvailabilityIsDefault(data.isDefault ?? true);
+      } catch (err) {
+        console.error('[UI] Failed to load round availability:', err);
+      }
+    }
+    loadAvailability();
+  }, [event, eventId]);
+
+  const toggleAvailability = (playerId: string) => {
+    setAvailabilityIds((prev) =>
+      prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]
+    );
+  };
+
+  const handleSaveAvailability = async () => {
+    setIsSavingAvailability(true);
+    try {
+      const res = await fetch(`/api/events/${eventId}/rounds/${availabilityRound}/availability`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerIds: availabilityIds })
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      setAvailabilityIsDefault(false);
+      toast.success(
+        `Disponibilité enregistrée pour la ronde ${availabilityRound} (${availabilityIds.length} joueur${availabilityIds.length > 1 ? 's' : ''}).`
+      );
+    } catch (err) {
+      console.error('[UI] Failed to save availability:', err);
+      toast.error("Échec de l'enregistrement de la disponibilité.");
+    } finally {
+      setIsSavingAvailability(false);
+    }
+  };
 
   // Debounced search effect
   useEffect(() => {
@@ -495,10 +549,10 @@ export default function AdminEventDetailPage() {
 
       {/* Tabs Navigation & Content */}
       <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as TabValue)} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px] mb-6">
+        <TabsList className="grid w-full grid-cols-3 md:w-[600px] mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="participants">Participants ({event.playerIds?.length || 0})</TabsTrigger>
-          {/* Add more tabs here later e.g. Rounds, Settings */}
+          <TabsTrigger value="availability">Disponibilité R{availabilityRound}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab Content */}
@@ -641,6 +695,63 @@ export default function AdminEventDetailPage() {
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">No participants have been added to this event yet.</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Availability Tab Content — Règlement V2 §IV.A */}
+        <TabsContent value="availability">
+          <Card>
+            <CardHeader>
+              <CardTitle>Disponibilité — Ronde {availabilityRound}</CardTitle>
+              <CardDescription>
+                Seuls les joueurs cochés seront appariés à la prochaine ronde.
+                Ne pas être inscrit est neutre : pas de match, pas de PR, pas de sanction.
+                {availabilityIsDefault && ' (Aucune liste enregistrée : tous les participants sont réputés disponibles.)'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {event.playerIds && event.playerIds.length > 0 ? (
+                <>
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAvailabilityIds(event.playerIds ?? [])}
+                    >
+                      Tout cocher
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setAvailabilityIds([])}>
+                      Tout décocher
+                    </Button>
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {event.playerIds.map((playerId) => (
+                      <li key={playerId}>
+                        <label className="flex items-center gap-3 p-3 border rounded-md dark:border-gray-700 bg-gray-50 dark:bg-onyx-800/50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={availabilityIds.includes(playerId)}
+                            onChange={() => toggleAvailability(playerId)}
+                            className="h-4 w-4 accent-amethyste-600"
+                          />
+                          <span className="text-gray-800 dark:text-gray-200">
+                            {getPlayerName(playerId)}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button onClick={handleSaveAvailability} disabled={isSavingAvailability}>
+                    {isSavingAvailability
+                      ? 'Enregistrement...'
+                      : `Enregistrer (${availabilityIds.length}/${event.playerIds.length} disponibles)`}
+                  </Button>
+                </>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                  Ajoutez d&apos;abord des participants à l&apos;événement.
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

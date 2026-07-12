@@ -8,6 +8,7 @@ import PlayerNameDisplay from '@/components/shared/PlayerNameDisplay';
 import ScoreProgressionChart from './ScoreProgressionChart';
 import MoveList from './MoveList';
 import MatchStatBadges from './MatchStatBadges';
+import { calculatePR, calculateSpread } from '@/lib/scoring';
 
 interface PlayerDetails {
   name: string;
@@ -38,8 +39,6 @@ interface MatchResultPopupProps {
     player1: { name: string; score: number };
     player2: { name: string; score: number };
     pr: number;
-    pdi: number;
-    ds: number;
     ratingChanges?: {
       player1: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
       player2: { newRating: number; newCategory: PlayerCategoryType; ratingChange: number };
@@ -47,26 +46,6 @@ interface MatchResultPopupProps {
   };
 }
 
-// Calculate Points Ranking (PR)
-const calculatePR = (score1: number, score2: number) => {
-  if (score1 > score2) return 3;
-  if (score1 === score2) return 1;
-  return 0;
-};
-
-// Keep PDI as internal helper for DS calculation
-const calculatePDI = (score1: number, score2: number) => {
-  const totalPoints = score1 + score2;
-  if (totalPoints === 0) return 0;
-  return Math.abs(score1 - score2) / totalPoints;
-};
-
-// Calculate Dominant Score (DS) based on PDI
-const calculateDS = (score1: number, score2: number) => {
-  const pdi = calculatePDI(score1, score2);
-  const threshold = 0.8;
-  return pdi >= threshold ? 100 : Math.floor(pdi * 100);
-};
 
 export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
   isOpen,
@@ -351,18 +330,14 @@ export const MatchResultPopup: React.FC<MatchResultPopupProps> = ({
           {matchResult ? (
             <MatchStatBadges
               variant="card"
-              pdiFormat="decimal"
               pr={matchResult.pr}
-              pdi={matchResult.pdi}
-              ds={matchResult.ds}
+              spread={calculateSpread(matchResult.player1.score, matchResult.player2.score)}
             />
           ) : (
             <MatchStatBadges
               variant="card"
-              pdiFormat="decimal"
               pr={calculatePR(scores[0], scores[1])}
-              pdi={calculatePDI(scores[0], scores[1])}
-              ds={calculateDS(scores[0], scores[1])}
+              spread={calculateSpread(scores[0], scores[1])}
             />
           )}
 

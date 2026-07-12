@@ -83,7 +83,7 @@ export default function StatsOverview({ stats }: StatsOverviewProps) {
           {stats.averageDS.toFixed(1)}
         </p>
         <div className="mt-1 text-sm text-onyx-500 dark:text-onyx-400 space-y-1">
-          <div>Average DS</div>
+          <div>Average spread</div>
           <div>PR: {stats.averagePR.toFixed(1)}</div>
           <div>Rating: {stats.averageRating.toFixed(0)}</div>
         </div>

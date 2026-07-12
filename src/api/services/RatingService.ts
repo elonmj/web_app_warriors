@@ -1,4 +1,4 @@
-import { RatingSystem } from '@/lib/RatingSystem';
+import { RatingSystem, PlayerRatingContext } from '@/lib/RatingSystem';
 import { PlayerCategoryType } from '@/types/Enums';
 import { Match } from '@/types/Match';
 
@@ -20,21 +20,28 @@ export class RatingService {
   /**
    * Process match ratings
    */
-  processMatchRatings(match: Match): [number, number] {
-    return this.ratingSystem.processMatchRatings(match);
+  processMatchRatings(
+    match: Match,
+    player1Context?: PlayerRatingContext,
+    player2Context?: PlayerRatingContext
+  ): [number, number] {
+    return this.ratingSystem.processMatchRatings(match, player1Context, player2Context);
   }
 
   /**
    * Calculate new rating
    */
-  calculateNewRating(currentRating: number, opponentRating: number, matchResult: any): number {
-    return this.ratingSystem.calculateNewRating({
+  calculateNewRating(
+    currentRating: number,
+    opponentRating: number,
+    outcome: 1 | 0.5 | 0,
+    context?: PlayerRatingContext
+  ): number {
+    return this.ratingSystem.calculateNewRating(
       currentRating,
-      id: '',
-      name: '',
-      category: this.getCategory(currentRating),
-      matches: [],
-      statistics: this.ratingSystem.initializeStatistics()
-    }, opponentRating, matchResult);
+      opponentRating,
+      outcome,
+      context ?? { matchesPlayed: 15, isReturning: false }
+    );
   }
 }

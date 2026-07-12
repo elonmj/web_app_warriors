@@ -63,11 +63,11 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
             <div className={perfCard}>
               <div className="flex items-center gap-2 mb-2">
                 <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
-                <Body.Label>Average DS</Body.Label>
+                <Body.Label>Average spread</Body.Label>
               </div>
               <Heading.H4>{allRounds.averageDS.toFixed(1)}</Heading.H4>
               <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-                Dominance score
+                Écart moyen (plafonné ±100)
               </Body.Caption>
             </div>
             <div className={perfCard}>
@@ -122,7 +122,7 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
                           W/L/D
                         </th>
                         <th scope="col" className="px-4 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                          Avg DS
+                          Avg spread
                         </th>
                       </tr>
                     </thead>

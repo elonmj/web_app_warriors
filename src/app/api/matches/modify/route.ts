@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
 import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
 import { MatchStatus, ValidationStatusType } from '@/types/Enums';
+import { calculatePR, calculateSpread } from '@/lib/scoring';
 
 const matchRepository = new FirebaseMatchRepository();
 const eventRepository = new FirebaseEventRepository();
@@ -33,18 +34,19 @@ export async function POST(request: NextRequest) {
       }
       
       if (match.result) {
-        // Update existing result
+        // Update existing result — keep PR/spread coherent with the corrected score
         updates.result = {
           ...match.result,
-          score: [score.player1Score, score.player2Score]
+          score: [score.player1Score, score.player2Score],
+          pr: calculatePR(score.player1Score, score.player2Score),
+          ds: calculateSpread(score.player1Score, score.player2Score)
         };
       } else {
         // Create new result with basic values
         updates.result = {
           score: [score.player1Score, score.player2Score],
-          pr: score.player1Score > score.player2Score ? 3 : (score.player1Score === score.player2Score ? 1 : 0),
-          pdi: calculatePDI(score.player1Score, score.player2Score),
-          ds: calculateDS(score.player1Score, score.player2Score),
+          pr: calculatePR(score.player1Score, score.player2Score),
+          ds: calculateSpread(score.player1Score, score.player2Score),
           validation: {
             status: 'admin_validated',
             player1Approved: true,
@@ -83,14 +85,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function calculatePDI(score1: number, score2: number): number {
-  const totalPoints = score1 + score2;
-  if (totalPoints === 0) return 0;
-  return Math.abs(score1 - score2) / totalPoints;
-}
-
-function calculateDS(score1: number, score2: number): number {
-  const pdi = calculatePDI(score1, score2);
-  const threshold = 0.8;
-  return pdi >= threshold ? 100 : Math.floor(pdi * 100);
-}

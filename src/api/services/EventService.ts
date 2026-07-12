@@ -209,10 +209,21 @@ export class EventService {
       // Handle this case - maybe filter event.playerIds based on fetched players
     }
 
+    // Pool de disponibilité (Règlement V2 §IV.A) : seuls les inscrits à la
+    // ronde sont appariés ; sans liste, tous les participants sont réputés
+    // disponibles. Ne pas s'inscrire est neutre — pas de match, pas de PR.
+    const availability = event.metadata?.roundAvailability?.[round];
+    const poolPlayers = availability
+      ? players.filter((p) => availability.includes(p.id))
+      : players;
+    if (poolPlayers.length === 0) {
+      throw new Error(`No available players for round ${round} of event ${eventId}`);
+    }
+
     const previousMatches = await this.eventRepository.getEventMatches(eventId);
 
     // Initialize MatchManager
-    const matchManager = new MatchManager(players, previousMatches);
+    const matchManager = new MatchManager(poolPlayers, previousMatches);
 
     // Generate pairings
     const pairings = matchManager.generatePairings(round);
@@ -266,6 +277,19 @@ export class EventService {
        throw new Error(`Event ${eventId} not found for metadata update`);
      }
 
+     // Trace du bye de la ronde (Règlement V2 §IV.C)
+     const byeMatch = savedMatches.find((m) => m.player2.id === 'BYE');
+     const byeHistory = [...(currentEvent.metadata.byeHistory || [])];
+     if (byeMatch) {
+       const existing = byeHistory.find((b) => b.playerId === byeMatch.player1.id);
+       if (existing) {
+         existing.rounds = [...(existing.rounds || []), round];
+         existing.lastByeRound = round;
+       } else {
+         byeHistory.push({ playerId: byeMatch.player1.id, rounds: [round], lastByeRound: round });
+       }
+     }
+
      const metadataUpdates: EventMetadata = {
        totalPlayers: currentEvent.metadata.totalPlayers || 0,
        totalMatches: (currentEvent.metadata.totalMatches || 0) + savedMatches.length,
@@ -276,10 +300,12 @@ export class EventService {
          [round]: {
            date: new Date().toISOString(),
            totalMatches: savedMatches.length,
-           completedMatches: 0
+           completedMatches: 0,
+           ...(byeMatch ? { byePlayerId: byeMatch.player1.id } : {})
          }
        },
-       byeHistory: currentEvent.metadata.byeHistory || [],
+       byeHistory,
+       roundAvailability: currentEvent.metadata.roundAvailability,
        lastUpdated: new Date().toISOString()
      };
 
@@ -455,8 +481,14 @@ export class EventService {
     const players = await this.playerRepository.getPlayersByIds(event.playerIds);
     const previousMatches = await this.eventRepository.getEventMatches(eventId);
 
+    // Même pool de disponibilité que la génération réelle (§IV.A)
+    const availability = event.metadata?.roundAvailability?.[round];
+    const poolPlayers = availability
+      ? players.filter((p) => availability.includes(p.id))
+      : players;
+
     // Initialize MatchManager
-    const matchManager = new MatchManager(players, previousMatches);
+    const matchManager = new MatchManager(poolPlayers, previousMatches);
 
     // Generate pairings
     const pairings = matchManager.generatePairings(round);

@@ -25,6 +25,9 @@ const CATEGORY_DEFINITIONS: Record<PlayerCategoryType, CategoryDefinition> = {
   }
 };
 
+/** Marge d'hystérésis anti yo-yo (Règlement V2 §VIII, réglable §IX). */
+export const CATEGORY_HYSTERESIS_MARGIN = 25;
+
 export class CategoryManager {
   /**
    * Determine player category based on rating
@@ -37,6 +40,23 @@ export class CategoryManager {
       }
     }
     return "ONYX"; // Default category for lowest ratings
+  }
+
+  /**
+   * Catégorie avec hystérésis (Règlement V2 §VIII) : promotion immédiate,
+   * rétrogradation seulement si la cote passe sous le seuil de la catégorie
+   * actuelle moins CATEGORY_HYSTERESIS_MARGIN. Évite le yo-yo d'un joueur
+   * qui oscille autour d'un seuil (ex. 1395–1405).
+   */
+  static determineCategoryWithHysteresis(
+    rating: number,
+    currentCategory: PlayerCategoryType
+  ): PlayerCategoryType {
+    const target = this.determineCategory(rating);
+    if (target === currentCategory) return currentCategory;
+    if (this.isPromotion(currentCategory, target)) return target;
+    const currentMin = this.getMinRatingForCategory(currentCategory);
+    return rating < currentMin - CATEGORY_HYSTERESIS_MARGIN ? target : currentCategory;
   }
 
   /**

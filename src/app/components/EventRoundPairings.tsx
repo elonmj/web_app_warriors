@@ -8,6 +8,7 @@ import { TrophyIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { getCategoryColor } from "./utils/styles";
 import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 import MatchStatBadges from "./MatchStatBadges";
+import { calculateSpread } from "@/lib/scoring";
 
 interface PlayerDetails {
   name: string;
@@ -201,7 +202,10 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
       {/* Match Stats */}
       {match.result && !isProjected && (
         <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
-          <MatchStatBadges pr={match.result.pr} pdi={match.result.pdi} ds={match.result.ds} />
+          <MatchStatBadges
+            pr={match.result.pr}
+            spread={calculateSpread(match.result.score[0], match.result.score[1])}
+          />
         </div>
       )}
 

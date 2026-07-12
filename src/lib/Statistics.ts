@@ -1,4 +1,5 @@
 import { Match, MatchResult } from "@/types/Match";
+import { calculateSpread } from "./scoring";
 import { MatchStatusType } from "@/types/Enums";
 import { Player } from "@/types/Player";
 import { Event } from "@/types/Event";
@@ -38,12 +39,20 @@ export class StatisticsCalculator {
     return Math.round(sum / players.length);
   }
 
+  /**
+   * Écart moyen (spread absolu, plafonné ±100 — Règlement V2 §III.B).
+   * Recalculé depuis les scores pour rester correct sur les matchs
+   * antérieurs à la V2, qui stockaient une DS en pourcentage.
+   */
   static calculateAverageDS(matches: Match[]): number {
     const playedMatches = matches.filter((match): match is Match & { result: MatchResult } =>
-      match.status === 'completed' && match.result !== undefined && match.result.ds > 0
+      match.status === 'completed' && match.result !== undefined
     );
     if (playedMatches.length === 0) return 0;
-    const sum = playedMatches.reduce((acc, match) => acc + match.result.ds, 0);
+    const sum = playedMatches.reduce(
+      (acc, match) => acc + Math.abs(calculateSpread(match.result.score[0], match.result.score[1])),
+      0
+    );
     return Math.round((sum / playedMatches.length) * 10) / 10;
   }
 

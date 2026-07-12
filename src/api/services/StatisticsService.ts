@@ -1,4 +1,5 @@
 import { StatisticsCalculator, EventStatisticsCalculator, EventStatistics } from '../../lib/Statistics';
+import { calculatePR, calculateSpread } from '../../lib/scoring';
 import { Match } from '@/types/Match';
 import { Event } from '@/types/Event';
 import { Player, PlayerMatch } from '@/types/Player';
@@ -42,9 +43,9 @@ export class StatisticsService {
       },
       result: {
         score: [playerScore, opponentScore],
-        pr: newMatch.result.pr,
-        pdi: newMatch.result.pdi,
-        ds: newMatch.result.ds
+        // PR et spread signés du point de vue du joueur (Règlement V2 §III)
+        pr: calculatePR(playerScore, opponentScore),
+        ds: calculateSpread(playerScore, opponentScore)
       },
       ratingChange: {
         before: player.currentRating,
@@ -107,8 +108,10 @@ export class StatisticsService {
     const prPerMatch = totalGames > 0 ?
       Number((statistics.totalPR / totalGames).toFixed(1)) : 0;
 
-    // Calculate consistency (standard deviation of DS)
-    const dsValues = matches.map((m: PlayerMatch) => m.result.ds);
+    // Calculate consistency (standard deviation of spread, recomputed from scores)
+    const dsValues = matches.map((m: PlayerMatch) =>
+      calculateSpread(m.result.score[0], m.result.score[1])
+    );
     const avgDS = statistics.averageDS;
     const variance = dsValues.length > 0 ?
       dsValues.reduce((acc: number, ds: number) => 

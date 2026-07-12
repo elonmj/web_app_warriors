@@ -8,6 +8,7 @@ import {
 import { Player, PlayerMatch } from '../../types/Player';
 import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from '../../types/Enums';
 import { RatingSystem } from '../../lib/RatingSystem';
+import { calculatePR, calculateSpread } from '../../lib/scoring';
 import { CategoryManager } from '../../lib/CategoryManager';
 import { StatisticsCalculator } from '../../lib/Statistics';
 import { FirebasePlayerRepository } from '../repository/FirebasePlayerRepository';
@@ -97,23 +98,6 @@ export class MatchService {
     }
   }
 
-  private calculatePDI(score1: number, score2: number): number {
-    const totalPoints = score1 + score2;
-    if (totalPoints === 0) return 0;
-    return Math.abs(score1 - score2) / totalPoints;
-  }
-
-  private calculateDS(score1: number, score2: number): number {
-    const pdi = this.calculatePDI(score1, score2);
-    const threshold = 0.8; // configurable
-    return pdi >= threshold ? 100 : Math.floor(pdi * 100);
-  }
-
-  private calculatePR(score1: number, score2: number): number {
-    if (score1 > score2) return 3; // win
-    if (score1 === score2) return 1; // draw
-    return 0; // loss
-  }
 
   async processMatchResult(match: Match, input: UpdateMatchResultInput): Promise<{ 
     updatedMatch: Match; 
@@ -140,10 +124,8 @@ export class MatchService {
 
       const result: MatchResult = {
         score: [score.player1Score, score.player2Score],
-        pr: this.calculatePR(score.player1Score, score.player2Score),
-        pdi: this.calculatePDI(score.player1Score, score.player2Score),
-        ds: this.calculateDS(score.player1Score, score.player2Score),
-     
+        pr: calculatePR(score.player1Score, score.player2Score),
+        ds: calculateSpread(score.player1Score, score.player2Score)
       };
 
       // Calculate new ratings
@@ -157,9 +139,33 @@ export class MatchService {
         result
       } as any;
 
-      const [newRating1, newRating2] = this.ratingSystem.processMatchRatings(ratingMatch);
-      const newCategory1 = CategoryManager.determineCategory(newRating1);
-      const newCategory2 = CategoryManager.determineCategory(newRating2);
+      // Real player histories drive the K factor (provisional / returning / elite)
+      const [ratingPlayer1, ratingPlayer2] = await Promise.all([
+        this.playerRepository.getPlayer(match.player1.id),
+        this.playerRepository.getPlayer(match.player2.id)
+      ]);
+      const player1Context = ratingPlayer1
+        ? this.ratingSystem.buildContext(ratingPlayer1, now)
+        : undefined;
+      const player2Context = ratingPlayer2
+        ? this.ratingSystem.buildContext(ratingPlayer2, now)
+        : undefined;
+
+      const [newRating1, newRating2] = this.ratingSystem.processMatchRatings(
+        ratingMatch,
+        player1Context,
+        player2Context
+      );
+      // Hystérésis (Règlement V2 §VIII) : promotion immédiate,
+      // rétrogradation seulement sous le seuil − 25
+      const newCategory1 = CategoryManager.determineCategoryWithHysteresis(
+        newRating1,
+        match.player1.categoryBefore
+      );
+      const newCategory2 = CategoryManager.determineCategoryWithHysteresis(
+        newRating2,
+        match.player2.categoryBefore
+      );
 
       // Create player match records
       const playerMatch1: PlayerMatch = {
@@ -174,7 +180,6 @@ export class MatchService {
         result: {
           score: [score.player1Score, score.player2Score],
           pr: result.pr,
-          pdi: result.pdi,
           ds: result.ds
         },
         ratingChange: {
@@ -196,9 +201,8 @@ export class MatchService {
         },
         result: {
           score: [score.player2Score, score.player1Score],
-          pr: score.player2Score > score.player1Score ? 3 : (score.player2Score === score.player1Score ? 1 : 0),
-          pdi: result.pdi,
-          ds: result.ds
+          pr: calculatePR(score.player2Score, score.player1Score),
+          ds: -result.ds
         },
         ratingChange: {
           before: match.player2.ratingBefore,
@@ -269,7 +273,6 @@ export class MatchService {
       const result: MatchResult = {
         score: [0, 0],
         pr: 0,
-        pdi: 0,
         ds: 0
       };
 
@@ -291,7 +294,6 @@ export class MatchService {
         result: {
           score: [0, 0],
           pr: 0,
-          pdi: 0,
           ds: 0
         },
         ratingChange: {
@@ -314,7 +316,6 @@ export class MatchService {
         result: {
           score: [0, 0],
           pr: 0,
-          pdi: 0,
           ds: 0
         },
         ratingChange: {

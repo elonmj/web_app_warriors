@@ -3,6 +3,7 @@ import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerReposit
 import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepository';
 import { StatisticsService } from '@/api/services/StatisticsService';
 import { Player } from '@/types/Player';
+import { calculateSpread } from '@/lib/scoring';
 
 const playerRepo = new FirebasePlayerRepository();
 const matchRepo = new FirebaseMatchRepository();
@@ -87,7 +88,11 @@ export async function POST(
         const losses = totalGames - wins - draws;
         
         const totalPR = matches.reduce((sum, match) => sum + match.result.pr, 0);
-        const totalDS = matches.reduce((sum, match) => sum + match.result.ds, 0);
+        // Spread recalculé depuis les scores (les anciens matchs stockent une DS en %)
+        const totalDS = matches.reduce(
+          (sum, match) => sum + calculateSpread(match.result.score[0], match.result.score[1]),
+          0
+        );
         
         player.statistics = {
           ...player.statistics,

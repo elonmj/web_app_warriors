@@ -1,54 +1,36 @@
-import { Match, MatchScore, PlayerMatchInfo, MatchResult } from '../types/Match';
+import { Match, PlayerMatchInfo } from '../types/Match';
 import { Player } from '../types/Player';
-import { RatingSystem } from './RatingSystem';
-import { CategoryManager } from './CategoryManager';
 import { v4 as uuidv4 } from 'uuid';
-import { PlayerStatistics } from '../types/Player';
-import { ValidationStatusType } from '../types/Enums';
+import { generateSwissPairings } from './SwissPairing';
 
 export interface PairingResult {
   player1: Player;
   player2?: Player; // Optional for BYE
 }
 
-interface MatchUpdateResult {
-  updatedMatch: Match;
-  player1Update: Partial<Player>;
-  player2Update: Partial<Player>;
-}
-
+/**
+ * Génère les appariements d'une ronde. Le traitement des résultats
+ * (cotes, PR, spread, forfaits) vit dans MatchService — les anciennes
+ * méthodes processMatch/processForfeitMatch dupliquaient cette logique
+ * avec des formules divergentes et n'étaient appelées nulle part.
+ */
 export class MatchManager {
-  private ratingSystem: RatingSystem;
   private players: Player[];
   private previousMatches: Match[];
 
   constructor(players: Player[], previousMatches: Match[] = []) {
-    this.ratingSystem = new RatingSystem();
     this.players = players;
     this.previousMatches = previousMatches;
   }
 
-   /**
-   * Generate pairings for a specific round
-   * TODO: Implement actual pairing logic based on previousMatches
+  /**
+   * Appariement suisse par groupes de points (Règlement V2 §IV.B) :
+   * tri PR puis cote, moitié haute contre moitié basse, anti re-match
+   * sur 4 rondes avec relâchement, bye au moins bien classé sans bye
+   * récent. Voir SwissPairing.ts.
    */
   generatePairings(round: number): PairingResult[] {
-    // Placeholder: Simple sequential pairings
-    const pairings: PairingResult[] = [];
-    const availablePlayers = [...this.players]; // Use the players passed in constructor
-
-    while (availablePlayers.length > 1) {
-      const player1 = availablePlayers.shift()!;
-      const player2 = availablePlayers.shift()!;
-      pairings.push({ player1, player2 });
-    }
-
-    // Handle odd number of players (BYE)
-    if (availablePlayers.length === 1) {
-      pairings.push({ player1: availablePlayers[0] });
-    }
-
-    return pairings;
+    return generateSwissPairings(this.players, this.previousMatches, round);
   }
 
 
@@ -84,201 +66,4 @@ export class MatchManager {
       }
     };
   }
-
-  processMatch(match: Match, scores: { player1Score: number; player2Score: number }): MatchUpdateResult {
-    if (scores.player1Score < 0 || scores.player2Score < 0) {
-      throw new Error('Scores cannot be negative');
-    }
-
-    const { player1Score, player2Score } = scores;
-    const scoreDifference = Math.abs(player1Score - player2Score);
-    const ds = this.calculateDS(scoreDifference);
-
-    // Calculate PR (Performance Rating) based on score difference
-    const pr = this.calculatePR(scoreDifference);
-
-    // Calculate PDI (Player Dominance Index)
-    const pdi = this.calculatePDI(player1Score, player2Score);
-
-    // Create temp players for rating calculation
-    const tempPlayer1: Player = {
-      id: match.player1.id,
-      name: '',
-      currentRating: match.player1.ratingBefore,
-      category: match.player1.categoryBefore,
-      matches: [],
-      statistics: {
-        totalMatches: 0, wins: 0, draws: 0, losses: 0,
-        forfeits: { given: 0, received: 0 },
-        totalPR: 0, averageDS: 0, inactivityWeeks: 0,
-        bestRating: 0, worstRating: 0,
-        categoryHistory: [],
-        eventParticipation: []
-      }
-    };
-
-    const tempPlayer2: Player = {
-      id: match.player2.id,
-      name: '',
-      currentRating: match.player2.ratingBefore,
-      category: match.player2.categoryBefore,
-      matches: [],
-      statistics: {
-        totalMatches: 0, wins: 0, draws: 0, losses: 0,
-        forfeits: { given: 0, received: 0 },
-        totalPR: 0, averageDS: 0, inactivityWeeks: 0,
-        bestRating: 0, worstRating: 0,
-        categoryHistory: [],
-        eventParticipation: []
-      }
-    };
-
-    // Calculate result with ratings
-    const result: MatchResult = {
-      score: [player1Score, player2Score],
-      pr,
-      pdi,
-      ds,
-
-    };
-
-    const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({
-      ...match,
-      player1Rating: match.player1.ratingBefore,
-      player2Rating: match.player2.ratingBefore,
-      result
-    } as any);
-
-    // Determine category changes
-    const player1NewCategory = CategoryManager.determineCategory(newRating1);
-    const player2NewCategory = CategoryManager.determineCategory(newRating2);
-
-    // Update player info
-    const updatedPlayer1Info: PlayerMatchInfo = {
-      ...match.player1,
-      ratingAfter: newRating1,
-      categoryAfter: player1NewCategory
-    };
-
-    const updatedPlayer2Info: PlayerMatchInfo = {
-      ...match.player2,
-      ratingAfter: newRating2,
-      categoryAfter: player2NewCategory
-    };
-
-    const updatedMatch: Match = {
-      ...match,
-      status: 'completed',
-      player1: updatedPlayer1Info,
-      player2: updatedPlayer2Info,
-      result,
-      metadata: {
-        ...match.metadata,
-        updatedAt: new Date().toISOString()
-      }
-    };
-
-    return {
-      updatedMatch,
-      player1Update: {
-        currentRating: newRating1,
-        category: player1NewCategory
-      },
-      player2Update: {
-        currentRating: newRating2,
-        category: player2NewCategory
-      }
-    };
-  }
-
-  processForfeitMatch(match: Match, forfeitingPlayerId: string, reason: string): MatchUpdateResult {
-    const isPlayer1Forfeiting = forfeitingPlayerId === match.player1.id;
-    const ds = 100; // Maximum DS for forfeits
-
-    // Set forfeit scores
-    const player1Score = isPlayer1Forfeiting ? 0 : 400;
-    const player2Score = isPlayer1Forfeiting ? 400 : 0;
-
-    // Create result with ratings
-    const result: MatchResult = {
-      score: [player1Score, player2Score],
-      pr: 0,
-      pdi: 5,
-      ds,
-
-    };
-
-    const [newRating1, newRating2] = this.ratingSystem.processMatchRatings({
-      ...match,
-      player1Rating: match.player1.ratingBefore,
-      player2Rating: match.player2.ratingBefore,
-      result
-    } as any);
-
-    // Determine category changes
-    const player1NewCategory = CategoryManager.determineCategory(newRating1);
-    const player2NewCategory = CategoryManager.determineCategory(newRating2);
-
-    // Update player info
-    const updatedPlayer1Info: PlayerMatchInfo = {
-      ...match.player1,
-      ratingAfter: newRating1,
-      categoryAfter: player1NewCategory
-    };
-
-    const updatedPlayer2Info: PlayerMatchInfo = {
-      ...match.player2,
-      ratingAfter: newRating2,
-      categoryAfter: player2NewCategory
-    };
-
-    const updatedMatch: Match = {
-      ...match,
-      status: 'forfeit',
-      player1: updatedPlayer1Info,
-      player2: updatedPlayer2Info,
-      result,
-      metadata: {
-        ...match.metadata,
-        updatedAt: new Date().toISOString()
-      }
-    };
-
-    return {
-      updatedMatch,
-      player1Update: {
-        currentRating: newRating1,
-        category: player1NewCategory
-      },
-      player2Update: {
-        currentRating: newRating2,
-        category: player2NewCategory
-      }
-    };
-  }
-
-  private calculateDS(scoreDifference: number): number {
-    // DS (Dominance Score) calculation
-    // Base formula: DS = (scoreDifference / 10) ^ 1.5
-    return Math.min(100, Math.pow(scoreDifference / 10, 1.5));
-  }
-
-  private calculatePR(scoreDifference: number): number {
-    // PR (Performance Rating) calculation
-    if (scoreDifference <= 20) return 1;
-    if (scoreDifference <= 50) return 2;
-    if (scoreDifference <= 100) return 3;
-    return 4;
-  }
-
-  private calculatePDI(score1: number, score2: number): number {
-    // PDI (Player Dominance Index) calculation
-    const ratio = Math.max(score1, score2) / Math.min(score1, score2);
-    if (ratio <= 1.1) return 1;
-    if (ratio <= 1.25) return 2;
-    if (ratio <= 1.5) return 3;
-    return 4;
-  }
 }
-
-export type { MatchUpdateResult };

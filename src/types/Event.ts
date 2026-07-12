@@ -39,6 +39,9 @@ export interface EventMetadata {
   lastCompletedRound?: number;
   completionHistory?: RoundCompletion[];
   category?: string;
+  /** Pool d'inscription par ronde (Règlement V2 §IV.A) : seuls les joueurs
+   *  listés sont appariés. Absent = tous les participants sont disponibles. */
+  roundAvailability?: { [round: number]: string[] };
 }
 
 export interface Event {
