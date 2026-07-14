@@ -11,8 +11,28 @@ interface ClientEventHeaderProps {
   event: Event;
 }
 
+const getStatusDisplay = (status: string) => {
+  switch (status) {
+    case EventStatus.OPEN:
+      return {
+        text: "Active",
+        classes: "bg-green-100 text-green-800 ring-1 ring-green-600/20 dark:bg-green-900/30 dark:text-green-200"
+      };
+    case EventStatus.IN_PROGRESS:
+      return {
+        text: "In Progress",
+        classes: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-200"
+      };
+    default:
+      return {
+        text: "Closed",
+        classes: "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
+      };
+  }
+};
+
 export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
-  const isOpen = event.status === EventStatus.OPEN;
+  const status = getStatusDisplay(event.status);
 
   return (
     <div className="relative">
@@ -27,13 +47,8 @@ export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
             
             {/* Event Status */}
             <div className="flex flex-wrap items-center gap-3">
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium
-                ${isOpen
-                  ? "bg-green-100 text-green-800 ring-1 ring-green-600/20 dark:bg-green-900/30 dark:text-green-200"
-                  : "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
-                }`}
-              >
-                {isOpen ? "Active" : "Closed"}
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${status.classes}`}>
+                {status.text}
               </span>
               
               {/* Event Type Badge */}

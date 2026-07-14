@@ -106,78 +106,71 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
 
   const { label, className } = getStatusDisplay(match.status);
 
+  // Ligne discrète "catégorie · cote" — fusionne deux lignes de métadonnées en une
+  const metaLine = (category?: string, rating?: number) =>
+    [category, rating !== undefined ? `${rating}` : null].filter(Boolean).join(' · ');
+
   return (
     <Link
       href={`/event/${match.eventId}/match/${match.id}`}
-      className={`relative block border rounded-lg p-4 sm:p-6 mb-4 cursor-pointer
+      className={`relative block border rounded-lg p-3 sm:p-4 cursor-pointer
       hover:border-amethyste-300 hover:shadow-md transition-all duration-200
       ${isByeMatch ? 'bg-onyx-50 dark:bg-onyx-900/50' : 'bg-white dark:bg-onyx-900'}
       ${isProjected ? 'border-purple-200 dark:border-purple-800/30' : 'border-onyx-200 dark:border-onyx-800'}`}>
 
-      <div className="flex justify-between items-center mb-4">
-        {isByeMatch && (
-          <span className="absolute -top-2 left-4 bg-gray-500 text-white text-xs px-2 py-1 rounded">
-            Bye Match
-          </span>
-        )}
-        
-        <div className="text-onyx-500 dark:text-onyx-400">
-          <Body.Caption>
-            {isCurrentRound && !isProjected && (
-              <span className="text-blue-600 dark:text-blue-400 font-medium mr-2">Current Round</span>
-            )}
-            {isProjected ? (
-              <span className="text-purple-600 dark:text-purple-400 font-medium">Projected</span>
-            ) : (
-              `Round ${match.metadata.round}`
-            )}
-          </Body.Caption>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <span className={`px-2 py-1 rounded text-xs font-medium ${className}`}>
-            {label}
-          </span>
-        </div>
+      {isByeMatch && (
+        <span className="absolute -top-2 left-4 bg-gray-500 text-white text-xs px-2 py-1 rounded">
+          Bye Match
+        </span>
+      )}
+
+      {/* Header : discret, statut seul mis en avant */}
+      <div className="flex justify-between items-center mb-2">
+        <Body.Caption className="text-onyx-400 dark:text-onyx-500">
+          {isProjected ? (
+            <span className="text-purple-600 dark:text-purple-400 font-medium">Projected</span>
+          ) : (
+            `Round ${match.metadata.round}`
+          )}
+        </Body.Caption>
+        <span className={`px-2 py-0.5 rounded text-xs font-medium ${className}`}>
+          {label}
+        </span>
       </div>
 
-      {/* Match Content */}
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-4 items-center">
+      {/* Match Content — les deux joueurs resserrés autour du "vs" */}
+      <div className="flex items-center justify-center gap-3 sm:gap-6">
         {/* Player 1 */}
-        <div className="text-center sm:text-left">
+        <div className="flex-1 min-w-0 text-right">
           <PlayerNameDisplay
             name={player1Name}
             iscUsername={match.player1Details?.iscUsername || player1Details?.iscUsername}
+            className="text-base sm:text-lg font-semibold"
           />
-          {match.player1.categoryBefore && (
-            <Body.Caption className={getCategoryColor(match.player1.categoryBefore)}>
-              {match.player1.categoryBefore}
-            </Body.Caption>
-          )}
-          <Body.Caption className="text-onyx-500 dark:text-onyx-400">
-            Rating: {match.player1.ratingBefore}
+          <Body.Caption className={`${getCategoryColor(match.player1.categoryBefore)} block`}>
+            {metaLine(match.player1.categoryBefore, match.player1.ratingBefore)}
           </Body.Caption>
         </div>
 
         {/* Score */}
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex-none flex items-center justify-center gap-2 px-1">
           {match.status === 'completed' && match.result ? (
             <>
-              <Heading.H3 className="text-onyx-900 dark:text-white">
+              <Heading.H4 className="text-onyx-900 dark:text-white">
                 {match.result.score[0]}
-              </Heading.H3>
-              <Body.Text className="text-onyx-400">vs</Body.Text>
-              <Heading.H3 className="text-onyx-900 dark:text-white">
+              </Heading.H4>
+              <Body.Caption className="text-onyx-400">–</Body.Caption>
+              <Heading.H4 className="text-onyx-900 dark:text-white">
                 {match.result.score[1]}
-              </Heading.H3>
+              </Heading.H4>
             </>
           ) : (
-            <Body.Text className="text-onyx-400">vs</Body.Text>
+            <Body.Caption className="text-onyx-400 font-medium">vs</Body.Caption>
           )}
         </div>
 
         {/* Player 2 */}
-        <div className="text-center sm:text-right">
+        <div className="flex-1 min-w-0 text-left">
           {isByeMatch ? (
             <Body.Text className="font-medium text-onyx-400 dark:text-onyx-500">BYE</Body.Text>
           ) : (
@@ -185,14 +178,10 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
               <PlayerNameDisplay
                 name={player2Name}
                 iscUsername={match.player2Details?.iscUsername || player2Details?.iscUsername}
+                className="text-base sm:text-lg font-semibold"
               />
-              {match.player2.categoryBefore && (
-                <Body.Caption className={getCategoryColor(match.player2.categoryBefore)}>
-                  {match.player2.categoryBefore}
-                </Body.Caption>
-              )}
-              <Body.Caption className="text-onyx-500 dark:text-onyx-400">
-                Rating: {match.player2.ratingBefore}
+              <Body.Caption className={`${getCategoryColor(match.player2.categoryBefore)} block`}>
+                {metaLine(match.player2.categoryBefore, match.player2.ratingBefore)}
               </Body.Caption>
             </>
           )}
@@ -201,7 +190,7 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
 
       {/* Match Stats */}
       {match.result && !isProjected && (
-        <div className="mt-4 pt-4 border-t border-onyx-100 dark:border-onyx-800">
+        <div className="mt-3 pt-3 border-t border-onyx-100 dark:border-onyx-800">
           <MatchStatBadges
             pr={match.result.pr}
             spread={calculateSpread(match.result.score[0], match.result.score[1])}
@@ -210,8 +199,13 @@ const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) =
       )}
 
       {!isProjected && !isByeMatch && (
-        <div className="mt-4 flex justify-end border-t border-onyx-100 pt-3 dark:border-onyx-800">
-          <span className="inline-flex items-center gap-1 text-sm font-medium text-amethyste-600 dark:text-amethyste-400">
+        <div className="mt-3 pt-2 flex justify-end">
+          <span
+            className={`inline-flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-md
+            ${match.status === 'pending'
+              ? 'bg-amethyste-50 text-amethyste-700 dark:bg-amethyste-900/20 dark:text-amethyste-300'
+              : 'text-amethyste-600 dark:text-amethyste-400'}`}
+          >
             {match.status === 'pending' ? 'Enter Results' : 'View Details / Modify'}
             <ArrowRightIcon className="h-3.5 w-3.5" />
           </span>
@@ -270,7 +264,7 @@ const EventRoundPairings = ({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-2 sm:space-y-3">
       {matches.map(match => (
         <PairingCard
           key={match.id}
