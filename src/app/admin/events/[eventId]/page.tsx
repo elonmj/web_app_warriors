@@ -14,12 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner"; // Sonner for toasts
 import AdminPasswordDialog from '@/app/components/AdminPasswordDialog'; // Import password dialog
 import { AUTH_ERROR_MESSAGES } from '@/lib/auth'; // Import auth error messages
+import { MISSED_ROUNDS_BEFORE_SLEEP } from '@/lib/scoring'; // Seuil de mise en sommeil (V3 §VI)
 
 // Instantiate repositories
 
 
-type TabValue = "overview" | "participants" | "availability"; // Define possible tab values
-type PasswordAction = 'add' | 'remove' | 'start' | 'sync'; // Define possible password actions
+type TabValue = "overview" | "participants" | "attendance"; // Define possible tab values
+type PasswordAction = 'add' | 'remove' | 'start' | 'sync' | 'wake'; // Define possible password actions
 
 export default function AdminEventDetailPage() {
   const params = useParams();
@@ -38,11 +39,8 @@ export default function AdminEventDetailPage() {
   const [selectedPlayerToAdd, setSelectedPlayerToAdd] = useState<Player | null>(null); // Added: Player object to add
   const [activeTab, setActiveTab] = useState<TabValue>("overview");
 
-  // Disponibilité par ronde (Règlement V2 §IV.A)
-  const [availabilityIds, setAvailabilityIds] = useState<string[]>([]);
-  const [availabilityRound, setAvailabilityRound] = useState<number>(1);
-  const [availabilityIsDefault, setAvailabilityIsDefault] = useState<boolean>(true);
-  const [isSavingAvailability, setIsSavingAvailability] = useState<boolean>(false);
+  // Assiduité et sommeil (Règlement V3 §VI)
+  const [wakingPlayerId, setWakingPlayerId] = useState<string | null>(null);
 
   // State for password dialog
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -116,51 +114,30 @@ export default function AdminEventDetailPage() {
     fetchData();
   }, [eventId]);
 
-  // Charge la disponibilité de la prochaine ronde à apparier
-  useEffect(() => {
-    if (!event) return;
-    const nextRound =
-      event.status === 'in_progress' ? (event.metadata?.currentRound ?? 0) + 1 : 1;
-    setAvailabilityRound(nextRound);
-
-    async function loadAvailability() {
-      try {
-        const res = await fetch(`/api/events/${eventId}/rounds/${nextRound}/availability`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setAvailabilityIds(data.availablePlayerIds ?? []);
-        setAvailabilityIsDefault(data.isDefault ?? true);
-      } catch (err) {
-        console.error('[UI] Failed to load round availability:', err);
-      }
-    }
-    loadAvailability();
-  }, [event, eventId]);
-
-  const toggleAvailability = (playerId: string) => {
-    setAvailabilityIds((prev) =>
-      prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]
-    );
-  };
-
-  const handleSaveAvailability = async () => {
-    setIsSavingAvailability(true);
+  // Réveil d'un joueur endormi (Règlement V3 §VI)
+  const executeWakePlayer = async (password: string, playerId: string) => {
+    setWakingPlayerId(playerId);
     try {
-      const res = await fetch(`/api/events/${eventId}/rounds/${availabilityRound}/availability`, {
+      const res = await fetch(`/api/players/${playerId}/wake`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerIds: availabilityIds })
+        headers: { 'X-Admin-Password': password }
       });
-      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
-      setAvailabilityIsDefault(false);
-      toast.success(
-        `Disponibilité enregistrée pour la ronde ${availabilityRound} (${availabilityIds.length} joueur${availabilityIds.length > 1 ? 's' : ''}).`
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Server error: ${res.status}`);
+      }
+
+      setParticipantDetails((prev) =>
+        prev.map((p) =>
+          p.id === playerId ? { ...p, asleep: false, consecutiveMissedRounds: 0 } : p
+        )
       );
-    } catch (err) {
-      console.error('[UI] Failed to save availability:', err);
-      toast.error("Échec de l'enregistrement de la disponibilité.");
+      toast.success(`${getPlayerName(playerId)} est de nouveau apparié.`);
+    } catch (error) {
+      console.error('[UI] Failed to wake player:', error);
+      throw error; // Re-throw so handlePasswordConfirm can show the toast
     } finally {
-      setIsSavingAvailability(false);
+      setWakingPlayerId(null);
     }
   };
 
@@ -232,6 +209,8 @@ export default function AdminEventDetailPage() {
         await executeStartEvent(password);
       } else if (passwordAction === 'sync') {
         await executeSyncEvent(password);
+      } else if (passwordAction === 'wake') {
+        await executeWakePlayer(password, passwordActionPayload);
       }
       setShowPasswordDialog(false); // Close dialog on success
     } catch (error) {
@@ -552,7 +531,7 @@ export default function AdminEventDetailPage() {
         <TabsList className="grid w-full grid-cols-3 md:w-[600px] mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="participants">Participants ({event.playerIds?.length || 0})</TabsTrigger>
-          <TabsTrigger value="availability">Disponibilité R{availabilityRound}</TabsTrigger>
+          <TabsTrigger value="attendance">Assiduité</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab Content */}
@@ -698,55 +677,55 @@ export default function AdminEventDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* Availability Tab Content — Règlement V2 §IV.A */}
-        <TabsContent value="availability">
+        {/* Assiduité et sommeil — Règlement V3 §VI */}
+        <TabsContent value="attendance">
           <Card>
             <CardHeader>
-              <CardTitle>Disponibilité — Ronde {availabilityRound}</CardTitle>
+              <CardTitle>Assiduité</CardTitle>
               <CardDescription>
-                Seuls les joueurs cochés seront appariés à la prochaine ronde.
-                Ne pas être inscrit est neutre : pas de match, pas de PR, pas de sanction.
-                {availabilityIsDefault && ' (Aucune liste enregistrée : tous les participants sont réputés disponibles.)'}
+                Tous les joueurs sont appariés à chaque ronde : il n&apos;y a plus de
+                confirmation de disponibilité. Une ronde non jouée coûte 1 point aux
+                deux joueurs, et après {MISSED_ROUNDS_BEFORE_SLEEP} absences consécutives
+                le joueur passe en sommeil — il sort du pool et cesse de perdre des points.
+                Jouer une partie le réveille automatiquement.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {event.playerIds && event.playerIds.length > 0 ? (
-                <>
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAvailabilityIds(event.playerIds ?? [])}
-                    >
-                      Tout cocher
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setAvailabilityIds([])}>
-                      Tout décocher
-                    </Button>
-                  </div>
-                  <ul className="space-y-2 mb-6">
-                    {event.playerIds.map((playerId) => (
-                      <li key={playerId}>
-                        <label className="flex items-center gap-3 p-3 border rounded-md dark:border-gray-700 bg-gray-50 dark:bg-onyx-800/50 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={availabilityIds.includes(playerId)}
-                            onChange={() => toggleAvailability(playerId)}
-                            className="h-4 w-4 accent-amethyste-600"
-                          />
-                          <span className="text-gray-800 dark:text-gray-200">
-                            {getPlayerName(playerId)}
-                          </span>
-                        </label>
+              {participantDetails.length > 0 ? (
+                <ul className="space-y-2">
+                  {participantDetails.map((player) => {
+                    const missed = player.consecutiveMissedRounds ?? 0;
+                    return (
+                      <li
+                        key={player.id}
+                        className="flex items-center justify-between gap-3 p-3 border rounded-md dark:border-gray-700 bg-gray-50 dark:bg-onyx-800/50"
+                      >
+                        <div className="min-w-0">
+                          <span className="text-gray-800 dark:text-gray-200">{player.name}</span>
+                          {player.asleep ? (
+                            <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-onyx-200 text-onyx-800 dark:bg-onyx-700 dark:text-onyx-100">
+                              en sommeil
+                            </span>
+                          ) : missed > 0 ? (
+                            <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                              {missed} absence{missed > 1 ? 's' : ''} d&apos;affilée
+                            </span>
+                          ) : null}
+                        </div>
+                        {player.asleep && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={wakingPlayerId === player.id}
+                            onClick={() => triggerPasswordDialog('wake', player.id)}
+                          >
+                            {wakingPlayerId === player.id ? 'Réveil...' : 'Réveiller'}
+                          </Button>
+                        )}
                       </li>
-                    ))}
-                  </ul>
-                  <Button onClick={handleSaveAvailability} disabled={isSavingAvailability}>
-                    {isSavingAvailability
-                      ? 'Enregistrement...'
-                      : `Enregistrer (${availabilityIds.length}/${event.playerIds.length} disponibles)`}
-                  </Button>
-                </>
+                    );
+                  })}
+                </ul>
               ) : (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                   Ajoutez d&apos;abord des participants à l&apos;événement.

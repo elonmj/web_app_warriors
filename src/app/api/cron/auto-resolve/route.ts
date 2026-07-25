@@ -5,14 +5,27 @@ import { MatchService } from '@/api/services/MatchService';
 import { RankingService } from '@/api/services/RankingService';
 import { wooglesService } from '@/api/services/WooglesService';
 import { gamePersistenceService } from '@/api/services/GamePersistenceService';
+import { resolveRoundWindow, isRoundOver, formatLeagueTime } from '@/lib/roundWindow';
+import { EventService } from '@/api/services/EventService';
+import { attendanceService } from '@/api/services/AttendanceService';
 
 const eventRepository = new FirebaseEventRepository();
 const playerRepository = new FirebasePlayerRepository();
 const matchService = new MatchService();
 const rankingService = new RankingService();
+const eventService = new EventService();
 
+/**
+ * Tick quotidien de la ligue (Règlement V3 §III.A).
+ *
+ * Programmé à 19 h UTC = 20 h au Bénin. Il tourne tous les jours mais n'agit
+ * qu'aux échéances : entre deux bascules il se contente de récupérer sur
+ * Woogles les parties déjà jouées. Quand la fenêtre de la ronde est écoulée,
+ * il tranche les matchs non joués, clôt la ronde, applique l'assiduité et
+ * ouvre la ronde suivante — sans aucune intervention humaine.
+ */
 export async function GET(request: NextRequest) {
-  console.log('[CRON] Starting weekly match auto-resolve job');
+  console.log('[CRON] Tick de ligue — résolution des matchs et bascule de ronde');
 
   // Verify CRON_SECRET if configured
   const authHeader = request.headers.get('authorization');
@@ -39,10 +52,6 @@ export async function GET(request: NextRequest) {
 
     const results = [];
 
-    // Default deadline of 7 days
-    const url = new URL(request.url);
-    const deadlineDays = Number(url.searchParams.get('days') || '7');
-
     // 2. Iterate through active events
     for (const event of activeEvents) {
       const eventId = event.id;
@@ -63,14 +72,33 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      const roundStartDate = new Date(roundStats.date || event.startDate);
-      const now = new Date();
-      const diffMs = now.getTime() - roundStartDate.getTime();
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const isPastDeadline = diffDays > deadlineDays;
+      // Fenêtre de ronde : seule référence pour décider si une partie compte.
+      // Aucun repli sur event.startDate — deviner reviendrait à accepter
+      // n'importe quelle partie jouée depuis la création de la ligue.
+      let window;
+      try {
+        window = resolveRoundWindow(roundStats, `event ${eventId}, ronde ${round}`);
+      } catch (windowError) {
+        const message = windowError instanceof Error ? windowError.message : String(windowError);
+        console.error(`[CRON] ${message} — événement ignoré.`);
+        results.push({
+          eventId,
+          eventName: event.name,
+          round,
+          syncedCount: 0,
+          forfeitCount: 0,
+          errors: [message]
+        });
+        continue;
+      }
+
+      const isPastDeadline = isRoundOver(window);
 
       console.log(`[CRON] Processing Event ${eventId} (Round ${round})`);
-      console.log(`[CRON] Round start date: ${roundStartDate.toISOString()}. Days elapsed: ${diffDays.toFixed(2)}. Past deadline: ${isPastDeadline}`);
+      console.log(
+        `[CRON] Fenêtre de ronde : ${formatLeagueTime(window.startsAt)} → ` +
+          `${formatLeagueTime(window.endsAt)} (heure Bénin). Ronde terminée : ${isPastDeadline}`
+      );
 
       // Fetch round matches
       const matches = await eventRepository.getRoundMatches(eventId, round);
@@ -103,11 +131,7 @@ export async function GET(request: NextRequest) {
           if (u1 && u2) {
             try {
               console.log(`[CRON] Fetching Woogles game for match ${match.id} between ${u1} and ${u2}`);
-              const game = await wooglesService.findMatchBetween(
-                u1,
-                u2,
-                roundStartDate.toISOString()
-              );
+              const game = await wooglesService.findMatchInWindow(u1, u2, window);
 
               if (game) {
                 const s1 = wooglesService.scoreFor(game, u1);
@@ -169,12 +193,83 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // ---- Bascule de ronde (Règlement V3 §III.A) ----
+      // La ronde échue est close, l'assiduité appliquée, puis la suivante est
+      // ouverte. Le tick est quotidien mais n'agit qu'aux échéances : entre
+      // deux bascules il se contente de récupérer les parties jouées.
+      let closedRound = false;
+      let nextRound: number | undefined;
+      let fellAsleep: string[] = [];
+      let wokeUp: string[] = [];
+
+      // `completedAt` sert de garde d'idempotence : sans lui, un échec de
+      // génération ferait repasser tout le monde à la caisse au tick suivant.
+      const alreadyClosed = !!roundStats.completedAt;
+
+      if (isPastDeadline && !alreadyClosed) {
+        try {
+          const resolvedMatches = await eventRepository.getRoundMatches(eventId, round);
+
+          const eventToClose = await eventRepository.getEvent(eventId);
+          if (eventToClose?.metadata) {
+            await eventRepository.updateEvent(eventId, {
+              metadata: {
+                ...eventToClose.metadata,
+                roundHistory: {
+                  ...eventToClose.metadata.roundHistory,
+                  [round]: {
+                    ...eventToClose.metadata.roundHistory[round],
+                    completedAt: new Date().toISOString()
+                  }
+                },
+                lastCompletedRound: round,
+                lastUpdated: new Date().toISOString()
+              }
+            });
+          }
+          closedRound = true;
+
+          const outcome = await attendanceService.applyRoundAttendance(resolvedMatches);
+          fellAsleep = outcome.fellAsleep;
+          wokeUp = outcome.wokeUp;
+          console.log(
+            `[CRON] Ronde ${round} close. ${outcome.missed.length} absence(s), ` +
+              `${outcome.fellAsleep.length} mise(s) en sommeil, ${outcome.wokeUp.length} réveil(s).`
+          );
+        } catch (closeError) {
+          const message = closeError instanceof Error ? closeError.message : String(closeError);
+          console.error(`[CRON] Échec de la clôture de la ronde ${round}:`, message);
+          errors.push(`Clôture ronde ${round} : ${message}`);
+        }
+      }
+
+      // Génération de la ronde suivante — tentée aussi quand la clôture a eu
+      // lieu à un tick précédent mais que la génération avait échoué.
+      if (isPastDeadline) {
+        try {
+          const refreshed = await eventRepository.getEvent(eventId);
+          if (refreshed?.metadata?.currentRound === round) {
+            await eventService.generatePairingsForRound(eventId, round + 1);
+            nextRound = round + 1;
+            console.log(`[CRON] Ronde ${nextRound} générée pour l'événement ${eventId}.`);
+          }
+        } catch (pairingError) {
+          const message = pairingError instanceof Error ? pairingError.message : String(pairingError);
+          console.error(`[CRON] Échec de la génération de la ronde ${round + 1}:`, message);
+          errors.push(`Génération ronde ${round + 1} : ${message}`);
+        }
+      }
+
       results.push({
         eventId,
         eventName: event.name,
         round,
         syncedCount,
         forfeitCount,
+        closedRound,
+        nextRound,
+        fellAsleep,
+        wokeUp,
         errors
       });
     }

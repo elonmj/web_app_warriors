@@ -7,11 +7,14 @@ import { FirebaseMatchRepository } from '@/api/repository/FirebaseMatchRepositor
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
 import { wooglesService } from '@/api/services/WooglesService';
 import { gamePersistenceService } from '@/api/services/GamePersistenceService';
+import { FirebaseEventRepository } from '@/api/repository/FirebaseEventRepository';
+import { resolveRoundWindow } from '@/lib/roundWindow';
 
 const matchService = new MatchService();
 const rankingService = new RankingService();
 const matchRepository = new FirebaseMatchRepository();
 const playerRepository = new FirebasePlayerRepository();
+const eventRepository = new FirebaseEventRepository();
 
 interface MatchUpdate {
   id: string;
@@ -83,11 +86,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<MatchResp
       const u2 = p2?.wooglesUsername ?? p2?.iscUsername;
 
       if (u1 && u2) {
+        // La validation doit être bornée à la ronde du match : sans fenêtre,
+        // un score pouvait être « validé » contre une partie vieille de
+        // plusieurs mois entre les deux mêmes joueurs (Règlement V3 §III.B).
+        const round = match.metadata.round;
+        const event = await eventRepository.getEvent(match.eventId);
+        const roundStats = event?.metadata?.roundHistory?.[round];
+        if (!roundStats) {
+          throw new Error(
+            `Ronde ${round} introuvable pour l'événement ${match.eventId} : ` +
+              `impossible de borner la validation Woogles.`
+          );
+        }
+        const window = resolveRoundWindow(roundStats, `event ${match.eventId}, ronde ${round}`);
+
         const validation = await wooglesService.validateSubmittedScore(
           u1,
           u2,
           input.score.player1Score,
-          input.score.player2Score
+          input.score.player2Score,
+          window
         );
 
         if (validation.valid && validation.game) {

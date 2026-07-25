@@ -9,6 +9,12 @@ export interface ByeHistory {
 
 export interface RoundStats {
   date: string;          // ISO-8601 date
+  /** Ouverture de la fenêtre de ronde (Règlement V3 §III.B). Absent sur les
+   *  rondes créées avant la V3 : on retombe alors sur `date`. */
+  startsAt?: string;
+  /** Clôture de la fenêtre : 20 h Bénin, au moins 3 jours après `startsAt`.
+   *  Seules les parties jouées dans [startsAt, endsAt[ comptent pour la ronde. */
+  endsAt?: string;
   totalMatches: number;
   completedMatches: number;
   byePlayerId?: string;
@@ -39,8 +45,9 @@ export interface EventMetadata {
   lastCompletedRound?: number;
   completionHistory?: RoundCompletion[];
   category?: string;
-  /** Pool d'inscription par ronde (Règlement V2 §IV.A) : seuls les joueurs
-   *  listés sont appariés. Absent = tous les participants sont disponibles. */
+  /** @deprecated Supprimé par le Règlement V3 §III.A : il n'y a plus de phase
+   *  d'inscription, tout le monde est apparié. Conservé en lecture seule pour
+   *  les événements créés sous la V2. */
   roundAvailability?: { [round: number]: string[] };
 }
 

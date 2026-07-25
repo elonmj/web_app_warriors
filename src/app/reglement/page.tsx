@@ -42,7 +42,7 @@ export default function RulesPage() {
           <Body.Text>
             La ligue tourne en continu — ce n&apos;est pas un tournoi ponctuel. Chaque joueur a
             une <strong>cote Elo</strong> permanente, qui mesure son niveau et n&apos;est jamais
-            remise à zéro. En parallèle, un <strong>championnat de saison</strong> (12 semaines)
+            remise à zéro. En parallèle, un <strong>championnat de saison</strong> (8 semaines)
             classe les joueurs sur leurs performances récentes, avant de repartir de zéro à la
             saison suivante.
           </Body.Text>
@@ -91,9 +91,18 @@ export default function RulesPage() {
                   <td className="py-2 pr-4">Défaite</td>
                   <td className="py-2 font-semibold text-onyx-900 dark:text-white">0 PR</td>
                 </tr>
+                <tr>
+                  <td className="py-2 pr-4">Ronde non jouée</td>
+                  <td className="py-2 font-semibold text-red-600 dark:text-red-400">−1 PR</td>
+                </tr>
               </tbody>
             </table>
           </div>
+          <Body.Text>
+            Retenez surtout ceci : <strong>jouer et perdre ne coûte rien</strong>. Seul le fait
+            de ne pas jouer coûte un point. Vous n&apos;êtes jamais puni parce que vous êtes moins
+            fort — uniquement parce que la partie n&apos;a pas eu lieu.
+          </Body.Text>
           <Body.Text>
             En cas d&apos;égalité au classement, le départage se fait dans cet ordre : force des
             adversaires affrontés, puis écart de score cumulé (plafonné à ±100 par match, pour
@@ -104,23 +113,30 @@ export default function RulesPage() {
 
         <Section title="Les rondes et les appariements">
           <Body.Text>
-            Une nouvelle ronde est lancée tous les 3 à 5 jours. Avant chaque ronde, on
-            vous demande de confirmer votre disponibilité :
+            Une nouvelle ronde démarre <strong>tous les 3 jours</strong>, automatiquement, et se
+            clôture à <strong>20 h</strong>. Il n&apos;y a plus de disponibilité à confirmer :
+            tout le monde est apparié à chaque ronde.
           </Body.Text>
           <ul className="list-disc list-inside space-y-1">
-            <li>Vous ne vous inscrivez pas : c&apos;est totalement neutre, aucun match ne vous est attribué et rien ne change à votre cote.</li>
-            <li>Vous vous inscrivez : vous êtes apparié avec un adversaire de niveau proche (les joueurs proches au classement s&apos;affrontent en priorité).</li>
+            <li>Vous êtes apparié avec un adversaire de niveau proche (les joueurs proches au classement s&apos;affrontent en priorité).</li>
             <li>Deux joueurs ne se rejouent pas dans les 4 rondes qui suivent leur dernière rencontre.</li>
-            <li>En cas de nombre impair d&apos;inscrits, un joueur reçoit un bye (3 PR, aucun impact sur le score ou la cote).</li>
+            <li>En cas de nombre impair de joueurs, un joueur reçoit un bye (3 PR, aucun impact sur le score ou la cote).</li>
+            <li>Vous avez 3 jours pour trouver un créneau avec votre adversaire et jouer la partie sur Woogles.</li>
           </ul>
         </Section>
 
-        <Section title="Absences et forfaits">
-          <Body.Text>Ne pas s&apos;inscrire à une ronde n&apos;a aucune conséquence. En revanche, une fois apparié :</Body.Text>
+        <Section title="Si la partie n’a pas lieu">
+          <Body.Text>
+            Si aucune partie n&apos;a été jouée à la clôture de la ronde,{" "}
+            <strong>les deux joueurs perdent 1 point</strong>. Pas seulement celui qui a disparu :
+            tous les deux. C&apos;est voulu — organiser la partie fait partie du jeu, et le silence
+            de votre adversaire vous coûte aussi quelque chose. Relancez-le.
+          </Body.Text>
           <ul className="list-disc list-inside space-y-1">
-            <li>Ne pas jouer son match dans le délai de la ronde compte comme un <strong>forfait</strong> — traité comme une défaite pour la cote et les PR.</li>
-            <li>Si l&apos;adversaire ne se présente pas, vous gagnez par forfait (3 PR, gain de cote comme pour une victoire).</li>
-            <li>3 forfaits dans la même saison entraînent une suspension d&apos;une ronde.</li>
+            <li>Votre <strong>cote Elo ne bouge pas</strong> : elle mesure votre force, pas votre assiduité. Une absence ne vous suit jamais d&apos;une saison à l&apos;autre.</li>
+            <li>Après <strong>3 absences d&apos;affilée</strong>, vous passez « en sommeil » : vous n&apos;êtes plus apparié et vous arrêtez de perdre des points. Une absence, même longue, coûte donc 3 points au maximum.</li>
+            <li>Vous revenez dès que vous rejouez une partie — rien à demander à personne.</li>
+            <li>Vous avez vraiment cherché à jouer sans réponse ? Signalez-le au comité, qui peut annuler votre pénalité.</li>
           </ul>
         </Section>
 

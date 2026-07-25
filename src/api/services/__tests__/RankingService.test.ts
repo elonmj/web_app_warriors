@@ -62,7 +62,9 @@ describe('RankingService — Règlement V2 §III', () => {
       expect(perf.has('BYE')).toBe(false);
     });
 
-    it('scores a single forfeit 3/+50 and 0/−50', () => {
+    it('relit les forfaits simples d’avant la V3 : 3/+50 et 0/−50', () => {
+      // Plus aucun code ne produit ce cas ; la branche existe pour ne pas
+      // réécrire l’historique des matchs enregistrés sous la V2.
       const perf = service.calculatePlayerPerformance([match('a', 'b', [400, 0], 'forfeit')]);
       expect(perf.get('a').points).toBe(3);
       expect(perf.get('a').spread).toBe(50);
@@ -70,11 +72,42 @@ describe('RankingService — Règlement V2 §III', () => {
       expect(perf.get('b').spread).toBe(-50);
     });
 
-    it('scores a double forfeit 0 PR each, no spread', () => {
+    it('retire 1 PR à chacun pour une ronde non jouée (V3 §V)', () => {
       const perf = service.calculatePlayerPerformance([match('a', 'b', [0, 0], 'forfeit')]);
-      expect(perf.get('a').points).toBe(0);
-      expect(perf.get('b').points).toBe(0);
+      expect(perf.get('a').points).toBe(-1);
+      expect(perf.get('b').points).toBe(-1);
       expect(perf.get('a').spread).toBe(0);
+    });
+
+    it('une ronde non jouée n’est ni une partie ni une défaite', () => {
+      // Elle ne doit gonfler ni le nombre de matchs joués ni le Buchholz :
+      // sinon on améliorerait son départage avec des rondes que personne
+      // n’a jouées.
+      const perf = service.calculatePlayerPerformance([match('a', 'b', [0, 0], 'forfeit')]);
+      expect(perf.get('a').matches).toBe(0);
+      expect(perf.get('a').losses).toBe(0);
+      expect(perf.get('a').opponents).toEqual([]);
+      expect(perf.get('a').missed).toBe(1);
+    });
+
+    it('annule la pénalité du seul joueur gracié par le comité (§V)', () => {
+      const m = match('a', 'b', [0, 0], 'forfeit');
+      m.metadata = { ...m.metadata, penaltyWaived: ['a'] };
+
+      const perf = service.calculatePlayerPerformance([m]);
+      // Gracié : retour à 0, sans les 3 points d'une victoire — aucune partie
+      // n'a été jouée, donc aucun point de performance n'est distribué.
+      expect(perf.get('a').points).toBe(0);
+      expect(perf.get('a').missed).toBe(0);
+      // L'adversaire garde son −1.
+      expect(perf.get('b').points).toBe(-1);
+    });
+
+    it('jouer et perdre (0) reste meilleur que ne pas jouer (−1)', () => {
+      // L’invariant qui fait tenir tout le règlement V3.
+      const joue = service.calculatePlayerPerformance([match('a', 'b', [300, 400])]);
+      const absent = service.calculatePlayerPerformance([match('a', 'b', [0, 0], 'forfeit')]);
+      expect(joue.get('a').points).toBeGreaterThan(absent.get('a').points);
     });
   });
 

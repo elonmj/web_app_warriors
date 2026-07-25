@@ -33,7 +33,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const gameData = await wooglesService.findMatchBetween(u1, u2, since);
+    // Consultation manuelle : pas de fenêtre de ronde ici, donc le résultat
+    // n'a aucune valeur de validation pour la ligue (voir findMatchInWindow).
+    const gameData = await wooglesService.findLatestBetween(u1, u2, since);
 
     if (!gameData) {
       return NextResponse.json({

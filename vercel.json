@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/auto-resolve",
-      "schedule": "0 22 * * *"
+      "schedule": "0 19 * * *"
     }
   ]
 }

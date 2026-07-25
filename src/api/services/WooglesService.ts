@@ -7,6 +7,7 @@ import {
 } from '@/types/Woogles';
 import { Move } from '@/types/ISC';
 import { FirebasePlayerRepository } from '@/api/repository/FirebasePlayerRepository';
+import { RoundWindow, isGameWithinWindow } from '@/lib/roundWindow';
 
 const WOOGLES_API_BASE =
   'https://woogles.io/api/game_service.GameMetadataService';
@@ -121,50 +122,110 @@ export class WooglesService {
     return e.played_tiles;
   }
 
+  /** Parties terminées entre deux joueurs, sans aucun filtre de date. */
+  private async candidatesBetween(
+    username1: string,
+    username2: string,
+    searchDepth: number
+  ): Promise<WooglesGameInfo[]> {
+    const u1 = username1.toLowerCase();
+    const u2 = username2.toLowerCase();
+    const games = await this.getRecentGames(username1, searchDepth, 0);
+
+    return games.filter((g) => {
+      const nicks = g.players.map((p) => p.nickname.toLowerCase());
+      if (!nicks.includes(u1) || !nicks.includes(u2)) return false;
+      return !VOID_END_REASONS.has(g.game_end_reason);
+    });
+  }
+
   /**
-   * Find the most recent finished game between two usernames.
-   * @param sinceISO only consider games created at/after this date
-   *                 (e.g. round start — avoids picking up an older game).
+   * La partie qui compte pour une ronde (Règlement V3 §III.B).
+   *
+   * Trois garanties, chacune corrigeant un défaut de l'implémentation V2 :
+   *   - une partie sans `created_at` est rejetée (elle était acceptée quel que
+   *     soit son âge, le test de date étant sauté quand la date manquait) ;
+   *   - les DEUX bornes de la fenêtre sont appliquées (seule la borne basse
+   *     l'était, et uniquement si un `sinceISO` avait été fourni) ;
+   *   - si plusieurs parties tombent dans la fenêtre, c'est la PREMIÈRE qui
+   *     fait foi, jamais la plus récente — sinon deux joueurs peuvent rejouer
+   *     jusqu'à ce que le résultat leur convienne.
    */
-  async findMatchBetween(
+  async findMatchInWindow(
+    username1: string,
+    username2: string,
+    window: RoundWindow,
+    searchDepth = 50
+  ): Promise<WooglesGameData | null> {
+    const inWindow = (await this.candidatesBetween(username1, username2, searchDepth)).filter(
+      (g) => isGameWithinWindow(g.created_at, window)
+    );
+
+    if (inWindow.length === 0) return null;
+
+    // Woogles liste du plus récent au plus ancien : prendre le premier élément
+    // renverrait la dernière partie de la ronde.
+    const first = inWindow.reduce((earliest, g) =>
+      new Date(g.created_at).getTime() < new Date(earliest.created_at).getTime() ? g : earliest
+    );
+
+    const data = await this.getGameData(first.game_id);
+    data.createdAt = first.created_at;
+    return data;
+  }
+
+  /**
+   * Dernière partie entre deux joueurs — outil de consultation manuelle.
+   *
+   * NE PAS utiliser pour valider un résultat de ligue : sans fenêtre de ronde,
+   * rien ne garantit que la partie trouvée appartienne à la ronde en cours.
+   * Utiliser `findMatchInWindow`.
+   */
+  async findLatestBetween(
     username1: string,
     username2: string,
     sinceISO?: string,
     searchDepth = 50
   ): Promise<WooglesGameData | null> {
-    const u1 = username1.toLowerCase();
-    const u2 = username2.toLowerCase();
-    const games = await this.getRecentGames(username1, searchDepth, 0);
+    const candidates = await this.candidatesBetween(username1, username2, searchDepth);
+    const since = sinceISO ? new Date(sinceISO).getTime() : null;
 
-    const candidate = games.find((g) => {
-      const nicks = g.players.map((p) => p.nickname.toLowerCase());
-      if (!nicks.includes(u1) || !nicks.includes(u2)) return false;
-      if (VOID_END_REASONS.has(g.game_end_reason)) return false;
-      if (sinceISO && g.created_at && new Date(g.created_at) < new Date(sinceISO)) {
-        return false;
-      }
-      return true;
-    });
+    const inRange =
+      since === null
+        ? candidates
+        : candidates.filter((g) => {
+            if (!g.created_at) return false;
+            const t = new Date(g.created_at).getTime();
+            return !Number.isNaN(t) && t >= since;
+          });
 
-    if (!candidate) return null;
+    if (inRange.length === 0) return null;
 
-    const data = await this.getGameData(candidate.game_id);
-    data.createdAt = candidate.created_at;
+    const dated = inRange.filter((g) => g.created_at && !Number.isNaN(new Date(g.created_at).getTime()));
+    const latest = dated.length
+      ? dated.reduce((newest, g) =>
+          new Date(g.created_at).getTime() > new Date(newest.created_at).getTime() ? g : newest
+        )
+      : inRange[0];
+
+    const data = await this.getGameData(latest.game_id);
+    data.createdAt = latest.created_at;
     return data;
   }
 
   /**
-   * Compare submitted scores against the Woogles result for the game found
-   * between the two usernames. Returns the game when scores match.
+   * Compare des scores saisis à la main au résultat Woogles de la ronde.
+   * La fenêtre est obligatoire : sans elle, un score peut être « validé »
+   * contre une partie vieille de plusieurs mois.
    */
   async validateSubmittedScore(
     username1: string,
     username2: string,
     player1Score: number,
     player2Score: number,
-    sinceISO?: string
+    window: RoundWindow
   ): Promise<{ valid: boolean; game?: WooglesGameData; reason?: string }> {
-    const game = await this.findMatchBetween(username1, username2, sinceISO);
+    const game = await this.findMatchInWindow(username1, username2, window);
     if (!game) {
       return { valid: false, reason: 'NOT_FOUND' };
     }

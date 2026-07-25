@@ -3,7 +3,7 @@ import { FirebasePlayerRepository } from '../repository/FirebasePlayerRepository
 import { EventRanking, PlayerRanking } from '@/types/Ranking';
 import { Match } from '@/types/Match';
 import { ValidationStatus } from '@/types/ValidationStatus';
-import { calculatePR, calculateSpread, FORFEIT_SPREAD } from '@/lib/scoring';
+import { calculatePR, calculateSpread, FORFEIT_SPREAD, MISSED_ROUND_PR } from '@/lib/scoring';
 
 export class RankingService {
   private eventRepository: FirebaseEventRepository;
@@ -160,6 +160,8 @@ export class RankingService {
           draws: 0,
           losses: 0,
           matches: 0,
+          /** Rondes appariées mais non jouées (Règlement V3 §V). */
+          missed: 0,
           spread: 0,
           opponents: [] as string[],
           rating: info.ratingAfter,
@@ -191,19 +193,35 @@ export class RankingService {
       const p2Stats = ensurePlayer(player2);
       const [p1Score, p2Score] = result.score;
 
+      // Match non joué (Règlement V3 §V) : −1 PR chacun, aucun spread, aucune
+      // cote. Ce n'est ni une défaite ni une partie : il ne doit compter ni
+      // dans le nombre de matchs joués, ni dans le Buchholz — sinon un joueur
+      // gonflerait son départage avec des rondes que personne n'a jouées.
+      if (match.status === 'forfeit' && p1Score === p2Score) {
+        // Le comité peut annuler la pénalité d'un joueur qui a réellement
+        // cherché à jouer (§V) : il repasse à 0, sans recevoir les 3 points
+        // d'une victoire — aucune partie n'a eu lieu.
+        const waived = match.metadata?.penaltyWaived ?? [];
+        if (!waived.includes(player1.id)) {
+          p1Stats.points += MISSED_ROUND_PR;
+          p1Stats.missed++;
+        }
+        if (!waived.includes(player2.id)) {
+          p2Stats.points += MISSED_ROUND_PR;
+          p2Stats.missed++;
+        }
+        continue;
+      }
+
       p1Stats.matches++;
       p2Stats.matches++;
       p1Stats.opponents.push(player2.id);
       p2Stats.opponents.push(player1.id);
 
       if (match.status === 'forfeit') {
-        // Double forfait (score 0-0) : 0 PR chacun, aucun spread (§VI)
-        if (p1Score === p2Score) {
-          p1Stats.losses++;
-          p2Stats.losses++;
-          continue;
-        }
-        // Forfait simple : 3 PR / +50 au présent, 0 PR / −50 au forfait
+        // Forfait simple : n'existe plus en V3 (aucun code ne le produit).
+        // Conservé pour relire les matchs enregistrés avant la V3 :
+        // 3 PR / +50 au présent, 0 PR / −50 au forfait.
         const [winner, loser] = p1Score > p2Score ? [p1Stats, p2Stats] : [p2Stats, p1Stats];
         winner.wins++;
         winner.points += 3;

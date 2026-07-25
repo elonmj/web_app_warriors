@@ -74,6 +74,14 @@ export interface Player {
   statistics: PlayerStatistics;
   lastUpdated?: string;
   matches?: PlayerMatch[];
+  /** Rondes consécutives appariées mais non jouées (Règlement V3 §VI).
+   *  Remis à 0 dès qu'une partie est jouée. */
+  consecutiveMissedRounds?: number;
+  /** En sommeil : plus apparié, ne perd plus de points. Déclenché
+   *  automatiquement à MISSED_ROUNDS_BEFORE_SLEEP absences consécutives. */
+  asleep?: boolean;
+  /** Date de mise en sommeil, pour l'affichage et le suivi coaching. */
+  asleepSince?: string;
 }
 
 export interface CreatePlayerInput {
@@ -93,6 +101,9 @@ export interface UpdatePlayerInput {
   active?: boolean;
   matches?: PlayerMatch[];
   statistics?: PlayerStatistics;
+  consecutiveMissedRounds?: number;
+  asleep?: boolean;
+  asleepSince?: string;
 }
 
 export interface PlayerPreferences {

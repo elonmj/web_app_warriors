@@ -8,7 +8,7 @@ import {
 import { Player, PlayerMatch } from '../../types/Player';
 import { MatchStatusType, ValidationStatusType, PlayerCategoryType } from '../../types/Enums';
 import { RatingSystem } from '../../lib/RatingSystem';
-import { calculatePR, calculateSpread } from '../../lib/scoring';
+import { calculatePR, calculateSpread, MISSED_ROUND_PR } from '../../lib/scoring';
 import { CategoryManager } from '../../lib/CategoryManager';
 import { StatisticsCalculator } from '../../lib/Statistics';
 import { FirebasePlayerRepository } from '../repository/FirebasePlayerRepository';
@@ -263,6 +263,14 @@ export class MatchService {
     }
   }
 
+  /**
+   * Match non joué à la clôture de la ronde (Règlement V3 §V).
+   *
+   * Les deux joueurs prennent −1 PR, aucun spread, et la cote reste
+   * strictement inchangée : aucune partie n'a eu lieu, il n'y a donc rien à
+   * mesurer. Aucun arbitrage automatique n'est tenté — l'application ne peut
+   * pas savoir qui a relancé qui. Le recours passe par l'administrateur.
+   */
   async processDoubleForfeit(match: Match): Promise<{
     updatedMatch: Match;
     player1Update: Partial<Player>;
@@ -272,7 +280,7 @@ export class MatchService {
       const now = new Date().toISOString();
       const result: MatchResult = {
         score: [0, 0],
-        pr: 0,
+        pr: MISSED_ROUND_PR,
         ds: 0
       };
 
@@ -293,7 +301,7 @@ export class MatchService {
         },
         result: {
           score: [0, 0],
-          pr: 0,
+          pr: MISSED_ROUND_PR,
           ds: 0
         },
         ratingChange: {
@@ -315,7 +323,7 @@ export class MatchService {
         },
         result: {
           score: [0, 0],
-          pr: 0,
+          pr: MISSED_ROUND_PR,
           ds: 0
         },
         ratingChange: {

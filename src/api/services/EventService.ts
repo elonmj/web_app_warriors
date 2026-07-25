@@ -8,6 +8,7 @@ import { MatchManager } from '@/lib/MatchManager';
 import { RatingSystem } from '@/lib/RatingSystem'; // Import RatingSystem from lib
 import {RatingService} from '@/api/services/RatingService'; // Import RatingService
 import { EventStatus, PlayerCategoryType } from '@/types/Enums'; // Import PlayerCategoryType
+import { roundWindowFrom } from '@/lib/roundWindow';
 
 export class EventService {
   private eventRepository: FirebaseEventRepository;
@@ -209,15 +210,15 @@ export class EventService {
       // Handle this case - maybe filter event.playerIds based on fetched players
     }
 
-    // Pool de disponibilité (Règlement V2 §IV.A) : seuls les inscrits à la
-    // ronde sont appariés ; sans liste, tous les participants sont réputés
-    // disponibles. Ne pas s'inscrire est neutre — pas de match, pas de PR.
-    const availability = event.metadata?.roundAvailability?.[round];
-    const poolPlayers = availability
-      ? players.filter((p) => availability.includes(p.id))
-      : players;
+    // Pool d'appariement (Règlement V3 §III.A) : tous les participants, sauf
+    // ceux en sommeil. Il n'y a plus de phase d'inscription — ne pas confirmer
+    // sa disponibilité n'existe plus, tout le monde est apparié d'office.
+    const poolPlayers = players.filter((p) => p.asleep !== true);
     if (poolPlayers.length === 0) {
-      throw new Error(`No available players for round ${round} of event ${eventId}`);
+      throw new Error(
+        `Aucun joueur actif pour la ronde ${round} de l'événement ${eventId} ` +
+          `(${players.length} participant(s), tous en sommeil).`
+      );
     }
 
     const previousMatches = await this.eventRepository.getEventMatches(eventId);
@@ -290,6 +291,11 @@ export class EventService {
        }
      }
 
+     // Fenêtre de ronde figée à la génération (Règlement V3 §III.B) : elle sert
+     // ensuite de seule référence pour décider si une partie Woogles compte.
+     const startsAt = new Date();
+     const { endsAt } = roundWindowFrom(startsAt);
+
      const metadataUpdates: EventMetadata = {
        totalPlayers: currentEvent.metadata.totalPlayers || 0,
        totalMatches: (currentEvent.metadata.totalMatches || 0) + savedMatches.length,
@@ -298,14 +304,15 @@ export class EventService {
        roundHistory: {
          ...(currentEvent.metadata.roundHistory || {}),
          [round]: {
-           date: new Date().toISOString(),
+           date: startsAt.toISOString(),
+           startsAt: startsAt.toISOString(),
+           endsAt: endsAt.toISOString(),
            totalMatches: savedMatches.length,
            completedMatches: 0,
            ...(byeMatch ? { byePlayerId: byeMatch.player1.id } : {})
          }
        },
        byeHistory,
-       roundAvailability: currentEvent.metadata.roundAvailability,
        lastUpdated: new Date().toISOString()
      };
 
@@ -481,11 +488,8 @@ export class EventService {
     const players = await this.playerRepository.getPlayersByIds(event.playerIds);
     const previousMatches = await this.eventRepository.getEventMatches(eventId);
 
-    // Même pool de disponibilité que la génération réelle (§IV.A)
-    const availability = event.metadata?.roundAvailability?.[round];
-    const poolPlayers = availability
-      ? players.filter((p) => availability.includes(p.id))
-      : players;
+    // Même pool que la génération réelle (§III.A) : tous sauf les endormis
+    const poolPlayers = players.filter((p) => p.asleep !== true);
 
     // Initialize MatchManager
     const matchManager = new MatchManager(poolPlayers, previousMatches);

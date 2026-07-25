@@ -46,6 +46,10 @@ export interface Match {
     isRandom: boolean;
     createdAt: string;  // ISO-8601
     updatedAt: string;  // ISO-8601
+    /** Joueurs dont la pénalité d'absence a été annulée par le comité
+     *  (Règlement V3 §V) : ils repassent à 0 PR pour la ronde, sans recevoir
+     *  les 3 points de la victoire — aucune partie n'a été jouée. */
+    penaltyWaived?: string[];
   };
 }
 

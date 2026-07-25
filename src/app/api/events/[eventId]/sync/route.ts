@@ -6,6 +6,7 @@ import { RankingService } from '@/api/services/RankingService';
 import { wooglesService } from '@/api/services/WooglesService';
 import { gamePersistenceService } from '@/api/services/GamePersistenceService';
 import { verifyPassword } from '@/lib/auth';
+import { resolveRoundWindow, isRoundOver, formatLeagueTime } from '@/lib/roundWindow';
 import { Match } from '@/types/Match';
 import { Player } from '@/types/Player';
 
@@ -60,17 +61,24 @@ export async function POST(
       return NextResponse.json({ error: `Metadata for round ${round} is missing` }, { status: 400 });
     }
 
-    // 3. Determine deadline threshold (default 7 days)
-    const url = new URL(request.url);
-    const deadlineDays = Number(url.searchParams.get('days') || '7');
-    const roundStartDate = new Date(roundStats.date || event.startDate);
-    const now = new Date();
-    const diffMs = now.getTime() - roundStartDate.getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    const isPastDeadline = diffDays > deadlineDays;
+    // 3. Fenêtre de ronde (Règlement V3 §III.B) — jamais devinée : si elle est
+    // introuvable on refuse la synchronisation plutôt que de retomber sur la
+    // date de l'événement, ce qui accepterait n'importe quelle vieille partie.
+    let window;
+    try {
+      window = resolveRoundWindow(roundStats, `event ${eventId}, ronde ${round}`);
+    } catch (windowError) {
+      const message = windowError instanceof Error ? windowError.message : String(windowError);
+      console.error(`[API] ${message}`);
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
 
-    console.log(`[API] Round start date: ${roundStartDate.toISOString()}, current date: ${now.toISOString()}`);
-    console.log(`[API] Days elapsed: ${diffDays.toFixed(2)}, threshold: ${deadlineDays} days. Past deadline: ${isPastDeadline}`);
+    const isPastDeadline = isRoundOver(window);
+
+    console.log(
+      `[API] Fenêtre de ronde : ${formatLeagueTime(window.startsAt)} → ` +
+        `${formatLeagueTime(window.endsAt)} (heure Bénin). Ronde terminée : ${isPastDeadline}`
+    );
 
     // 4. Fetch round matches
     const matches = await eventRepository.getRoundMatches(eventId, round);
@@ -111,11 +119,7 @@ export async function POST(
         if (u1 && u2) {
           try {
             console.log(`[API] Fetching Woogles game for match ${match.id} (${u1} vs ${u2})`);
-            const game = await wooglesService.findMatchBetween(
-              u1,
-              u2,
-              roundStartDate.toISOString()
-            );
+            const game = await wooglesService.findMatchInWindow(u1, u2, window);
 
             if (game) {
               const s1 = wooglesService.scoreFor(game, u1);
