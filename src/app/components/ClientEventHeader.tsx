@@ -3,74 +3,75 @@
 import { Event } from "@/types/Event";
 import { EventStatus } from "@/types/Enums";
 import { format } from "date-fns";
-import { CalendarIcon, UsersIcon, PlusIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { fr } from "date-fns/locale";
+import { PlusIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { Heading, Body } from "@/components/ui/Typography";
 import CompleteRoundButton from "./CompleteRoundButton";
 
 interface ClientEventHeaderProps {
   event: Event;
+  /** Les actions d'organisation restent invisibles pour les joueurs. */
+  isAdmin?: boolean;
 }
 
 const getStatusDisplay = (status: string) => {
   switch (status) {
     case EventStatus.OPEN:
       return {
-        text: "Active",
+        text: "Ouvert",
         classes: "bg-green-100 text-green-800 ring-1 ring-green-600/20 dark:bg-green-900/30 dark:text-green-200"
       };
     case EventStatus.IN_PROGRESS:
       return {
-        text: "In Progress",
+        text: "En cours",
         classes: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-200"
       };
     default:
       return {
-        text: "Closed",
+        text: "Terminé",
         classes: "bg-onyx-100 text-onyx-800 ring-1 ring-onyx-600/20 dark:bg-onyx-800 dark:text-onyx-200"
       };
   }
 };
 
-export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
+export default function ClientEventHeader({ event, isAdmin = false }: ClientEventHeaderProps) {
   const status = getStatusDisplay(event.status);
+  const metadata = event.metadata;
 
   return (
     <div className="relative">
       {/* Background with gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-amethyste-500/10 to-amethyste-600/10 
+      <div className="absolute inset-0 bg-gradient-to-r from-amethyste-500/10 to-amethyste-600/10
         dark:from-amethyste-900/20 dark:to-amethyste-800/20" />
-      
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-3">
+
+      <div className="relative mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-2">
             <Heading.H1>{event.name}</Heading.H1>
-            
-            {/* Event Status */}
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${status.classes}`}>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.classes}`}>
                 {status.text}
               </span>
-              
-              {/* Event Type Badge */}
-              <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium
-                bg-amethyste-100 text-amethyste-800 ring-1 ring-amethyste-600/20 
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                bg-amethyste-100 text-amethyste-800 ring-1 ring-amethyste-600/20
                 dark:bg-amethyste-900/30 dark:text-amethyste-200"
               >
                 {event.type}
               </span>
             </div>
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
-            <CompleteRoundButton
-              event={event}
-              totalMatches={event.metadata?.totalMatches || 0}
-              completedMatches={event.metadata?.roundHistory?.[event.metadata.currentRound]?.completedMatches || 0}
-            />
-            <div className="flex gap-3">
-              {event.metadata?.currentRound === 1 && event.metadata?.totalMatches === 0 ? (
-                <button 
+
+          {/* Action Buttons — organisation uniquement */}
+          {isAdmin && (
+            <div className="flex flex-none flex-wrap items-center justify-end gap-2">
+              <CompleteRoundButton
+                event={event}
+                totalMatches={metadata?.totalMatches || 0}
+                completedMatches={metadata?.roundHistory?.[metadata.currentRound]?.completedMatches || 0}
+              />
+              {metadata?.currentRound === 1 && metadata?.totalMatches === 0 ? (
+                <button
                   onClick={() => {
                     fetch(`/api/events/${event.id}/rounds/generate`, {
                       method: 'POST',
@@ -92,7 +93,7 @@ export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
                     transition-colors gap-2"
                 >
                   <PlusIcon className="w-4 h-4" />
-                  <span>Configure First Round</span>
+                  <span>Configurer la ronde 1</span>
                 </button>
               ) : (
                 <button className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold
@@ -101,43 +102,26 @@ export default function ClientEventHeader({ event }: ClientEventHeaderProps) {
                   transition-colors gap-2"
                 >
                   <PencilIcon className="w-4 h-4" />
-                  <span>Edit Event</span>
+                  <span>Modifier</span>
                 </button>
               )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Event Meta Info */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-onyx-400" />
-            <Body.Text variant="sm" className="text-onyx-600 dark:text-onyx-300">
-              Start: {format(new Date(event.startDate), "MMM d, yyyy")}
-            </Body.Text>
-          </div>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-onyx-400" />
-            <Body.Text variant="sm" className="text-onyx-600 dark:text-onyx-300">
-              End: {format(new Date(event.endDate), "MMM d, yyyy")}
-            </Body.Text>
-          </div>
-          {event.metadata && (
-            <div className="flex items-center gap-2">
-              <UsersIcon className="w-5 h-5 text-onyx-400" />
-              <Body.Text variant="sm" className="text-onyx-600 dark:text-onyx-300">
-                {event.metadata.totalPlayers} Players
-              </Body.Text>
             </div>
           )}
         </div>
 
-        {/* Last Updated */}
-        {event.metadata?.lastUpdated && (
-          <Body.Caption className="mt-4 block">
-            Last updated: {format(new Date(event.metadata.lastUpdated), "MMM d, yyyy")}
+        {/* Une seule ligne de méta : le reste appartient à l'onglet Stats. */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {metadata && (
+            <>
+              <Body.Caption>{metadata.totalPlayers} joueurs</Body.Caption>
+              <Body.Caption className="text-onyx-300 dark:text-onyx-700">·</Body.Caption>
+            </>
+          )}
+          <Body.Caption>
+            Du {format(new Date(event.startDate), "d MMM yyyy", { locale: fr })} au{" "}
+            {format(new Date(event.endDate), "d MMM yyyy", { locale: fr })}
           </Body.Caption>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -25,6 +25,10 @@ export interface PlayerDetails {
 
 export interface PlayerDisplayDetails {
   name: string;
+  /** Pseudo de la plateforme de jeu (Woogles). C'est sous ce nom que les joueurs
+   *  se reconnaissent et se défient — il s'affiche sur les cartes d'appariement. */
+  platformUsername?: string;
+  /** @deprecated les parties se jouent sur Woogles — voir platformUsername */
   iscUsername?: string;
   category?: PlayerCategoryType;
 }

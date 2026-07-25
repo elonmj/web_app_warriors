@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import MainNav from "./components/MainNav";
+import { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,7 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable}`}>
+    <html lang="fr" className={`${dmSans.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="antialiased font-sans bg-onyx-50 dark:bg-onyx-950">
         <MainNav />
 

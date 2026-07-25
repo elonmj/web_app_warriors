@@ -7,16 +7,29 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: ['class', 'class'],
+  // Forme tableau = [stratégie, sélecteur]. ['class','class'] compilait les
+  // variantes en `.class &` : ajouter `dark` sur <html> ne pouvait rien faire.
+  darkMode: 'class',
   theme: {
+  	// `theme.colors` remplace toute la palette Tailwind : chaque famille utilisée
+  	// dans le code doit être listée ici, sinon la classe ne produit rien. Les
+  	// valeurs doivent être les objets importés — une chaîne comme 'colors.white'
+  	// compile en CSS invalide et rend le fond transparent / le texte noir.
   	colors: {
   		transparent: 'transparent',
   		current: 'currentColor',
-  		black: 'colors.black',
-  		white: 'colors.white',
-  		gray: 'colors.gray',
-  		green: 'colors.green',
-  		yellow: 'colors.yellow',
+  		black: colors.black,
+  		white: colors.white,
+  		gray: colors.gray,
+  		red: colors.red,
+  		green: colors.green,
+  		yellow: colors.yellow,
+  		blue: colors.blue,
+  		amber: colors.amber,
+  		purple: colors.purple,
+  		indigo: colors.indigo,
+  		emerald: colors.emerald,
+  		rose: colors.rose,
   		onyx: {
   			'50': '#f7f7f8',
   			'100': '#efeef1',

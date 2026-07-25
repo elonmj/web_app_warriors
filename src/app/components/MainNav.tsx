@@ -3,13 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
-  { href: "/", label: "Events" },
-  { href: "/rankings", label: "Rankings" },
-  { href: "/dashboard", label: "My Dashboard" },
-  { href: "/club-overview", label: "Club Overview" },
-  { href: "/reglement", label: "Rules" },
+  { href: "/", label: "Événements" },
+  { href: "/rankings", label: "Classement" },
+  { href: "/dashboard", label: "Mon tableau de bord" },
+  { href: "/club-overview", label: "Le club" },
+  { href: "/reglement", label: "Règlement" },
 ];
 
 const categoryLinks = [
@@ -35,7 +36,7 @@ export default function MainNav() {
               WWL
             </Link>
             {/* Category Indicators */}
-            <div className="ml-8 hidden space-x-4 sm:flex">
+            <div className="ml-8 hidden space-x-4 lg:flex">
               {categoryLinks.map((cat) => (
                 <Link
                   key={cat.label}
@@ -49,8 +50,8 @@ export default function MainNav() {
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden sm:block">
+          {/* Desktop Navigation Links — sous 1024 px la barre déborde, on passe au menu */}
+          <div className="hidden lg:block">
             <div className="flex items-center space-x-4">
               {navLinks.map((link) => (
                 <Link
@@ -66,6 +67,7 @@ export default function MainNav() {
                   {link.label}
                 </Link>
               ))}
+              <ThemeToggle />
               <Link
                 href="/admin"
                 className="rounded-md bg-white/10 backdrop-blur-sm px-3 py-2 text-sm font-medium text-white
@@ -76,27 +78,30 @@ export default function MainNav() {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-white
-              hover:bg-amethyste-600/50 dark:hover:bg-amethyste-800/50 sm:hidden"
-            aria-expanded={isOpen}
-            aria-label="Toggle navigation menu"
-          >
-            {isOpen ? (
-              <XMarkIcon className="h-6 w-6" />
-            ) : (
-              <Bars3Icon className="h-6 w-6" />
-            )}
-          </button>
+          {/* Mobile : le thème reste accessible sans ouvrir le menu */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className="inline-flex items-center justify-center rounded-md p-2 text-white
+                hover:bg-amethyste-600/50 dark:hover:bg-amethyste-800/50"
+              aria-expanded={isOpen}
+              aria-label="Ouvrir ou fermer le menu"
+            >
+              {isOpen ? (
+                <XMarkIcon className="h-6 w-6" />
+              ) : (
+                <Bars3Icon className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile Menu Panel */}
       {isOpen && (
-        <div className="sm:hidden border-t border-white/20">
+        <div className="lg:hidden border-t border-white/20">
           <div className="space-y-1 px-4 py-3">
             {navLinks.map((link) => (
               <Link

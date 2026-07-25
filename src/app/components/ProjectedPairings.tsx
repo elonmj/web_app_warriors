@@ -75,11 +75,11 @@ export default function ProjectedPairings({ eventId, currentRound }: ProjectedPa
               <div className="flex items-center gap-2">
                 <LightBulbIcon className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                 <h3 className="font-medium text-amber-900 dark:text-amber-100">
-                  Projected Pairings for Next Round
+                  Appariements de la ronde suivante
                 </h3>
               </div>
               <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-                These are projected match-ups based on current rankings. They will only be confirmed when the current round is completed.
+                Projection basée sur le classement actuel. Rien n&apos;est confirmé tant que la ronde en cours n&apos;est pas clôturée.
               </p>
             </div>
             <button

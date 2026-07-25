@@ -5,12 +5,12 @@ import EventRoundPairings from "./EventRoundPairings";
 import { PlayerRankings } from "./PlayerRankings";
 import EventStats from "./EventStats";
 import ProjectedPairings from "./ProjectedPairings";
-import { Match } from "@/types/Match";
+import StatsOverview from "./StatsOverview";
 import { MatchDisplay } from "@/types/MatchHistory";
 import { Event } from "@/types/Event";
-import { Player } from "@/types/Player";
 import { EventRanking } from "@/types/Ranking";
 import { EventStatistics } from "@/types/EventStatistics";
+import { Body } from "@/components/ui/Typography";
 
 interface ClientEventTabsProps {
   event: Event;
@@ -18,6 +18,7 @@ interface ClientEventTabsProps {
   roundMatches: MatchDisplay[];
   roundRankings: EventRanking;
   stats: EventStatistics;
+  isAdmin: boolean;
 }
 
 export default function ClientEventTabs({
@@ -25,11 +26,9 @@ export default function ClientEventTabs({
   currentRound,
   roundMatches,
   roundRankings,
-  stats
+  stats,
+  isAdmin
 }: ClientEventTabsProps) {
-  // Add console.log right at the start of the component
-  console.log(roundMatches);
-  
   const handleRoundChange = (round: number) => {
     const params = new URLSearchParams(window.location.search);
     params.set('round', round.toString());
@@ -39,48 +38,51 @@ export default function ClientEventTabs({
   return (
     <TabNav
       defaultTab="matches"
-      currentRound={currentRound}
-      totalRounds={event.metadata?.totalRounds || 0}
-      onRoundChange={handleRoundChange}
       tabs={[
         {
           id: "matches",
-          label: "Matches",
+          label: "Appariements",
           content: (
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               <EventRoundPairings
                 eventId={event.id}
                 currentRound={currentRound}
                 matches={roundMatches}
+                isAdmin={isAdmin}
               />
             </div>
           ),
         },
         {
           id: "rankings",
-          label: "Rankings",
+          label: "Classement",
           content: (
-            <div className="rounded-lg border border-onyx-200 dark:border-onyx-800">
-              <PlayerRankings
-                eventRanking={roundRankings}
-                currentRound={currentRound}
-                totalRounds={event.metadata?.totalRounds || 0}
-                onRoundChange={handleRoundChange}
-              />
-            </div>
+            <PlayerRankings
+              eventRanking={roundRankings}
+              currentRound={currentRound}
+              totalRounds={event.metadata?.totalRounds || 0}
+              onRoundChange={handleRoundChange}
+            />
           ),
         },
         {
           id: "statistics",
-          label: "Statistics",
+          label: "Stats",
           content: (
-            <div className="space-y-6 p-4">
+            <div className="space-y-6 p-3 sm:p-4">
+              <div>
+                <Body.Caption className="mb-2 block">
+                  Résumé de la ronde {currentRound} — les totaux toutes rondes sont plus bas.
+                </Body.Caption>
+                <StatsOverview stats={stats} />
+              </div>
+
               {/* Category Distribution */}
               <div>
                 <h3 className="text-lg font-medium text-onyx-900 dark:text-white mb-4">
-                  Player Categories
+                  Catégories des joueurs
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
                   {Object.entries(stats.categoryDistribution).map(([category, count]) => (
                     <div
                       key={category}
@@ -104,9 +106,9 @@ export default function ClientEventTabs({
         },
         {
           id: "pairings",
-          label: "Next Round",
+          label: "Ronde +1",
           content: (
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               <ProjectedPairings
                 eventId={event.id}
                 currentRound={currentRound}

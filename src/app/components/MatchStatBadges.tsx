@@ -39,20 +39,21 @@ export default function MatchStatBadges({
     );
   }
 
+  // Une seule ligne : sur une carte d'appariement mobile, deux colonnes
+  // légendées coûtaient plus de hauteur que les noms des joueurs.
   return (
-    <div className={`grid grid-cols-2 gap-4 ${className}`}>
-      <div className="text-center">
-        <Body.Caption>PR</Body.Caption>
-        <Body.Text className="font-medium text-onyx-900 dark:text-white">
-          {pr}
-        </Body.Text>
-      </div>
-      <div className="text-center">
-        <Body.Caption>Spread</Body.Caption>
-        <Body.Text className="font-medium text-onyx-900 dark:text-white">
-          {spreadDisplay}
-        </Body.Text>
-      </div>
+    <div className={`flex items-baseline gap-3 ${className}`}>
+      {[
+        { label: "PR", value: pr },
+        { label: "Spread", value: spreadDisplay },
+      ].map((stat) => (
+        <span key={stat.label} className="inline-flex items-baseline gap-1">
+          <Body.Caption>{stat.label}</Body.Caption>
+          <span className="text-sm font-medium tabular-nums text-onyx-900 dark:text-white">
+            {stat.value}
+          </span>
+        </span>
+      ))}
     </div>
   );
 }

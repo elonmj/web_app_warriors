@@ -1,214 +1,175 @@
-import { useState, useEffect } from 'react';
-import { Match } from '@/types/Match';
+import { useMemo, useState } from 'react';
 import { MatchDisplay } from '@/types/MatchHistory';
 import { MatchStatus } from '@/types/MatchStatus';
-import { Body, Heading } from "@/components/ui/Typography";
+import { PlayerCategoryType } from '@/types/Enums';
+import { Body } from "@/components/ui/Typography";
 import Link from 'next/link';
-import { TrophyIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, MagnifyingGlassIcon, TrophyIcon } from "@heroicons/react/24/outline";
+import { remove as removeDiacritics } from 'diacritics';
 import { getCategoryColor } from "./utils/styles";
-import PlayerNameDisplay from "@/components/shared/PlayerNameDisplay";
 import MatchStatBadges from "./MatchStatBadges";
 import { calculateSpread } from "@/lib/scoring";
 
-interface PlayerDetails {
-  name: string;
-  iscUsername?: string;
-}
-
-async function fetchPlayerDetails(playerId: string): Promise<PlayerDetails | null> {
-  try {
-    const response = await fetch(`/api/players/${playerId}`);
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(`Failed to fetch details for player ${playerId}:`, error);
-    return null;
-  }
-}
+/** Nombre d'appariements à partir duquel se chercher à l'œil devient pénible. */
+const SEARCH_THRESHOLD = 4;
 
 interface PairingCardProps {
   match: MatchDisplay;
-  isCurrentRound: boolean;
   isProjected?: boolean;
+  isAdmin?: boolean;
 }
 
-const PairingCard = ({ match, isCurrentRound, isProjected }: PairingCardProps) => {
-  const [player1Details, setPlayer1Details] = useState<PlayerDetails | null>(null);
-  const [player2Details, setPlayer2Details] = useState<PlayerDetails | null>(null);
+const getStatusDisplay = (status: MatchStatus, isProjected?: boolean) => {
+  if (isProjected) {
+    return {
+      label: 'Projeté',
+      className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300'
+    };
+  }
 
-  // Fetch player details if they're not available in match object
-  useEffect(() => {
-    async function loadPlayerDetails() {
-      // Only fetch if we don't have the details from the match object
-      if (!match.player1Details?.name) {
-        const details = await fetchPlayerDetails(match.player1.id.toString());
-        if (details) {
-          setPlayer1Details(details);
-        }
-      }
-
-      // Only fetch player 2 details if it's not a bye match and we don't have the details
-      if (match.player2.id.toString() === 'BYE' && !match.player2Details?.name) {
-        const details = await fetchPlayerDetails(match.player2.id.toString());
-        if (details) {
-          setPlayer2Details(details);
-        }
-      }
-    }
-
-    loadPlayerDetails();
-  }, [match.player1.id, match.player2.id, match.player1Details, match.player2Details]);
-
-  // Get the best available name for each player
-  const player1Name = match.player1Details?.name || 
-    player1Details?.name || 
-    `Player ${match.player1.id}`;
-
-  const player2Name = match.player2Details?.name || 
-    player2Details?.name || 
-    `Player ${match.player2.id}`;
-
-  // Check if this is a bye match - handling string ID correctly
-  const isByeMatch = match.player2.id.toString() === 'BYE';
-
-  const getStatusDisplay = (status: MatchStatus) => {
-    if (isProjected) {
+  switch (status) {
+    case 'pending':
       return {
-        label: 'Projected',
-        className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300'
+        label: 'À jouer',
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
       };
-    }
+    case 'completed':
+      return {
+        label: 'Joué',
+        className: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+      };
+    case 'forfeit':
+      return {
+        label: 'Forfait',
+        className: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
+      };
+    default:
+      return {
+        label: status,
+        className: 'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300'
+      };
+  }
+};
 
-    switch (status) {
-      case 'pending':
-        return {
-          label: 'Upcoming',
-          className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
-        };
-      case 'completed':
-        return {
-          label: 'Completed',
-          className: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-        };
-      case 'forfeit':
-        return {
-          label: 'Forfeit',
-          className: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
-        };
-      default:
-        return {
-          label: status,
-          className: 'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300'
-        };
-    }
-  };
+/**
+ * Une ligne = un joueur. Empilées, elles se lisent comme une feuille de match,
+ * là où deux colonnes côte à côte forcent les noms à se casser sur 375 px.
+ */
+const PlayerRow = ({
+  name,
+  username,
+  category,
+  rating,
+  score,
+  isWinner,
+}: {
+  name: string;
+  username?: string;
+  category?: PlayerCategoryType;
+  rating?: number;
+  score?: number;
+  isWinner: boolean;
+}) => (
+  <div className="flex items-baseline gap-2 py-0.5">
+    {/* Nom et pseudo sur une seule ligne : deux lignes par joueur faisaient
+        déborder la carte hors de l'écran sur mobile. */}
+    <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+      <span
+        className={`truncate text-[15px] leading-tight sm:text-base ${
+          isWinner
+            ? 'font-bold text-onyx-900 dark:text-white'
+            : 'font-medium text-onyx-800 dark:text-onyx-200'
+        }`}
+      >
+        {name}
+      </span>
+      {username && (
+        <span className="truncate text-xs text-onyx-400 dark:text-onyx-500">@{username}</span>
+      )}
+    </div>
 
-  const { label, className } = getStatusDisplay(match.status);
+    {/* La cote suffit sur mobile — la catégorie est déjà portée par la couleur,
+        et l'écrire en toutes lettres rognait le nom du joueur. */}
+    <Body.Caption className={`flex-none tabular-nums ${getCategoryColor(category)}`}>
+      {category && <span className="hidden sm:inline">{category} · </span>}
+      {rating}
+    </Body.Caption>
 
-  // Ligne discrète "catégorie · cote" — fusionne deux lignes de métadonnées en une
-  const metaLine = (category?: string, rating?: number) =>
-    [category, rating !== undefined ? `${rating}` : null].filter(Boolean).join(' · ');
+    {score !== undefined && (
+      <span
+        className={`w-12 flex-none text-right text-lg tabular-nums ${
+          isWinner ? 'font-bold text-onyx-900 dark:text-white' : 'font-semibold text-onyx-500 dark:text-onyx-400'
+        }`}
+      >
+        {score}
+      </span>
+    )}
+  </div>
+);
+
+const PairingCard = ({ match, isProjected, isAdmin }: PairingCardProps) => {
+  const isByeMatch = match.player2.id.toString() === 'BYE';
+  const { label, className } = getStatusDisplay(match.status, isProjected);
+
+  const scores = match.status === 'completed' && match.result ? match.result.score : undefined;
+  const player1Name = match.player1Details?.name || `Joueur ${match.player1.id}`;
+  const player2Name = match.player2Details?.name || `Joueur ${match.player2.id}`;
 
   return (
     <Link
       href={`/event/${match.eventId}/match/${match.id}`}
-      className={`relative block border rounded-lg p-3 sm:p-4 cursor-pointer
-      hover:border-amethyste-300 hover:shadow-md transition-all duration-200
+      className={`relative block rounded-lg border p-3 transition-all duration-200
+      hover:border-amethyste-300 hover:shadow-md
       ${isByeMatch ? 'bg-onyx-50 dark:bg-onyx-900/50' : 'bg-white dark:bg-onyx-900'}
-      ${isProjected ? 'border-purple-200 dark:border-purple-800/30' : 'border-onyx-200 dark:border-onyx-800'}`}>
+      ${isProjected ? 'border-purple-200 dark:border-purple-800/30' : 'border-onyx-200 dark:border-onyx-800'}`}
+    >
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className={`rounded px-2 py-0.5 text-xs font-medium ${className}`}>{label}</span>
+        <div className="flex items-center gap-1 text-onyx-400 dark:text-onyx-500">
+          {isByeMatch && <Body.Caption>Bye</Body.Caption>}
+          {isAdmin && match.status === 'pending' && !isProjected && !isByeMatch && (
+            <Body.Caption className="text-amethyste-600 dark:text-amethyste-400">
+              Saisir le résultat
+            </Body.Caption>
+          )}
+          <ChevronRightIcon className="h-4 w-4" />
+        </div>
+      </div>
 
-      {isByeMatch && (
-        <span className="absolute -top-2 left-4 bg-gray-500 text-white text-xs px-2 py-1 rounded">
-          Bye Match
-        </span>
+      <PlayerRow
+        name={player1Name}
+        username={match.player1Details?.platformUsername ?? match.player1Details?.iscUsername}
+        category={match.player1.categoryBefore}
+        rating={match.player1.ratingBefore}
+        score={scores?.[0]}
+        isWinner={!!scores && scores[0] > scores[1]}
+      />
+
+      <div className="my-0.5 flex items-center gap-2">
+        <div className="h-px flex-1 bg-onyx-100 dark:bg-onyx-800" />
+        <Body.Caption className="text-onyx-400">vs</Body.Caption>
+        <div className="h-px flex-1 bg-onyx-100 dark:bg-onyx-800" />
+      </div>
+
+      {isByeMatch ? (
+        <div className="py-1 text-[15px] font-medium text-onyx-400 dark:text-onyx-500">BYE</div>
+      ) : (
+        <PlayerRow
+          name={player2Name}
+          username={match.player2Details?.platformUsername ?? match.player2Details?.iscUsername}
+          category={match.player2.categoryBefore}
+          rating={match.player2.ratingBefore}
+          score={scores?.[1]}
+          isWinner={!!scores && scores[1] > scores[0]}
+        />
       )}
 
-      {/* Header : discret, statut seul mis en avant */}
-      <div className="flex justify-between items-center mb-2">
-        <Body.Caption className="text-onyx-400 dark:text-onyx-500">
-          {isProjected ? (
-            <span className="text-purple-600 dark:text-purple-400 font-medium">Projected</span>
-          ) : (
-            `Round ${match.metadata.round}`
-          )}
-        </Body.Caption>
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${className}`}>
-          {label}
-        </span>
-      </div>
-
-      {/* Match Content — les deux joueurs resserrés autour du "vs" */}
-      <div className="flex items-center justify-center gap-3 sm:gap-6">
-        {/* Player 1 */}
-        <div className="flex-1 min-w-0 text-right">
-          <PlayerNameDisplay
-            name={player1Name}
-            iscUsername={match.player1Details?.iscUsername || player1Details?.iscUsername}
-            className="text-base sm:text-lg font-semibold"
-          />
-          <Body.Caption className={`${getCategoryColor(match.player1.categoryBefore)} block`}>
-            {metaLine(match.player1.categoryBefore, match.player1.ratingBefore)}
-          </Body.Caption>
-        </div>
-
-        {/* Score */}
-        <div className="flex-none flex items-center justify-center gap-2 px-1">
-          {match.status === 'completed' && match.result ? (
-            <>
-              <Heading.H4 className="text-onyx-900 dark:text-white">
-                {match.result.score[0]}
-              </Heading.H4>
-              <Body.Caption className="text-onyx-400">–</Body.Caption>
-              <Heading.H4 className="text-onyx-900 dark:text-white">
-                {match.result.score[1]}
-              </Heading.H4>
-            </>
-          ) : (
-            <Body.Caption className="text-onyx-400 font-medium">vs</Body.Caption>
-          )}
-        </div>
-
-        {/* Player 2 */}
-        <div className="flex-1 min-w-0 text-left">
-          {isByeMatch ? (
-            <Body.Text className="font-medium text-onyx-400 dark:text-onyx-500">BYE</Body.Text>
-          ) : (
-            <>
-              <PlayerNameDisplay
-                name={player2Name}
-                iscUsername={match.player2Details?.iscUsername || player2Details?.iscUsername}
-                className="text-base sm:text-lg font-semibold"
-              />
-              <Body.Caption className={`${getCategoryColor(match.player2.categoryBefore)} block`}>
-                {metaLine(match.player2.categoryBefore, match.player2.ratingBefore)}
-              </Body.Caption>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Match Stats */}
       {match.result && !isProjected && (
-        <div className="mt-3 pt-3 border-t border-onyx-100 dark:border-onyx-800">
+        <div className="mt-2 border-t border-onyx-100 pt-2 dark:border-onyx-800">
           <MatchStatBadges
             pr={match.result.pr}
             spread={calculateSpread(match.result.score[0], match.result.score[1])}
           />
-        </div>
-      )}
-
-      {!isProjected && !isByeMatch && (
-        <div className="mt-3 pt-2 flex justify-end">
-          <span
-            className={`inline-flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-md
-            ${match.status === 'pending'
-              ? 'bg-amethyste-50 text-amethyste-700 dark:bg-amethyste-900/20 dark:text-amethyste-300'
-              : 'text-amethyste-600 dark:text-amethyste-400'}`}
-          >
-            {match.status === 'pending' ? 'Enter Results' : 'View Details / Modify'}
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          </span>
         </div>
       )}
     </Link>
@@ -221,29 +182,41 @@ interface EventRoundPairingsProps {
   matches: MatchDisplay[];
   isLoading?: boolean;
   isProjected?: boolean;
+  isAdmin?: boolean;
 }
 
+const normalize = (value: string) => removeDiacritics(value).toLowerCase();
+
 const EventRoundPairings = ({
-  eventId,
-  currentRound,
   matches,
   isLoading = false,
-  isProjected = false
+  isProjected = false,
+  isAdmin = false
 }: EventRoundPairingsProps) => {
-  // Remove player fetching since we should already have enriched data
+  const [query, setQuery] = useState('');
+
+  const visibleMatches = useMemo(() => {
+    const needle = normalize(query.trim());
+    if (!needle) return matches;
+    // Le pseudo Woogles compte autant que le nom : beaucoup de joueurs se
+    // cherchent sous celui qu'ils utilisent en jeu.
+    return matches.filter(match =>
+      [
+        match.player1Details?.name,
+        match.player1Details?.platformUsername ?? match.player1Details?.iscUsername,
+        match.player2Details?.name,
+        match.player2Details?.platformUsername ?? match.player2Details?.iscUsername,
+      ]
+        .filter((value): value is string => !!value)
+        .some(value => normalize(value).includes(needle))
+    );
+  }, [matches, query]);
 
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="space-y-2 animate-pulse">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="border rounded-lg p-4">
-            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-            <div className="space-y-4">
-              {[1, 2].map((j) => (
-                <div key={j} className="h-16 bg-gray-100 dark:bg-gray-800 rounded"></div>
-              ))}
-            </div>
-          </div>
+          <div key={i} className="h-28 rounded-lg border border-onyx-200 bg-onyx-50 dark:border-onyx-800 dark:bg-onyx-900" />
         ))}
       </div>
     );
@@ -257,22 +230,55 @@ const EventRoundPairings = ({
           <TrophyIcon className="w-6 h-6 text-onyx-400" />
         </div>
         <Body.Text className="text-onyx-600 dark:text-onyx-400">
-          No matches available for this round yet.
+          Aucun appariement pour cette ronde.
         </Body.Text>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 sm:space-y-3">
-      {matches.map(match => (
-        <PairingCard
-          key={match.id}
-          match={match}
-          isCurrentRound={match.metadata.round === currentRound}
-          isProjected={isProjected}
-        />
-      ))}
+    <div className="space-y-3">
+      {matches.length >= SEARCH_THRESHOLD && (
+        <div className="relative">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-onyx-400" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Trouve-toi : tape ton nom…"
+            aria-label="Filtrer les appariements par nom de joueur"
+            className="w-full rounded-lg border border-onyx-200 bg-white py-2 pl-9 pr-3 text-sm
+              placeholder:text-onyx-400 focus:border-amethyste-400 focus:outline-none focus:ring-1
+              focus:ring-amethyste-400 dark:border-onyx-800 dark:bg-onyx-900 dark:text-white"
+          />
+        </div>
+      )}
+
+      {visibleMatches.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-onyx-300 py-8 text-center dark:border-onyx-700">
+          <Body.Text className="text-onyx-600 dark:text-onyx-400">
+            Aucun joueur ne correspond à « {query} ».
+          </Body.Text>
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="mt-2 text-sm font-medium text-amethyste-600 hover:underline dark:text-amethyste-400"
+          >
+            Tout afficher
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {visibleMatches.map(match => (
+            <PairingCard
+              key={match.id}
+              match={match}
+              isProjected={isProjected}
+              isAdmin={isAdmin}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

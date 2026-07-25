@@ -6,7 +6,7 @@ import { ChartBarIcon, UsersIcon, TrophyIcon } from "@heroicons/react/24/outline
 import { Heading, Body } from "@/components/ui/Typography";
 
 interface EventStatsProps {
-  /** Round-scoped stats — already shown in the header StatsOverview above the tabs. */
+  /** Stats de la ronde affichée — le résumé au-dessus couvre la même ronde. */
   stats: EventStatistics;
   eventId: string;
 }
@@ -36,11 +36,11 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
 
   return (
     <div className="space-y-8">
-      {/* All-rounds performance — distinct from the round-scoped header above the tabs */}
+      {/* Totaux toutes rondes — à distinguer du résumé de ronde affiché au-dessus */}
       <section>
-        <Heading.H3 className="mb-1">Event Totals</Heading.H3>
+        <Heading.H3 className="mb-1">Totaux de l&apos;événement</Heading.H3>
         <Body.Caption className="text-onyx-500 dark:text-onyx-400 mb-4 block">
-          All rounds combined — the summary above only covers the round you're viewing.
+          Toutes rondes confondues — le résumé au-dessus ne couvre que la ronde affichée.
         </Body.Caption>
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -53,17 +53,17 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
             <div className={perfCard}>
               <div className="flex items-center gap-2 mb-2">
                 <TrophyIcon className="w-5 h-5 text-amethyste-500" />
-                <Body.Label>Average PR</Body.Label>
+                <Body.Label>PR moyen</Body.Label>
               </div>
               <Heading.H4>{allRounds.averagePR.toFixed(1)}</Heading.H4>
               <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-                Points per match
+                Points par match
               </Body.Caption>
             </div>
             <div className={perfCard}>
               <div className="flex items-center gap-2 mb-2">
                 <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
-                <Body.Label>Average spread</Body.Label>
+                <Body.Label>Spread moyen</Body.Label>
               </div>
               <Heading.H4>{allRounds.averageDS.toFixed(1)}</Heading.H4>
               <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
@@ -73,36 +73,36 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
             <div className={perfCard}>
               <div className="flex items-center gap-2 mb-2">
                 <UsersIcon className="w-5 h-5 text-amethyste-500" />
-                <Body.Label>Active Players</Body.Label>
+                <Body.Label>Joueurs actifs</Body.Label>
               </div>
               <Heading.H4>{allRounds.activePlayers}</Heading.H4>
               <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-                Across the whole event
+                Sur l&apos;ensemble de l&apos;événement
               </Body.Caption>
             </div>
             <div className={perfCard}>
               <div className="flex items-center gap-2 mb-2">
                 <ChartBarIcon className="w-5 h-5 text-amethyste-500" />
-                <Body.Label>Average Rating</Body.Label>
+                <Body.Label>Cote moyenne</Body.Label>
               </div>
               <Heading.H4>{allRounds.averageRating.toFixed(0)}</Heading.H4>
               <Body.Caption className="mt-1 text-onyx-600 dark:text-onyx-400">
-                Player skill level
+                Niveau moyen des joueurs
               </Body.Caption>
             </div>
           </div>
         ) : (
           <Body.Text className="text-onyx-500 dark:text-onyx-400">
-            Event totals unavailable.
+            Totaux indisponibles.
           </Body.Text>
         )}
       </section>
 
-      {/* Player Stats — this round's participants */}
+      {/* Stats joueurs — participants de la ronde affichée */}
       {stats.playerStats.length > 0 && (
         <section>
           <Heading.H3 className="mb-4">
-            Player Statistics (this round)
+            Statistiques des joueurs (cette ronde)
           </Heading.H3>
           <div className="overflow-hidden rounded-lg border border-onyx-200 bg-white
             dark:border-onyx-800 dark:bg-onyx-900">
@@ -113,16 +113,16 @@ const EventStats = ({ stats, eventId }: EventStatsProps) => {
                     <thead>
                       <tr className="bg-onyx-50 dark:bg-onyx-800/50">
                         <th scope="col" className="px-4 py-3.5 text-left text-sm font-semibold text-onyx-900 dark:text-white">
-                          Player
+                          Joueur
                         </th>
                         <th scope="col" className="px-4 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                          Matches
+                          Matchs
                         </th>
                         <th scope="col" className="px-4 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                          W/L/D
+                          V/D/N
                         </th>
                         <th scope="col" className="px-4 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                          Avg spread
+                          Spread moyen
                         </th>
                       </tr>
                     </thead>

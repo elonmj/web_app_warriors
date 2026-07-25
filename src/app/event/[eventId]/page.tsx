@@ -6,12 +6,14 @@ import { MatchDisplay } from '@/types/MatchHistory';
 import { MatchStatus } from '@/types/MatchStatus'; // Add this import
 import { EventRanking } from '@/types/Ranking';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { cookies } from 'next/headers';
 import EventHeader from "@/app/components/EventHeader";
-import StatsOverview from "@/app/components/StatsOverview";
-import { Body } from "@/components/ui/Typography";
+import RoundBanner from "@/app/components/RoundBanner";
 import ClientEventTabs from "@/app/components/ClientEventTabs"; // Import the new component
 
 import { EventStatisticsCalculator } from "@/lib/Statistics";
+import { resolveRoundWindow } from "@/lib/roundWindow";
+import { ADMIN_SESSION_COOKIE, verifySessionToken } from "@/lib/adminSession";
 
 const eventRepository = new FirebaseEventRepository();
 
@@ -52,10 +54,12 @@ export default async function EventPage({
         status: match.status as MatchStatus, // Ensure type compatibility
         player1Details: player1 ? {
           name: player1.name,
+          platformUsername: player1.wooglesUsername ?? player1.iscUsername,
           category: player1.category
         } : undefined,
         player2Details: player2 ? {
           name: player2.name,
+          platformUsername: player2.wooglesUsername ?? player2.iscUsername,
           category: player2.category
         } : undefined
       };
@@ -76,28 +80,49 @@ export default async function EventPage({
     // Calculate statistics
     const stats = EventStatisticsCalculator.calculate(event, roundMatches, players);
 
+    // Les actions d'organisation ne s'affichent que pour une session admin valide :
+    // la page est publique, c'est le lien qu'on partage aux joueurs.
+    const isAdmin = await verifySessionToken(cookies().get(ADMIN_SESSION_COOKIE)?.value);
+
+    // Échéance de la ronde. Une ronde sans fenêtre exploitable n'affiche pas de
+    // date plutôt que d'en inventer une.
+    let roundEndsAt: string | null = null;
+    const storedRound = event.metadata.roundHistory?.[currentRound];
+    if (storedRound) {
+      try {
+        roundEndsAt = resolveRoundWindow(
+          storedRound,
+          `event ${eventId}, ronde ${currentRound}`
+        ).endsAt.toISOString();
+      } catch {
+        roundEndsAt = null;
+      }
+    }
+
     return (
       <div className="min-h-screen bg-onyx-50 dark:bg-onyx-950">
-        <EventHeader event={event} />
+        <EventHeader event={event} isAdmin={isAdmin} />
 
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-          {/* Stats Overview Section — scoped to the round being viewed */}
-          <div className="mb-8">
-            <Body.Caption className="text-onyx-500 dark:text-onyx-400 mb-2 block">
-              Round {currentRound} summary — see the Statistics tab for all-rounds totals.
-            </Body.Caption>
-            <StatsOverview stats={stats} />
-          </div>
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+          {/* Contenu principal : l'appariement est ce que le joueur vient chercher,
+              il arrive donc immédiatement après l'en-tête. */}
+          <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-onyx-900">
+            <RoundBanner
+              eventName={event.name}
+              currentRound={currentRound}
+              totalRounds={event.metadata.totalRounds}
+              roundEndsAt={roundEndsAt}
+              totalMatches={enrichedMatches.length}
+              completedMatches={enrichedMatches.filter(m => m.status === 'completed').length}
+            />
 
-          {/* Main Content Area */}
-          <div className="bg-white shadow-sm rounded-lg dark:bg-onyx-900">
-            {/* Use ClientEventTabs instead of TabNav */}
             <ClientEventTabs
               event={event}
               currentRound={currentRound}
               roundMatches={enrichedMatches}
               roundRankings={roundRankings}
               stats={stats}
+              isAdmin={isAdmin}
             />
           </div>
         </div>

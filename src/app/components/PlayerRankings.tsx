@@ -53,7 +53,7 @@ export function PlayerRankings({
   scope = 'round'
 }: PlayerRankingsProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
-  const changeLabel = scope === 'global' ? 'Last Match' : 'Change';
+  const changeLabel = scope === 'global' ? 'Dernier match' : 'Évolution';
   // Départages V2 : colonnes visibles quand le classement les fournit
   const hasTiebreakers =
     scope === 'round' && eventRanking.rankings.some((r) => r.buchholz !== undefined);
@@ -87,7 +87,7 @@ export function PlayerRankings({
           <TrophyIcon className="w-6 h-6 text-onyx-400" />
         </div>
         <Body.Text className="text-onyx-600 dark:text-onyx-400">
-          {total ? `No rankings available for round ${round}` : 'No rankings available'}
+          {total ? `Aucun classement pour la ronde ${round}` : 'Aucun classement disponible'}
         </Body.Text>
       </div>
     );
@@ -105,10 +105,10 @@ export function PlayerRankings({
               disabled:opacity-50 disabled:cursor-not-allowed dark:text-onyx-400 dark:hover:text-white"
           >
             <ArrowLeftIcon className="w-4 h-4" />
-            Previous Round
+            Ronde précédente
           </button>
           <Body.Text className="font-medium">
-            Round {round} of {total}
+            Ronde {round} / {total}
           </Body.Text>
           <button
             onClick={() => handleRoundChange(round + 1)}
@@ -116,7 +116,7 @@ export function PlayerRankings({
             className="flex items-center gap-1 px-2 py-1 text-sm font-medium text-onyx-600 hover:text-onyx-900 
               disabled:opacity-50 disabled:cursor-not-allowed dark:text-onyx-400 dark:hover:text-white"
           >
-            Next Round
+            Ronde suivante
             <ArrowRightIcon className="w-4 h-4" />
           </button>
         </div>
@@ -131,16 +131,16 @@ export function PlayerRankings({
                 <thead className="bg-onyx-50 dark:bg-onyx-900">
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-onyx-900 dark:text-white sm:pl-6">
-                      Position
+                      Rang
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-onyx-900 dark:text-white">
-                      Player
+                      Joueur
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-onyx-900 dark:text-white">
-                      Category
+                      Catégorie
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
-                      Rating
+                      Cote
                     </th>
                     <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-onyx-900 dark:text-white">
                       Points
@@ -174,21 +174,21 @@ export function PlayerRankings({
                         <Link
                           href={`/player/${ranking.playerId}`}
                           className="group block"
-                          aria-label={`View ${ranking.playerDetails?.name || 'Unknown Player'}'s statistics`}
+                          aria-label={`Voir les statistiques de ${ranking.playerDetails?.name || 'joueur inconnu'}`}
                         >
                           <span className="flex items-center gap-2">
                             <Body.Text
                               variant="sm"
                               className="font-medium transition-colors group-hover:text-amethyste-600 dark:group-hover:text-amethyste-400 focus-visible:text-amethyste-600 dark:focus-visible:text-amethyste-400"
                             >
-                              {ranking.playerDetails?.name || 'Unknown Player'}
+                              {ranking.playerDetails?.name || 'Joueur inconnu'}
                             </Body.Text>
                             {ranking.isInactive && (
                               <span
                                 className="px-1.5 py-0.5 bg-onyx-100 text-onyx-500 rounded text-[10px] font-medium uppercase tracking-wide dark:bg-onyx-800 dark:text-onyx-400"
                                 title="Aucun match depuis 6 semaines — la cote ne se dégrade pas par inactivité"
                               >
-                                Inactive
+                                Inactif
                               </span>
                             )}
                           </span>
